@@ -13,7 +13,7 @@ mod operators;
 async fn get_api_operators() -> impl IntoResponse {
     Json(APIResourceList {
         group_version: "farm.example.com/v1alpha".to_string(),
-        operators: vec![
+        resources: vec![
             APIResource {
                 group: Some(llama::Llama::group(&()).into()),
                 kind: llama::Llama::kind(&()).into(),
