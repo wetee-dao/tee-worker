@@ -6,14 +6,14 @@ use axum_server::tls_rustls::RustlsConfig;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::{APIResource, APIResourceList};
 use kube::Resource as _;
 
-use crate::resources::{farmpod, llama};
+use crate::operators::{farmpod, llama};
 
-mod resources;
+mod operators;
 
-async fn get_api_resources() -> impl IntoResponse {
+async fn get_api_operators() -> impl IntoResponse {
     Json(APIResourceList {
         group_version: "farm.example.com/v1alpha".to_string(),
-        resources: vec![
+        operators: vec![
             APIResource {
                 group: Some(llama::Llama::group(&()).into()),
                 kind: llama::Llama::kind(&()).into(),
@@ -37,7 +37,7 @@ async fn get_api_resources() -> impl IntoResponse {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let app = Router::new()
-        .route("/apis/farm.example.com/v1alpha", get(get_api_resources))
+        .route("/apis/farm.example.com/v1alpha", get(get_api_operators))
         .route(
             "/apis/farm.example.com/v1alpha/namespaces/:namespace/llamas",
             get(llama::list_llamas),
