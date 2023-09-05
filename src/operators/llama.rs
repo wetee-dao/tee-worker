@@ -37,7 +37,7 @@ static STATIC_LLAMAS: LazyLock<HashMap<String, HashMap<String, Llama>>> = LazyLo
 
 #[derive(CustomResource, Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[kube(
-    group = "farm.example.com",
+    group = "app.wetee.tee-worker",
     version = "v1alpha",
     kind = "Llama",
     namespaced
@@ -51,7 +51,7 @@ pub async fn list_llamas(Path(namespace): Path<String>) -> impl IntoResponse {
     println!("Listing Llamas in {namespace}");
 
     Json(serde_json::json!({
-        "apiVersion": "farm.example.com/v1alpha",
+        "apiVersion": "app.wetee.tee-worker/v1alpha",
         "kind": "LamaList",
         "items": &STATIC_LLAMAS.get(&namespace).map(|lamas| lamas.values().collect::<Vec<_>>()).unwrap_or_default(),
         "metadata": ListMeta::default()

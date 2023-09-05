@@ -43,9 +43,9 @@ spec:
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1alpha.farm.example.com
+  name: v1alpha.app.wetee.tee-worker
 spec:
-  group: farm.example.com
+  group: app.wetee.tee-worker
   groupPriorityMinimum: 1000
   insecureSkipTLSVerify: true
   service:

@@ -1,5 +1,5 @@
 [package]
-name = "farm-operator"
+name = "wetee-worker"
 version = "0.1.0"
 edition = "2021"
 
@@ -21,9 +21,3 @@ members = [
 
 ]
 
-# Rusttls returns UnsupportedNameType error with certificates issued with CN=<ip-address>
-# Unfortunately such issued certificates are used in cloud providers like GCP
-# 
-# This replaces all uses of rustls in dependency tree to use the patched version
-[patch.crates-io]
-rustls = { git = "https://github.com/metalbear-co/rustls", branch = "feat-ip-address" }

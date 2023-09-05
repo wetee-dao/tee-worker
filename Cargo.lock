@@ -313,23 +313,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
 
 [[package]]
-name = "farm-operator"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "axum-server",
- "chrono",
- "k8s-openapi",
- "kube",
- "rcgen",
- "schemars",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -997,13 +980,14 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.20.6"
-source = "git+https://github.com/metalbear-co/rustls?branch=feat-ip-address#c706a865b99b7f1743342060178b28aed0257682"
+version = "0.20.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b80e3dec595989ea8510028f30c408a4630db12c9cbb8de34203b89d6577e99"
 dependencies = [
  "log",
  "ring",
  "sct",
- "webpki 0.21.4",
+ "webpki",
 ]
 
 [[package]]
@@ -1396,7 +1380,7 @@ checksum = "c43ee83903113e03984cb9e5cebe6c04a5116269e900e3ddba8f068a62adda59"
 dependencies = [
  "rustls",
  "tokio",
- "webpki 0.22.0",
+ "webpki",
 ]
 
 [[package]]
@@ -1634,21 +1618,29 @@ dependencies = [
 
 [[package]]
 name = "webpki"
-version = "0.21.4"
-source = "git+https://github.com/ctz/webpki?branch=feat-ip-address#53a0215d998ec4bef37e55a5b7eed7d41f20e8ac"
-dependencies = [
- "ring",
- "untrusted",
-]
-
-[[package]]
-name = "webpki"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f095d78192e208183081cc07bc5515ef55216397af48b873e5edcd72637fa1bd"
 dependencies = [
  "ring",
  "untrusted",
+]
+
+[[package]]
+name = "wetee-worker"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "axum-server",
+ "chrono",
+ "k8s-openapi",
+ "kube",
+ "rcgen",
+ "schemars",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

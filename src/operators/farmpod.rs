@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CustomResource, Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[kube(
-    group = "farm.example.com",
+    group = "app.wetee.tee-worker",
     version = "v1alpha",
     kind = "FarmPod",
     namespaced
@@ -46,7 +46,7 @@ pub async fn list_farmpods(Path(namespace): Path<String>) -> impl IntoResponse {
         .collect::<Vec<_>>();
 
     Json(serde_json::json!({
-        "apiVersion": "farm.example.com/v1alpha",
+        "apiVersion": "app.wetee.tee-worker/v1alpha",
         "kind": "FarmPodList",
         "items": items,
         "metadata": pods.metadata
