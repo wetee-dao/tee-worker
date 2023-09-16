@@ -2,4 +2,5 @@
 resources:
 - secret_v1_tee.yaml
 - secret_v1_cronjob.yaml
+- secret_v1_oracle.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
