@@ -1,0 +1,84 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - cronjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - cronjobs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - cronjobs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - oracles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - oracles/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - oracles/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - tees
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - tees/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - tees/status
+  verbs:
+  - get
+  - patch
+  - update

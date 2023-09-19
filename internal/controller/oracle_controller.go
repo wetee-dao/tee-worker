@@ -21,6 +21,7 @@ type OracleReconciler struct {
 // +kubebuilder:rbac:groups=secret.wetee.app,resources=oracles,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=secret.wetee.app,resources=oracles/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=secret.wetee.app,resources=oracles/finalizers,verbs=update
+
 func (r *OracleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 

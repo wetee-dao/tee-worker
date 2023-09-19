@@ -21,6 +21,7 @@ type CronJobReconciler struct {
 // +kubebuilder:rbac:groups=secret.wetee.app,resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=secret.wetee.app,resources=cronjobs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=secret.wetee.app,resources=cronjobs/finalizers,verbs=update
+
 func (r *CronJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 

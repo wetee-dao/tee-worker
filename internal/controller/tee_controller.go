@@ -21,6 +21,7 @@ type TeeReconciler struct {
 // +kubebuilder:rbac:groups=secret.wetee.app,resources=tees,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=secret.wetee.app,resources=tees/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=secret.wetee.app,resources=tees/finalizers,verbs=update
+
 func (r *TeeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
