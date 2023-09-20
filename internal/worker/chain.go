@@ -1,6 +1,7 @@
-package main
+package worker
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,7 +10,31 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/rpc/author"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	secretv1 "wetee.app/worker/api/v1"
 )
+
+func WorkerInit(mgr manager.Manager) {
+	time.Sleep(time.Second * 3)
+	c := mgr.GetClient()
+	ctx := context.Background()
+	pods := &appsv1.DeploymentList{}
+
+	c.List(ctx, pods, client.InNamespace("worker-system"))
+	err := c.Create(ctx, &secretv1.Tee{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "worker-system", Name: "ttt"},
+	})
+	fmt.Println("c.Create(ctx, &secretv1.Tee{})", err)
+
+	for i := 0; i <= 10; i++ {
+		time.Sleep(time.Second)
+		fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxx len(pods.Items) ", len(pods.Items))
+	}
+}
 
 func connect() {
 	// Query the system events and extract information from them. This example runs until exited via Ctrl-C
