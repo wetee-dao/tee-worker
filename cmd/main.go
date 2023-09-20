@@ -17,8 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -28,10 +31,13 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	secretv1 "wetee.app/worker/api/v1"
 	"wetee.app/worker/internal/controller"
 	//+kubebuilder:scaffold:imports
@@ -122,6 +128,24 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
+
+	go func() {
+		time.Sleep(time.Second * 3)
+		c := mgr.GetClient()
+		ctx := context.Background()
+		pods := &appsv1.DeploymentList{}
+
+		c.List(ctx, pods, client.InNamespace("worker-system"))
+		err = c.Create(ctx, &secretv1.Tee{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "worker-system", Name: "ttt"},
+		})
+		fmt.Println("c.Create(ctx, &secretv1.Tee{})", err)
+
+		for i := 0; i <= 10; i++ {
+			time.Sleep(time.Second)
+			fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxx len(pods.Items) ", len(pods.Items))
+		}
+	}()
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
