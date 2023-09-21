@@ -32,11 +32,11 @@ func WorkerInit(mgr manager.Manager) {
 
 	for i := 0; i <= 10; i++ {
 		time.Sleep(time.Second)
-		fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxx len(pods.Items) ", len(pods.Items))
+		fmt.Println("XXXXXXXXXXXXXXXX len(pods.Items) ", len(pods.Items))
 	}
 }
 
-func connect() {
+func chainConnect() {
 	// Query the system events and extract information from them. This example runs until exited via Ctrl-C
 
 	// Create our API with a default connection to the local node
@@ -108,7 +108,7 @@ func connect() {
 				fmt.Println("IsFinalized")
 				var accountInfo types.AccountInfo
 				api.RPC.State.GetStorageLatest(key, &accountInfo)
-				fmt.Println("accountInfo.Data.Free===>", accountInfo.Data.Free)
+				fmt.Println("accountInfo.Data.Free ===> ", accountInfo.Data.Free)
 				return
 			}
 		case <-timeout:

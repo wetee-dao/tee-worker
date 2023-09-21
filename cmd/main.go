@@ -124,6 +124,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 开启 worker 主线程
 	go worker.WorkerInit(mgr)
 
 	setupLog.Info("starting manager")
