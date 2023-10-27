@@ -26,7 +26,6 @@ func (r *CronJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
-
 	fmt.Println("Reconciling CronJob")
 
 	return ctrl.Result{}, nil
