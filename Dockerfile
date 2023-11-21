@@ -25,10 +25,10 @@
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM wetee/ubuntu-ego:20.04
 WORKDIR /
 # COPY --from=builder /workspace/manager .
-ADD bin/manager  /
+ADD bin/*  /
 USER 65532:65532
 
-ENTRYPOINT ["/manager"]
+ENTRYPOINT ["ego","run","/manager"]
