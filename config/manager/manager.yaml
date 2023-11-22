@@ -67,7 +67,7 @@ spec:
         #   type: RuntimeDefault
       containers:
       - command:
-        - /manager
+        - ego run /manager
         args:
         - --leader-elect
         image: controller:latest
@@ -95,8 +95,10 @@ spec:
           limits:
             cpu: 500m
             memory: 128Mi
+            alibabacloud.com/sgx_epc_MiB: 20
           requests:
             cpu: 10m
             memory: 64Mi
+            alibabacloud.com/sgx_epc_MiB: 20
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
