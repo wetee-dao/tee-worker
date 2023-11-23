@@ -31,4 +31,4 @@ WORKDIR /
 ADD bin/*  /
 USER 65532:65532
 
-ENTRYPOINT ["ego","run","/manager"]
+CMD ["ego","run","/manager"]

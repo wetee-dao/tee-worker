@@ -69,14 +69,22 @@ test: manifests generate fmt vet envtest ## Run tests.
 .PHONY: build
 build: manifests generate fmt vet ## Build manager binary.
 	rm -f  bin/manager
-	rm -f  bin/enclave.json
 	cd bin && \
 		ego-go build -o manager ../cmd/main.go && \
-		ego sign ./manager
+		ego sign
+
+.PHONY: gorun
+gorun: manifests generate fmt vet ## Run a controller from your host.
+	 export KUBECONFIG=/home/wetee/work/wetee/worker/bin/.kube/config &&  \
+		go run ./cmd/main.go
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./cmd/main.go
+	rm -f  bin/manager
+	cd bin && export KUBECONFIG=/etc/kube/config &&  \
+		ego-go build -o manager ../cmd/main.go && \
+		ego sign && \
+		ego run ./manager
 
 # If you wish to build the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64). However, you must enable docker buildKit for it.

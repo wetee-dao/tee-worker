@@ -18,11 +18,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -69,7 +73,17 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	var conf *rest.Config = nil
+	if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
+		fmt.Println("读取集群配置")
+		conf = loadConfig("")
+	} else {
+		fmt.Println("读取用户配置")
+		conf = ctrl.GetConfigOrDie()
+	}
+	fmt.Println(conf.APIPath)
+
+	mgr, err := ctrl.NewManager(conf, ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress: probeAddr,
@@ -132,4 +146,26 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func loadConfig(context string) *rest.Config {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	conf, err := loadConfigWithContext("", loadingRules, context)
+	if err != nil {
+		fmt.Println(err, " **** unable to get kubeconfig")
+		os.Exit(1)
+	}
+
+	return conf
+}
+
+func loadConfigWithContext(apiServerURL string, loader clientcmd.ClientConfigLoader, context string) (*rest.Config, error) {
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		loader,
+		&clientcmd.ConfigOverrides{
+			ClusterInfo: clientcmdapi.Cluster{
+				Server: apiServerURL,
+			},
+			CurrentContext: context,
+		}).ClientConfig()
 }
