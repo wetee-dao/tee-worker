@@ -67,9 +67,9 @@ spec:
         #   type: RuntimeDefault
       containers:
       - command:
-        - ego run /manager
-        args:
-        - --leader-elect
+        - ego
+        - run
+        - ./manager
         image: controller:latest
         name: manager
         securityContext:
@@ -93,12 +93,8 @@ spec:
         # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
         resources:
           limits:
-            cpu: 500m
-            memory: 128Mi
-            alibabacloud.com/sgx_epc_MiB: 20
+            alibabacloud.com/sgx_epc_MiB: 10
           requests:
-            cpu: 10m
-            memory: 64Mi
-            alibabacloud.com/sgx_epc_MiB: 20
+            alibabacloud.com/sgx_epc_MiB: 10
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
