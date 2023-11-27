@@ -53,3 +53,6 @@ spec:
           type: Directory
         name: dev
 EOF
+
+# kubectl create rolebinding hpa --clusterrole=admin --user=system:serviceaccount:worker-system:worker-controller-manager
+kubectl create clusterrolebinding metrics --clusterrole=worker-metrics-reader --user=system:serviceaccount:worker-system:worker-controller-manager
