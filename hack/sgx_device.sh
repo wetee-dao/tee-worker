@@ -54,5 +54,5 @@ spec:
         name: dev
 EOF
 
-# kubectl create rolebinding hpa --clusterrole=admin --user=system:serviceaccount:worker-system:worker-controller-manager
-kubectl create clusterrolebinding metrics --clusterrole=worker-metrics-reader --user=system:serviceaccount:worker-system:worker-controller-manager
+# 为wetee-worker赋予集群管理权限
+kubectl create clusterrolebinding wetee-admin --clusterrole=cluster-admin --user=system:serviceaccount:worker-system:worker-controller-manager
