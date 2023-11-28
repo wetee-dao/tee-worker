@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"time"
@@ -10,33 +11,48 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/rpc/author"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 func WorkerInit(mgr manager.Manager) {
-	time.Sleep(time.Second * 3)
-	// c := mgr.GetClient()
 	ctx := context.Background()
-	// ds := &appsv1.DeploymentList{}
-	// fmt.Println(ds)
-	// pods := &corev1.PodList{}
 
-	// c.List(ctx, pods)
+	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		fmt.Println("error in opening stream" + err.Error())
+		return
+	}
+	podLogOpts := &corev1.PodLogOptions{
+		Container: "kube-rbac-proxy",
+		SinceTime: &metav1.Time{
+			Time: time.Now().Add(-1 * time.Minute),
+		},
+	}
+	req := clientset.CoreV1().Pods("worker-system").GetLogs("worker-controller-manager-66dfb44b9b-9scl8", podLogOpts)
+	podLogs, err := req.Stream(ctx)
+	if err != nil {
+		fmt.Println("error in opening stream " + err.Error())
+		return
+	}
+	defer podLogs.Close()
 
-	// // c.List(ctx, pods, client.InNamespace("worker-system"))
-	// err := c.Create(ctx, &secretv1.Tee{
-	// 	ObjectMeta: metav1.ObjectMeta{Namespace: "worker-system", Name: "ttt"},
-	// })
-	// fmt.Println("c.Create(ctx, &secretv1.Tee{})", err)
+	// Read the logs line by line
+	logs := ""
+	scanner := bufio.NewScanner(podLogs)
+	for scanner.Scan() {
+		logs += scanner.Text() + "\n"
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("failed to read log line: %v", err)
+	}
 
-	// for i := 0; i < len(pods.Items); i++ {
-	// 	pod := pods.Items[i]
-	// 	fmt.Println("XXXXXXXXXXXXXXXX AllocatedResources ", pod.Status.ContainerStatuses[0].AllocatedResources)
-	// 	fmt.Println("XXXXXXXXXXXXXXXX Resources ", pod.Status.ContainerStatuses[0].AllocatedResources)
-	// 	time.Sleep(time.Second)
-	// }
+	fmt.Println("logs: ================================================")
+	fmt.Println(logs)
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<,")
 
 	// 创建Metrics Client
 	metricsClient, err := versioned.NewForConfig(mgr.GetConfig())
@@ -62,7 +78,7 @@ func WorkerInit(mgr manager.Manager) {
 	}
 }
 
-func chainConnect() {
+func ChainConnect() {
 	// Query the system events and extract information from them. This example runs until exited via Ctrl-C
 
 	// Create our API with a default connection to the local node
