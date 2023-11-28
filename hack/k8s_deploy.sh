@@ -10,6 +10,9 @@ cd $DIR/../
 
 tag=`date "+%Y-%m-%d-%H_%M"`
 
+# 清理旧的部署
+make undeploy
+
 make manifests
 make install
 

@@ -52,7 +52,7 @@ func WorkerInit(mgr manager.Manager) {
 
 	fmt.Println("logs: ================================================")
 	fmt.Println(logs)
-	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<,")
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
 	// 创建Metrics Client
 	metricsClient, err := versioned.NewForConfig(mgr.GetConfig())
@@ -79,8 +79,6 @@ func WorkerInit(mgr manager.Manager) {
 }
 
 func ChainConnect() {
-	// Query the system events and extract information from them. This example runs until exited via Ctrl-C
-
 	// Create our API with a default connection to the local node
 	api, err := gsrpc.NewSubstrateAPI(config.Default().RPCURL)
 	if err != nil {
@@ -93,27 +91,40 @@ func ChainConnect() {
 	}
 
 	genesisHash, err := api.RPC.Chain.GetBlockHash(0)
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println(genesisHash.Hex())
 
 	from := signature.TestKeyringPairAlice
 
 	bob, err := types.NewMultiAddressFromHexAccountID("0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48")
-
+	if err != nil {
+		panic(err)
+	}
 	c, err := types.NewCall(meta, "Balances.transfer", bob, types.NewUCompactFromUInt(1000000000000000000))
-
+	if err != nil {
+		panic(err)
+	}
 	ext := types.NewExtrinsic(c)
 
 	era := types.ExtrinsicEra{IsMortalEra: false}
 
 	rv, err := api.RPC.State.GetRuntimeVersionLatest()
-
+	if err != nil {
+		panic(err)
+	}
 	key, err := types.CreateStorageKey(meta, "System", "Account", from.PublicKey)
-
+	if err != nil {
+		panic(err)
+	}
 	var sub *author.ExtrinsicStatusSubscription
 
 	var accountInfo types.AccountInfo
 	_, err = api.RPC.State.GetStorageLatest(key, &accountInfo)
-
+	if err != nil {
+		panic(err)
+	}
 	nonce := uint32(accountInfo.Nonce)
 
 	fmt.Println("accountInfo.Data.Free===>", accountInfo.Data.Free)
@@ -129,7 +140,9 @@ func ChainConnect() {
 	}
 
 	err = ext.Sign(from, o)
-
+	if err != nil {
+		panic(err)
+	}
 	sub, err = api.RPC.Author.SubmitAndWatchExtrinsic(ext)
 	if err != nil {
 		panic(err)
