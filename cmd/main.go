@@ -150,7 +150,7 @@ func main() {
 
 func loadConfig(context string) *rest.Config {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	fmt.Println(loadingRules)
+	fmt.Println(*loadingRules)
 	conf, err := loadConfigWithContext("", loadingRules, context)
 	if err != nil {
 		fmt.Println(err, " **** unable to get kubeconfig")

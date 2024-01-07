@@ -75,7 +75,7 @@ build: manifests generate fmt vet ## Build manager binary.
 
 .PHONY: gorun
 gorun: manifests generate fmt vet ## Run a controller from your host.
-	 export KUBECONFIG=/home/wetee/work/wetee/worker/bin/.kube/config &&  \
+	 export KUBECONFIG=${PWD}/bin/.kube/config &&  \
 		go run ./cmd/main.go
 
 .PHONY: run
