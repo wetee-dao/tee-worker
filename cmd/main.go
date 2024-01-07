@@ -23,6 +23,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -38,6 +39,7 @@ import (
 
 	secretv1 "wetee.app/worker/api/v1"
 	"wetee.app/worker/internal/controller"
+	"wetee.app/worker/internal/util"
 	"wetee.app/worker/internal/worker"
 	//+kubebuilder:scaffold:imports
 )
@@ -75,13 +77,12 @@ func main() {
 
 	var conf *rest.Config = nil
 	if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
-		fmt.Println("读取集群配置")
+		util.LogWithRed("Loading", "Load from env")
 		conf = loadConfig("")
 	} else {
-		fmt.Println("读取用户配置")
+		util.LogWithRed("Loading", "Load from config")
 		conf = ctrl.GetConfigOrDie()
 	}
-	fmt.Println(conf.APIPath)
 
 	mgr, err := ctrl.NewManager(conf, ctrl.Options{
 		Scheme:                 scheme,
@@ -106,25 +107,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.TeeReconciler{
+	if err = (&controller.AppReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Tee")
+		setupLog.Error(err, "unable to create controller", "controller", "App")
 		os.Exit(1)
 	}
-	if err = (&controller.CronJobReconciler{
+	if err = (&controller.TaskReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CronJob")
-		os.Exit(1)
-	}
-	if err = (&controller.OracleReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Oracle")
+		setupLog.Error(err, "unable to create controller", "controller", "Task")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
@@ -140,6 +134,7 @@ func main() {
 
 	// 开启 worker 主线程
 	go worker.WorkerInit(mgr)
+	go worker.StartServer()
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
@@ -150,7 +145,7 @@ func main() {
 
 func loadConfig(context string) *rest.Config {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	fmt.Println(*loadingRules)
+	util.LogWithRed("LoadingRules", loadingRules)
 	conf, err := loadConfigWithContext("", loadingRules, context)
 	if err != nil {
 		fmt.Println(err, " **** unable to get kubeconfig")

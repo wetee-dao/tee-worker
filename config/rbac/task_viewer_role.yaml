@@ -1,31 +1,27 @@
-# permissions for end users to edit oracles.
+# permissions for end users to view tasks.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: clusterrole
-    app.kubernetes.io/instance: oracle-editor-role
+    app.kubernetes.io/instance: task-viewer-role
     app.kubernetes.io/component: rbac
     app.kubernetes.io/created-by: worker
     app.kubernetes.io/part-of: worker
     app.kubernetes.io/managed-by: kustomize
-  name: oracle-editor-role
+  name: task-viewer-role
 rules:
 - apiGroups:
   - secret.wetee.app
   resources:
-  - oracles
+  - tasks
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - secret.wetee.app
   resources:
-  - oracles/status
+  - tasks/status
   verbs:
   - get

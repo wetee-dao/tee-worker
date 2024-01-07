@@ -1,27 +1,31 @@
-# permissions for end users to view tees.
+# permissions for end users to edit apps.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: clusterrole
-    app.kubernetes.io/instance: tee-viewer-role
+    app.kubernetes.io/instance: app-editor-role
     app.kubernetes.io/component: rbac
     app.kubernetes.io/created-by: worker
     app.kubernetes.io/part-of: worker
     app.kubernetes.io/managed-by: kustomize
-  name: tee-viewer-role
+  name: app-editor-role
 rules:
 - apiGroups:
   - secret.wetee.app
   resources:
-  - tees
+  - apps
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - secret.wetee.app
   resources:
-  - tees/status
+  - apps/status
   verbs:
   - get

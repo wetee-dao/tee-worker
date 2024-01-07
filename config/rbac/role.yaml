@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - secret.wetee.app
   resources:
-  - cronjobs
+  - apps
   verbs:
   - create
   - delete
@@ -19,13 +19,13 @@ rules:
 - apiGroups:
   - secret.wetee.app
   resources:
-  - cronjobs/finalizers
+  - apps/finalizers
   verbs:
   - update
 - apiGroups:
   - secret.wetee.app
   resources:
-  - cronjobs/status
+  - apps/status
   verbs:
   - get
   - patch
@@ -33,7 +33,7 @@ rules:
 - apiGroups:
   - secret.wetee.app
   resources:
-  - oracles
+  - tasks
   verbs:
   - create
   - delete
@@ -45,39 +45,13 @@ rules:
 - apiGroups:
   - secret.wetee.app
   resources:
-  - oracles/finalizers
+  - tasks/finalizers
   verbs:
   - update
 - apiGroups:
   - secret.wetee.app
   resources:
-  - oracles/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - secret.wetee.app
-  resources:
-  - tees
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - secret.wetee.app
-  resources:
-  - tees/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - secret.wetee.app
-  resources:
-  - tees/status
+  - tasks/status
   verbs:
   - get
   - patch

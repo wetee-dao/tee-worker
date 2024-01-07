@@ -35,4 +35,22 @@ resources:
   kind: Oracle
   path: wetee.app/worker/api/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: wetee.app
+  group: secret
+  kind: App
+  path: wetee.app/worker/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: wetee.app
+  group: secret
+  kind: Task
+  path: wetee.app/worker/api/v1
+  version: v1
 version: "3"

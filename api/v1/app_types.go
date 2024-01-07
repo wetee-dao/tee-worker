@@ -23,17 +23,17 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CronJobSpec defines the desired state of CronJob
-type CronJobSpec struct {
+// AppSpec defines the desired state of App
+type AppSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of CronJob. Edit cronjob_types.go to remove/update
+	// Foo is an example field of App. Edit app_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
 }
 
-// CronJobStatus defines the observed state of CronJob
-type CronJobStatus struct {
+// AppStatus defines the observed state of App
+type AppStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -41,24 +41,24 @@ type CronJobStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// CronJob is the Schema for the cronjobs API
-type CronJob struct {
+// App is the Schema for the apps API
+type App struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CronJobSpec   `json:"spec,omitempty"`
-	Status CronJobStatus `json:"status,omitempty"`
+	Spec   AppSpec   `json:"spec,omitempty"`
+	Status AppStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// CronJobList contains a list of CronJob
-type CronJobList struct {
+// AppList contains a list of App
+type AppList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CronJob `json:"items"`
+	Items           []App `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&CronJob{}, &CronJobList{})
+	SchemeBuilder.Register(&App{}, &AppList{})
 }
