@@ -1,13 +1,18 @@
 package chain
 
 import (
+	"encoding/hex"
+
+	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/edgelesssys/ego/enclave"
-	"github.com/vedhavyas/go-subkey"
+	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"wetee.app/worker/internal/util"
 )
 
-func GetMintKey() (subkey.KeyPair, error) {
+// 获取挖矿密钥
+// GetKey get mint key
+func GetMintKey() (*signature.KeyringPair, error) {
 	k, info, err := enclave.GetProductSealKey()
 	if err != nil {
 		util.LogWithRed("GetKey error", err)
@@ -18,5 +23,17 @@ func GetMintKey() (subkey.KeyPair, error) {
 
 	var mss [32]byte
 	copy(mss[:], k)
-	return sr25519.Scheme{}.FromSeed(mss[:])
+
+	uri := hex.EncodeToString(mss[:])
+	scheme := sr25519.Scheme{}
+	kr, err := subkey.DeriveKeyPair(scheme, uri)
+	if err != nil {
+		return nil, err
+	}
+
+	return &signature.KeyringPair{
+		URI:       uri,
+		Address:   kr.SS58Address(42),
+		PublicKey: kr.Public(),
+	}, nil
 }

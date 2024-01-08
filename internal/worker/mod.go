@@ -9,20 +9,19 @@ import (
 	"wetee.app/worker/internal/worker/chain"
 )
 
-type Worker struct {
-	k8sClient     *kubernetes.Clientset
-	metricsClient *versioned.Clientset
-	chainClient   *chain.ChainClient
-}
+// type Worker struct {
+// 	k8sClient     *kubernetes.Clientset
+// 	metricsClient *versioned.Clientset
+// 	chainClient   *chain.ChainClient
+// }
 
 func WorkerInit(mgr manager.Manager) error {
-	chain.GetMintKey()
-
 	// ctx := context.Background()
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		return err
 	}
+	fmt.Println("clientset => ", clientset)
 	// podLogOpts := &corev1.PodLogOptions{
 	// 	Container: "worker",
 	// 	SinceTime: &metav1.Time{
@@ -56,6 +55,7 @@ func WorkerInit(mgr manager.Manager) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("metricsClient => ", metricsClient)
 
 	// 获取Pod的内存使用情况
 	// podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses("default").List(ctx, metav1.ListOptions{})
@@ -74,11 +74,20 @@ func WorkerInit(mgr manager.Manager) error {
 	// }
 
 	client, _ := chain.ClientInit()
+	signer, err := chain.GetMintKey()
+	if err != nil {
+		return err
+	}
 
-	worker := &Worker{
-		k8sClient:     clientset,
-		metricsClient: metricsClient,
-		chainClient:   client,
+	worker := chain.Worker{
+		Client: client,
+		Signer: signer,
+	}
+
+	err = worker.ClusterRegister()
+	if err != nil {
+		fmt.Println("ClusterRegister => ", err)
+		return err
 	}
 
 	sub, err := client.Api.RPC.Chain.SubscribeNewHeads()
@@ -100,6 +109,5 @@ func WorkerInit(mgr manager.Manager) error {
 		}
 	}
 
-	fmt.Println(worker)
 	return nil
 }
