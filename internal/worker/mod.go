@@ -16,6 +16,8 @@ type Worker struct {
 }
 
 func WorkerInit(mgr manager.Manager) error {
+	chain.GetMintKey()
+
 	// ctx := context.Background()
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
 	if err != nil {
@@ -52,7 +54,6 @@ func WorkerInit(mgr manager.Manager) error {
 	// 创建Metrics Client
 	metricsClient, err := versioned.NewForConfig(mgr.GetConfig())
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
@@ -79,6 +80,26 @@ func WorkerInit(mgr manager.Manager) error {
 		metricsClient: metricsClient,
 		chainClient:   client,
 	}
+
+	sub, err := client.Api.RPC.Chain.SubscribeNewHeads()
+	if err != nil {
+		return err
+	}
+	defer sub.Unsubscribe()
+
+	count := 0
+
+	for {
+		head := <-sub.Chan()
+		fmt.Printf("Chain is at block: #%v\n", head.Number)
+		count++
+
+		if count == 10 {
+			sub.Unsubscribe()
+			break
+		}
+	}
+
 	fmt.Println(worker)
 	return nil
 }

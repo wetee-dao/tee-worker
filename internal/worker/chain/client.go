@@ -12,8 +12,8 @@ import (
 )
 
 type ChainClient struct {
-	api  *gsrpc.SubstrateAPI
-	meta *types.Metadata
+	Api  *gsrpc.SubstrateAPI
+	Meta *types.Metadata
 }
 
 // 初始化区块连链接
@@ -39,7 +39,7 @@ func ClientInit() (*ChainClient, error) {
 }
 
 func (c *ChainClient) GetBlockHash() (string, error) {
-	genesisHash, err := c.api.RPC.Chain.GetBlockHash(0)
+	genesisHash, err := c.Api.RPC.Chain.GetBlockHash(0)
 	if err != nil {
 		return "", err
 	}

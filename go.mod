@@ -70,6 +70,7 @@ require (
 	github.com/rs/cors v1.8.2 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vedhavyas/go-subkey v1.0.4 // indirect
+	github.com/vedhavyas/go-subkey/v2 v2.0.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
