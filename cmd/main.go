@@ -37,10 +37,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	server "wetee.app/worker"
 	secretv1 "wetee.app/worker/api/v1"
 	"wetee.app/worker/internal/controller"
-	"wetee.app/worker/internal/util"
-	"wetee.app/worker/internal/worker"
+	"wetee.app/worker/internal/mint"
+	"wetee.app/worker/util"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -107,6 +108,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 开启 worker 主线程
+	go mint.StartMint(mgr)
+	go server.StartServer()
+
 	if err = (&controller.AppReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
@@ -131,10 +136,6 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
-
-	// 开启 worker 主线程
-	go worker.WorkerInit(mgr)
-	go worker.StartServer()
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
