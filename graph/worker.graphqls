@@ -1,0 +1,7 @@
+extend type Query {
+  worker: [String!]!  @AuthCheck
+}
+
+extend type Mutation {
+  cluster_register(input: String!): String! @AuthCheck
+}

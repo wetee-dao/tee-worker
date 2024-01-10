@@ -13,13 +13,13 @@ import (
 // 获取挖矿密钥
 // GetKey get mint key
 func GetMintKey() (*signature.KeyringPair, error) {
-	k, info, err := enclave.GetProductSealKey()
+	k, _, err := enclave.GetProductSealKey()
 	if err != nil {
 		util.LogWithRed("GetKey error", err)
 		return nil, err
 	}
 	util.LogWithRed("GetKey", k)
-	util.LogWithRed("GetKeyInfo", info)
+	// util.LogWithRed("GetKeyInfo", info)
 
 	var mss [32]byte
 	copy(mss[:], k)

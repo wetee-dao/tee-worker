@@ -2,26 +2,18 @@
 
 package model
 
-type Mutation struct {
+type LoginContent struct {
+	Address   string `json:"address"`
+	Timestamp int64  `json:"timestamp"`
 }
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+type Mutation struct {
 }
 
 type Query struct {
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Test string `json:"test"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
-}
-
 type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	Address   string `json:"address"`
+	Timestamp int64  `json:"timestamp"`
 }

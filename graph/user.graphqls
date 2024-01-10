@@ -1,0 +1,20 @@
+scalar Int64
+
+# 权限验证
+directive @AuthCheck on MUTATION | QUERY | FIELD_DEFINITION
+
+
+type User {
+  address: ID!
+  timestamp: Int64!
+}
+
+input LoginContent {
+  address: String!
+  timestamp: Int64!
+}
+
+extend type Mutation {
+  """用户登陆接口"""
+  login(input: LoginContent!,signature: String!): String!
+}

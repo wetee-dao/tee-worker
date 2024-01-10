@@ -22,6 +22,8 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.10
 )
 
+require github.com/vedhavyas/go-subkey v1.0.4 // indirect
+
 require (
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
@@ -37,6 +39,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.20 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/go-chi/chi/v5 v5.0.11
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/zapr v1.2.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
@@ -74,12 +77,11 @@ require (
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.10.1 // indirect
-	github.com/rs/cors v1.8.2 // indirect
+	github.com/rs/cors v1.8.2
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sosodev/duration v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/urfave/cli/v2 v2.25.5 // indirect
-	github.com/vedhavyas/go-subkey v1.0.4 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect

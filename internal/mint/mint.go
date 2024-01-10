@@ -23,7 +23,6 @@ func StartMint(mgr manager.Manager) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("clientset => ", clientset)
 	// podLogOpts := &corev1.PodLogOptions{
 	// 	Container: "worker",
 	// 	SinceTime: &metav1.Time{
@@ -57,7 +56,6 @@ func StartMint(mgr manager.Manager) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("metricsClient => ", metricsClient)
 
 	// 获取Pod的内存使用情况
 	// podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses("default").List(ctx, metav1.ListOptions{})
