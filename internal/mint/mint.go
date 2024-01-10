@@ -2,27 +2,109 @@ package mint
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
+	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"wetee.app/worker/internal/mint/chain"
+	"wetee.app/worker/util"
 )
 
 type Minter struct {
-	k8sClient     *kubernetes.Clientset
-	metricsClient *versioned.Clientset
-	chainClient   *chain.ChainClient
+	K8sClient     *kubernetes.Clientset
+	MetricsClient *versioned.Clientset
+	ChainClient   *chain.ChainClient
 }
 
-var MinterIns Minter
+var (
+	MinterIns *Minter
+	lock      sync.Mutex
+	Signer    *signature.KeyringPair
+)
 
-func StartMint(mgr manager.Manager) error {
-	// ctx := context.Background()
+func InitMint(mgr manager.Manager) error {
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		return err
 	}
+
+	// 创建Metrics Client
+	metricsClient, err := versioned.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		return err
+	}
+
+	client, _ := chain.ClientInit()
+
+	// 初始化minter
+	lock.Lock()
+	MinterIns = &Minter{
+		K8sClient:     clientset,
+		MetricsClient: metricsClient,
+		ChainClient:   client,
+	}
+	lock.Unlock()
+
+	// 获取签名账户
+	Signer, err = chain.GetMintKey()
+	return err
+}
+
+func StartMint() {
+
+	fmt.Println("MintKey => ", Signer.Address)
+	client := MinterIns.ChainClient
+
+	// 获取挖矿状态
+	worker := chain.Worker{
+		Client: client,
+		Signer: Signer,
+	}
+
+	// 挖矿开始
+mintStart:
+
+	// 等待集群开启
+	for {
+		clusterId, err := worker.Getk8sClusterAccounts(Signer.PublicKey)
+		if err != nil {
+			fmt.Println("ClusterId => ", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
+		fmt.Println("ClusterId => ", clusterId)
+		break
+	}
+
+	// 触发轮训事件
+	sub, err := client.Api.RPC.Chain.SubscribeNewHeads()
+	// 失败后等待10秒重新尝试
+	if err != nil {
+		util.LogWithRed("SubscribeNewHeads", err)
+		time.Sleep(time.Second * 10)
+		goto mintStart
+	}
+	defer sub.Unsubscribe()
+
+	count := 0
+
+	for {
+		head := <-sub.Chan()
+		fmt.Printf("Chain is at block: #%v\n", head.Number)
+		count++
+		// 执行任务检查
+		// 执行
+		if count == 10 {
+			sub.Unsubscribe()
+			break
+		}
+	}
+}
+
+func getPodInfo() {
 	// podLogOpts := &corev1.PodLogOptions{
 	// 	Container: "worker",
 	// 	SinceTime: &metav1.Time{
@@ -51,12 +133,6 @@ func StartMint(mgr manager.Manager) error {
 	// fmt.Println(logs)
 	// fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
-	// 创建Metrics Client
-	metricsClient, err := versioned.NewForConfig(mgr.GetConfig())
-	if err != nil {
-		return err
-	}
-
 	// 获取Pod的内存使用情况
 	// podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses("default").List(ctx, metav1.ListOptions{})
 	// if err != nil {
@@ -72,54 +148,4 @@ func StartMint(mgr manager.Manager) error {
 	// 		fmt.Printf("Pod %s 内存使用情况: %s \n", pod.Name, container.Usage.Memory())
 	// 	}
 	// }
-
-	client, _ := chain.ClientInit()
-
-	// 初始化minter
-	MinterIns = Minter{
-		k8sClient:     clientset,
-		metricsClient: metricsClient,
-		chainClient:   client,
-	}
-
-	// 获取签名账户
-	signer, err := chain.GetMintKey()
-	if err != nil {
-		return err
-	}
-
-	// 获取挖矿状态
-	worker := chain.Worker{
-		Client: client,
-		Signer: signer,
-	}
-
-	err = worker.ClusterRegister()
-	if err != nil {
-		fmt.Println("ClusterRegister => ", err)
-		return err
-	}
-
-	// 触发轮训事件
-	sub, err := client.Api.RPC.Chain.SubscribeNewHeads()
-	if err != nil {
-		return err
-	}
-	defer sub.Unsubscribe()
-
-	count := 0
-
-	for {
-		head := <-sub.Chan()
-		fmt.Printf("Chain is at block: #%v\n", head.Number)
-		count++
-		// 执行任务检查
-		// 执行
-		if count == 10 {
-			sub.Unsubscribe()
-			break
-		}
-	}
-
-	return nil
 }

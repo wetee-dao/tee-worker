@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
@@ -18,7 +19,7 @@ type Worker struct {
 
 // 集群注册
 // ClusterRegister
-func (w *Worker) ClusterRegister() error {
+func (w *Worker) ClusterRegister(ip []uint8) error {
 	runtimeCall := weteeworker.MakeClusterRegisterCall(
 		[]byte("test"),
 		[]gtypes.Ip{
@@ -61,4 +62,22 @@ func (w *Worker) ClusterStop() error {
 	)
 
 	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
+}
+
+func (w *Worker) Getk8sClusterAccounts(publey []byte) (uint64, error) {
+	if len(publey) != 32 {
+		return 0, errors.New("publey length error")
+	}
+
+	var mss [32]byte
+	copy(mss[:], publey)
+
+	res, ok, err := weteeworker.GetK8sClusterAccountsLatest(w.Client.Api.RPC.State, mss)
+	if err != nil {
+		return 0, err
+	}
+	if !ok {
+		return 0, errors.New("GetK8sClusterAccountsLatest => not ok")
+	}
+	return res, nil
 }

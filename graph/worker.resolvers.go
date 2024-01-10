@@ -6,12 +6,28 @@ package graph
 
 import (
 	"context"
-	"fmt"
+
+	"github.com/vektah/gqlparser/v2/gqlerror"
+	"wetee.app/worker/internal/mint"
+	"wetee.app/worker/internal/mint/chain"
 )
 
 // ClusterRegister is the resolver for the cluster_register field.
 func (r *mutationResolver) ClusterRegister(ctx context.Context, input string) (string, error) {
-	panic(fmt.Errorf("not implemented: ClusterRegister - cluster_register"))
+	client := mint.MinterIns.ChainClient
+	if client == nil {
+		return "", gqlerror.Errorf("Cant connect to chain")
+	}
+	worker := &chain.Worker{
+		Client: client,
+		Signer: mint.Signer,
+	}
+
+	err := worker.ClusterRegister([]uint8{127, 0, 0, 1})
+	if err != nil {
+		return "", gqlerror.Errorf("Chain call error:" + err.Error())
+	}
+	return "ok", nil
 }
 
 // Worker is the resolver for the worker field.

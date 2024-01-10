@@ -1,12 +1,18 @@
 scalar Int64
 
+enum Role {
+    ADMIN
+    USER
+}
+
 # 权限验证
-directive @AuthCheck on MUTATION | QUERY | FIELD_DEFINITION
+directive @AuthCheck(role: Role!) on MUTATION | QUERY | FIELD_DEFINITION
 
 
 type User {
   address: ID!
   timestamp: Int64!
+  isRoot: Boolean!
 }
 
 input LoginContent {
@@ -16,5 +22,5 @@ input LoginContent {
 
 extend type Mutation {
   """用户登陆接口"""
-  login(input: LoginContent!,signature: String!): String!
+  loginAndBindRoot(input: LoginContent!,signature: String!): String!
 }

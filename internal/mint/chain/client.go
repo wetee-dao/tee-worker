@@ -39,7 +39,6 @@ func ClientInit() (*ChainClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(genesisHash.Hex())
 
 	runtime, err := api.RPC.State.GetRuntimeVersionLatest()
 	if err != nil {

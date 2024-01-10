@@ -39,6 +39,7 @@ import (
 
 	server "wetee.app/worker"
 	secretv1 "wetee.app/worker/api/v1"
+	"wetee.app/worker/db"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/util"
@@ -108,8 +109,22 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 初始化数据库
+	err = db.DBInit()
+	if err != nil {
+		setupLog.Error(err, "unable to start database")
+		os.Exit(1)
+	}
+
 	// 开启 worker 主线程
-	go mint.StartMint(mgr)
+	err = mint.InitMint(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to start mint")
+		os.Exit(1)
+	}
+
+	go mint.StartMint()
+	// 开启 http 服务器
 	go server.StartServer()
 
 	if err = (&controller.AppReconciler{

@@ -1,7 +1,7 @@
 extend type Query {
-  worker: [String!]!  @AuthCheck
+  worker: [String!]!  @AuthCheck(role: ADMIN)
 }
 
 extend type Mutation {
-  cluster_register(input: String!): String! @AuthCheck
+  cluster_register(input: String!): String! @AuthCheck(role: ADMIN)
 }

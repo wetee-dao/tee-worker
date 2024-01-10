@@ -11,17 +11,23 @@ import (
 	subkey "github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"wetee.app/worker/db"
 	"wetee.app/worker/graph/model"
 )
 
-// Login is the resolver for the login field.
-func (r *mutationResolver) Login(ctx context.Context, input model.LoginContent, signature string) (string, error) {
+// LoginAndBindRoot is the resolver for the loginAndBindRoot field.
+func (r *mutationResolver) LoginAndBindRoot(ctx context.Context, input model.LoginContent, signature string) (string, error) {
 	account := &model.User{
 		Address:   input.Address,
 		Timestamp: input.Timestamp,
 	}
 	bt, _ := json.Marshal(account)
 	str := subkey.EncodeHex(bt)
+
+	rootUser, _ := db.GetRootUser()
+	if rootUser != "" && rootUser != input.Address {
+		return "", gqlerror.Errorf("Root user already exists")
+	}
 
 	// 解析地址
 	_, pubkeyBytes, err := subkey.SS58Decode(input.Address)
@@ -45,6 +51,12 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginContent, 
 	ok := pubkey.Verify(bt, sig)
 	if !ok {
 		// return "", gqlerror.Errorf("Bad signature")
+	}
+
+	// 设置根用户
+	err = db.SetRootUser(input.Address)
+	if err != nil {
+		return "", gqlerror.Errorf("Set root user error: " + err.Error())
 	}
 
 	return str + "||" + signature, nil

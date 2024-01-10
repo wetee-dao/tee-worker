@@ -44,13 +44,13 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	AuthCheck func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	AuthCheck func(ctx context.Context, obj interface{}, next graphql.Resolver, role model.Role) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
 	Mutation struct {
-		ClusterRegister func(childComplexity int, input string) int
-		Login           func(childComplexity int, input model.LoginContent, signature string) int
+		ClusterRegister  func(childComplexity int, input string) int
+		LoginAndBindRoot func(childComplexity int, input model.LoginContent, signature string) int
 	}
 
 	Query struct {
@@ -59,12 +59,13 @@ type ComplexityRoot struct {
 
 	User struct {
 		Address   func(childComplexity int) int
+		IsRoot    func(childComplexity int) int
 		Timestamp func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
-	Login(ctx context.Context, input model.LoginContent, signature string) (string, error)
+	LoginAndBindRoot(ctx context.Context, input model.LoginContent, signature string) (string, error)
 	ClusterRegister(ctx context.Context, input string) (string, error)
 }
 type QueryResolver interface {
@@ -102,17 +103,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ClusterRegister(childComplexity, args["input"].(string)), true
 
-	case "Mutation.login":
-		if e.complexity.Mutation.Login == nil {
+	case "Mutation.loginAndBindRoot":
+		if e.complexity.Mutation.LoginAndBindRoot == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_login_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_loginAndBindRoot_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Login(childComplexity, args["input"].(model.LoginContent), args["signature"].(string)), true
+		return e.complexity.Mutation.LoginAndBindRoot(childComplexity, args["input"].(model.LoginContent), args["signature"].(string)), true
 
 	case "Query.worker":
 		if e.complexity.Query.Worker == nil {
@@ -127,6 +128,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Address(childComplexity), true
+
+	case "User.isRoot":
+		if e.complexity.User.IsRoot == nil {
+			break
+		}
+
+		return e.complexity.User.IsRoot(childComplexity), true
 
 	case "User.timestamp":
 		if e.complexity.User.Timestamp == nil {
@@ -265,6 +273,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) dir_AuthCheck_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.Role
+	if tmp, ok := rawArgs["role"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+		arg0, err = ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["role"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_cluster_register_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -280,7 +303,7 @@ func (ec *executionContext) field_Mutation_cluster_register_args(ctx context.Con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_loginAndBindRoot_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 model.LoginContent
@@ -358,12 +381,18 @@ func (ec *executionContext) _queryMiddleware(ctx context.Context, obj *ast.Opera
 	for _, d := range obj.Directives {
 		switch d.Name {
 		case "AuthCheck":
+			rawArgs := d.ArgumentMap(ec.Variables)
+			args, err := ec.dir_AuthCheck_args(ctx, rawArgs)
+			if err != nil {
+				ec.Error(ctx, err)
+				return graphql.Null
+			}
 			n := next
 			next = func(ctx context.Context) (interface{}, error) {
 				if ec.directives.AuthCheck == nil {
 					return nil, errors.New("directive AuthCheck is not implemented")
 				}
-				return ec.directives.AuthCheck(ctx, obj, n)
+				return ec.directives.AuthCheck(ctx, obj, n, args["role"].(model.Role))
 			}
 		}
 	}
@@ -385,12 +414,18 @@ func (ec *executionContext) _mutationMiddleware(ctx context.Context, obj *ast.Op
 	for _, d := range obj.Directives {
 		switch d.Name {
 		case "AuthCheck":
+			rawArgs := d.ArgumentMap(ec.Variables)
+			args, err := ec.dir_AuthCheck_args(ctx, rawArgs)
+			if err != nil {
+				ec.Error(ctx, err)
+				return graphql.Null
+			}
 			n := next
 			next = func(ctx context.Context) (interface{}, error) {
 				if ec.directives.AuthCheck == nil {
 					return nil, errors.New("directive AuthCheck is not implemented")
 				}
-				return ec.directives.AuthCheck(ctx, obj, n)
+				return ec.directives.AuthCheck(ctx, obj, n, args["role"].(model.Role))
 			}
 		}
 	}
@@ -411,8 +446,8 @@ func (ec *executionContext) _mutationMiddleware(ctx context.Context, obj *ast.Op
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_login(ctx, field)
+func (ec *executionContext) _Mutation_loginAndBindRoot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_loginAndBindRoot(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -425,7 +460,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Login(rctx, fc.Args["input"].(model.LoginContent), fc.Args["signature"].(string))
+		return ec.resolvers.Mutation().LoginAndBindRoot(rctx, fc.Args["input"].(model.LoginContent), fc.Args["signature"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -442,7 +477,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_loginAndBindRoot(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -459,7 +494,7 @@ func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, fie
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_login_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_loginAndBindRoot_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -484,10 +519,14 @@ func (ec *executionContext) _Mutation_cluster_register(ctx context.Context, fiel
 			return ec.resolvers.Mutation().ClusterRegister(rctx, fc.Args["input"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
+			if err != nil {
+				return nil, err
+			}
 			if ec.directives.AuthCheck == nil {
 				return nil, errors.New("directive AuthCheck is not implemented")
 			}
-			return ec.directives.AuthCheck(ctx, nil, directive0)
+			return ec.directives.AuthCheck(ctx, nil, directive0, role)
 		}
 
 		tmp, err := directive1(rctx)
@@ -559,10 +598,14 @@ func (ec *executionContext) _Query_worker(ctx context.Context, field graphql.Col
 			return ec.resolvers.Query().Worker(rctx)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
+			if err != nil {
+				return nil, err
+			}
 			if ec.directives.AuthCheck == nil {
 				return nil, errors.New("directive AuthCheck is not implemented")
 			}
-			return ec.directives.AuthCheck(ctx, nil, directive0)
+			return ec.directives.AuthCheck(ctx, nil, directive0, role)
 		}
 
 		tmp, err := directive1(rctx)
@@ -817,6 +860,50 @@ func (ec *executionContext) fieldContext_User_timestamp(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int64 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_isRoot(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_isRoot(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsRoot, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_isRoot(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2656,9 +2743,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "login":
+		case "loginAndBindRoot":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_login(ctx, field)
+				return ec._Mutation_loginAndBindRoot(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -2783,6 +2870,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "timestamp":
 			out.Values[i] = ec._User_timestamp(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isRoot":
+			out.Values[i] = ec._User_isRoot(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3183,6 +3275,16 @@ func (ec *executionContext) marshalNInt642int64(ctx context.Context, sel ast.Sel
 func (ec *executionContext) unmarshalNLoginContent2weteeᚗappᚋworkerᚋgraphᚋmodelᚐLoginContent(ctx context.Context, v interface{}) (model.LoginContent, error) {
 	res, err := ec.unmarshalInputLoginContent(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx context.Context, v interface{}) (model.Role, error) {
+	var res model.Role
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx context.Context, sel ast.SelectionSet, v model.Role) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

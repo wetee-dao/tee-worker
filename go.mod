@@ -22,7 +22,16 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.10
 )
 
-require github.com/vedhavyas/go-subkey v1.0.4 // indirect
+require (
+	github.com/antlabs/stl v0.0.1 // indirect
+	github.com/antlabs/timer v0.0.11 // indirect
+	github.com/bwmarrin/snowflake v0.3.0 // indirect
+	github.com/gofrs/flock v0.8.1 // indirect
+	github.com/tidwall/btree v1.6.0 // indirect
+	github.com/vedhavyas/go-subkey v1.0.4 // indirect
+	github.com/xujiajun/mmap-go v1.0.1 // indirect
+	github.com/xujiajun/utils v0.0.0-20220904132955-5f7c5b914235 // indirect
+)
 
 require (
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
@@ -71,6 +80,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/nutsdb/nutsdb v1.0.3
 	github.com/pierrec/xxHash v0.1.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.16.0 // indirect
@@ -90,7 +100,7 @@ require (
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect

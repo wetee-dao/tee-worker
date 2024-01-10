@@ -12,6 +12,7 @@ import (
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
+	"wetee.app/worker/db"
 	"wetee.app/worker/graph/model"
 )
 
@@ -23,12 +24,18 @@ type contextKey struct {
 	name string
 }
 
-func AuthCheck(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+func AuthCheck(ctx context.Context, obj interface{}, next graphql.Resolver, role model.Role) (res interface{}, err error) {
 	user := ctx.Value(loginStatCtxKey).(*model.User)
 	if user == nil {
 		err = gqlerror.Errorf("Please log in first.")
 		return
 	}
+
+	if role == model.RoleAdmin && !user.IsRoot {
+		err = gqlerror.Errorf("Please log in root account.")
+		return
+	}
+
 	if user.Timestamp+360000 < time.Now().Unix() {
 		err = gqlerror.Errorf("Login expired, please log in again.")
 		return
@@ -77,6 +84,13 @@ func decodeToken(tokenStr string) *model.User {
 		err := json.Unmarshal(bt, user)
 		if err != nil {
 			return nil
+		}
+
+		root, err := db.GetRootUser()
+		if err == nil {
+			user.IsRoot = (root == user.Address)
+		} else {
+			user.IsRoot = false
 		}
 
 		// 解析地址
