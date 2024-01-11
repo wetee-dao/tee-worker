@@ -37,7 +37,10 @@ func InitMint(mgr manager.Manager) error {
 		return err
 	}
 
-	client, _ := chain.ClientInit()
+	client, err := chain.ClientInit()
+	if err != nil {
+		return err
+	}
 
 	// 初始化minter
 	lock.Lock()
@@ -89,18 +92,9 @@ mintStart:
 	}
 	defer sub.Unsubscribe()
 
-	count := 0
-
 	for {
 		head := <-sub.Chan()
 		fmt.Printf("Chain is at block: #%v\n", head.Number)
-		count++
-		// 执行任务检查
-		// 执行
-		if count == 10 {
-			sub.Unsubscribe()
-			break
-		}
 	}
 }
 

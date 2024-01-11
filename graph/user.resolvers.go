@@ -17,17 +17,36 @@ import (
 
 // LoginAndBindRoot is the resolver for the loginAndBindRoot field.
 func (r *mutationResolver) LoginAndBindRoot(ctx context.Context, input model.LoginContent, signature string) (string, error) {
+	rootUser, _ := db.GetRootUser()
+	if rootUser != "" && rootUser != input.Address {
+		return "", gqlerror.Errorf("Root user already exists")
+	}
+	return login(input, signature)
+}
+
+// Login is the resolver for the login field.
+func (r *mutationResolver) Login(ctx context.Context, input model.LoginContent, signature string) (string, error) {
+	return login(input, signature)
+}
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func login(input model.LoginContent, signature string) (string, error) {
 	account := &model.User{
 		Address:   input.Address,
 		Timestamp: input.Timestamp,
 	}
 	bt, _ := json.Marshal(account)
 	str := subkey.EncodeHex(bt)
-
-	rootUser, _ := db.GetRootUser()
-	if rootUser != "" && rootUser != input.Address {
-		return "", gqlerror.Errorf("Root user already exists")
-	}
 
 	// 解析地址
 	_, pubkeyBytes, err := subkey.SS58Decode(input.Address)
@@ -48,9 +67,9 @@ func (r *mutationResolver) LoginAndBindRoot(ctx context.Context, input model.Log
 	}
 
 	// 验证签名
-	ok := pubkey.Verify(bt, sig)
+	ok := pubkey.Verify([]byte("<Bytes>"+string(bt)+"</Bytes>"), sig)
 	if !ok {
-		// return "", gqlerror.Errorf("Bad signature")
+		return "", gqlerror.Errorf("Bad signature")
 	}
 
 	// 设置根用户
@@ -58,11 +77,5 @@ func (r *mutationResolver) LoginAndBindRoot(ctx context.Context, input model.Log
 	if err != nil {
 		return "", gqlerror.Errorf("Set root user error: " + err.Error())
 	}
-
 	return str + "||" + signature, nil
 }
-
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
-
-type mutationResolver struct{ *Resolver }

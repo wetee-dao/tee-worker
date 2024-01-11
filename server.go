@@ -33,10 +33,5 @@ func StartServer() {
 	router.Handle("/gql", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	err := http.ListenAndServe(":"+defaultPort, router)
-
-	if err != nil {
-		panic(err)
-	}
-
+	http.ListenAndServe(":"+defaultPort, router)
 }

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"wetee.app/worker/internal/mint"
@@ -28,6 +29,26 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, input string) (s
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
 	return "ok", nil
+}
+
+// ClusterMortgage is the resolver for the cluster_mortgage field.
+func (r *mutationResolver) ClusterMortgage(ctx context.Context, input string) (string, error) {
+	panic(fmt.Errorf("not implemented: ClusterMortgage - cluster_mortgage"))
+}
+
+// ClusterUnmortgage is the resolver for the cluster_unmortgage field.
+func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, input string) (string, error) {
+	panic(fmt.Errorf("not implemented: ClusterUnmortgage - cluster_unmortgage"))
+}
+
+// ClusterWithdrawal is the resolver for the cluster_withdrawal field.
+func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, input string) (string, error) {
+	panic(fmt.Errorf("not implemented: ClusterWithdrawal - cluster_withdrawal"))
+}
+
+// ClusterStop is the resolver for the cluster_stop field.
+func (r *mutationResolver) ClusterStop(ctx context.Context, input string) (string, error) {
+	panic(fmt.Errorf("not implemented: ClusterStop - cluster_stop"))
 }
 
 // Worker is the resolver for the worker field.

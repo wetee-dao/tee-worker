@@ -21,6 +21,9 @@ input LoginContent {
 }
 
 extend type Mutation {
-  """用户登陆接口"""
+  """Root用户登陆接口"""
   loginAndBindRoot(input: LoginContent!,signature: String!): String!
+
+  """用户登陆接口"""
+  login(input: LoginContent!,signature: String!): String!
 }

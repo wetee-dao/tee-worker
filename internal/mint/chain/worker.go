@@ -81,3 +81,8 @@ func (w *Worker) Getk8sClusterAccounts(publey []byte) (uint64, error) {
 	}
 	return res, nil
 }
+
+func (w *Worker) GetClusterContracts() error {
+	// res, ok, err := weteeworker.GetClusterContractsLatest()
+	return nil
+}

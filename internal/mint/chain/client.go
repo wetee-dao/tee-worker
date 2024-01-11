@@ -42,7 +42,7 @@ func ClientInit() (*ChainClient, error) {
 
 	runtime, err := api.RPC.State.GetRuntimeVersionLatest()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &ChainClient{api, meta, genesisHash, runtime}, nil

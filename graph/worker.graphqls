@@ -4,4 +4,8 @@ extend type Query {
 
 extend type Mutation {
   cluster_register(input: String!): String! @AuthCheck(role: ADMIN)
+  cluster_mortgage(input: String!): String! @AuthCheck(role: ADMIN)
+  cluster_unmortgage(input: String!): String! @AuthCheck(role: ADMIN)
+  cluster_withdrawal(input: String!): String! @AuthCheck(role: ADMIN)
+  cluster_stop(input: String!): String! @AuthCheck(role: ADMIN)
 }

@@ -112,9 +112,9 @@ func decodeToken(tokenStr string) *model.User {
 		}
 
 		// 验证签名
-		ok := pubkey.Verify(bt, sig)
+		ok := pubkey.Verify([]byte("<Bytes>"+string(bt)+"</Bytes>"), sig)
 		if !ok {
-			// return nil
+			return nil
 		}
 
 		return user
