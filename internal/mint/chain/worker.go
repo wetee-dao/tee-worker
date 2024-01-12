@@ -47,6 +47,17 @@ func (w *Worker) ClusterMortgage() error {
 	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
 }
 
+func (w *Worker) ClusterWithdrawal() error {
+	runtimeCall := weteeworker.MakeClusterWithdrawalCall(
+		gtypes.WorkId{
+			Wtype: gtypes.WorkType{IsAPP: true, IsTASK: false},
+		},
+		types.NewU128(*big.NewInt(100)),
+	)
+
+	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
+}
+
 func (w *Worker) ClusterUnmortgage() error {
 	runtimeCall := weteeworker.MakeClusterUnmortgageCall(
 		1,

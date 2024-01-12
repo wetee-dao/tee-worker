@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"wetee.app/worker/internal/mint"
@@ -33,22 +32,74 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, input string) (s
 
 // ClusterMortgage is the resolver for the cluster_mortgage field.
 func (r *mutationResolver) ClusterMortgage(ctx context.Context, input string) (string, error) {
-	panic(fmt.Errorf("not implemented: ClusterMortgage - cluster_mortgage"))
+	client := mint.MinterIns.ChainClient
+	if client == nil {
+		return "", gqlerror.Errorf("Cant connect to chain")
+	}
+	worker := &chain.Worker{
+		Client: client,
+		Signer: mint.Signer,
+	}
+
+	err := worker.ClusterMortgage()
+	if err != nil {
+		return "", gqlerror.Errorf("Chain call error:" + err.Error())
+	}
+	return "ok", nil
 }
 
 // ClusterUnmortgage is the resolver for the cluster_unmortgage field.
 func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, input string) (string, error) {
-	panic(fmt.Errorf("not implemented: ClusterUnmortgage - cluster_unmortgage"))
+	client := mint.MinterIns.ChainClient
+	if client == nil {
+		return "", gqlerror.Errorf("Cant connect to chain")
+	}
+	worker := &chain.Worker{
+		Client: client,
+		Signer: mint.Signer,
+	}
+
+	err := worker.ClusterUnmortgage()
+	if err != nil {
+		return "", gqlerror.Errorf("Chain call error:" + err.Error())
+	}
+	return "ok", nil
 }
 
 // ClusterWithdrawal is the resolver for the cluster_withdrawal field.
 func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, input string) (string, error) {
-	panic(fmt.Errorf("not implemented: ClusterWithdrawal - cluster_withdrawal"))
+	client := mint.MinterIns.ChainClient
+	if client == nil {
+		return "", gqlerror.Errorf("Cant connect to chain")
+	}
+	worker := &chain.Worker{
+		Client: client,
+		Signer: mint.Signer,
+	}
+
+	err := worker.ClusterWithdrawal()
+	if err != nil {
+		return "", gqlerror.Errorf("Chain call error:" + err.Error())
+	}
+	return "ok", nil
 }
 
 // ClusterStop is the resolver for the cluster_stop field.
 func (r *mutationResolver) ClusterStop(ctx context.Context, input string) (string, error) {
-	panic(fmt.Errorf("not implemented: ClusterStop - cluster_stop"))
+	client := mint.MinterIns.ChainClient
+	if client == nil {
+		return "", gqlerror.Errorf("Cant connect to chain")
+	}
+	worker := &chain.Worker{
+		Client: client,
+		Signer: mint.Signer,
+	}
+
+	err := worker.ClusterStop()
+	if err != nil {
+		return "", gqlerror.Errorf("Chain call error:" + err.Error())
+	}
+	return "ok", nil
 }
 
 // Worker is the resolver for the worker field.
