@@ -48,14 +48,21 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Contract struct {
+		BlockNumber func(childComplexity int) int
+		Minted      func(childComplexity int) int
+		Withdrawal  func(childComplexity int) int
+	}
+
 	Mutation struct {
-		ClusterMortgage   func(childComplexity int, input string) int
-		ClusterRegister   func(childComplexity int, input string) int
-		ClusterStop       func(childComplexity int, input string) int
-		ClusterUnmortgage func(childComplexity int, input string) int
-		ClusterWithdrawal func(childComplexity int, input string) int
+		ClusterMortgage   func(childComplexity int, cpu int, mem int, disk int, deposit int64) int
+		ClusterRegister   func(childComplexity int, name string, ip string, port int, level int) int
+		ClusterStop       func(childComplexity int) int
+		ClusterUnmortgage func(childComplexity int, id int64) int
+		ClusterWithdrawal func(childComplexity int, val int64, id int64) int
 		Login             func(childComplexity int, input model.LoginContent, signature string) int
 		LoginAndBindRoot  func(childComplexity int, input model.LoginContent, signature string) int
+		StartForTest      func(childComplexity int) int
 	}
 
 	Query struct {
@@ -72,14 +79,15 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	LoginAndBindRoot(ctx context.Context, input model.LoginContent, signature string) (string, error)
 	Login(ctx context.Context, input model.LoginContent, signature string) (string, error)
-	ClusterRegister(ctx context.Context, input string) (string, error)
-	ClusterMortgage(ctx context.Context, input string) (string, error)
-	ClusterUnmortgage(ctx context.Context, input string) (string, error)
-	ClusterWithdrawal(ctx context.Context, input string) (string, error)
-	ClusterStop(ctx context.Context, input string) (string, error)
+	ClusterRegister(ctx context.Context, name string, ip string, port int, level int) (string, error)
+	ClusterMortgage(ctx context.Context, cpu int, mem int, disk int, deposit int64) (string, error)
+	ClusterUnmortgage(ctx context.Context, id int64) (string, error)
+	ClusterWithdrawal(ctx context.Context, val int64, id int64) (string, error)
+	ClusterStop(ctx context.Context) (string, error)
+	StartForTest(ctx context.Context) (bool, error)
 }
 type QueryResolver interface {
-	Worker(ctx context.Context) ([]string, error)
+	Worker(ctx context.Context) ([]*model.Contract, error)
 }
 
 type executableSchema struct {
@@ -101,6 +109,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Contract.BlockNumber":
+		if e.complexity.Contract.BlockNumber == nil {
+			break
+		}
+
+		return e.complexity.Contract.BlockNumber(childComplexity), true
+
+	case "Contract.Minted":
+		if e.complexity.Contract.Minted == nil {
+			break
+		}
+
+		return e.complexity.Contract.Minted(childComplexity), true
+
+	case "Contract.Withdrawal":
+		if e.complexity.Contract.Withdrawal == nil {
+			break
+		}
+
+		return e.complexity.Contract.Withdrawal(childComplexity), true
+
 	case "Mutation.cluster_mortgage":
 		if e.complexity.Mutation.ClusterMortgage == nil {
 			break
@@ -111,7 +140,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ClusterMortgage(childComplexity, args["input"].(string)), true
+		return e.complexity.Mutation.ClusterMortgage(childComplexity, args["cpu"].(int), args["mem"].(int), args["disk"].(int), args["deposit"].(int64)), true
 
 	case "Mutation.cluster_register":
 		if e.complexity.Mutation.ClusterRegister == nil {
@@ -123,19 +152,14 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ClusterRegister(childComplexity, args["input"].(string)), true
+		return e.complexity.Mutation.ClusterRegister(childComplexity, args["name"].(string), args["ip"].(string), args["port"].(int), args["level"].(int)), true
 
 	case "Mutation.cluster_stop":
 		if e.complexity.Mutation.ClusterStop == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_cluster_stop_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClusterStop(childComplexity, args["input"].(string)), true
+		return e.complexity.Mutation.ClusterStop(childComplexity), true
 
 	case "Mutation.cluster_unmortgage":
 		if e.complexity.Mutation.ClusterUnmortgage == nil {
@@ -147,7 +171,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ClusterUnmortgage(childComplexity, args["input"].(string)), true
+		return e.complexity.Mutation.ClusterUnmortgage(childComplexity, args["id"].(int64)), true
 
 	case "Mutation.cluster_withdrawal":
 		if e.complexity.Mutation.ClusterWithdrawal == nil {
@@ -159,7 +183,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ClusterWithdrawal(childComplexity, args["input"].(string)), true
+		return e.complexity.Mutation.ClusterWithdrawal(childComplexity, args["val"].(int64), args["id"].(int64)), true
 
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
@@ -184,6 +208,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.LoginAndBindRoot(childComplexity, args["input"].(model.LoginContent), args["signature"].(string)), true
+
+	case "Mutation.start_for_test":
+		if e.complexity.Mutation.StartForTest == nil {
+			break
+		}
+
+		return e.complexity.Mutation.StartForTest(childComplexity), true
 
 	case "Query.worker":
 		if e.complexity.Query.Worker == nil {
@@ -361,15 +392,42 @@ func (ec *executionContext) dir_AuthCheck_args(ctx context.Context, rawArgs map[
 func (ec *executionContext) field_Mutation_cluster_mortgage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 int
+	if tmp, ok := rawArgs["cpu"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpu"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["cpu"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["mem"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mem"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["mem"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["disk"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disk"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["disk"] = arg2
+	var arg3 int64
+	if tmp, ok := rawArgs["deposit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deposit"))
+		arg3, err = ec.unmarshalNInt642int64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deposit"] = arg3
 	return args, nil
 }
 
@@ -377,59 +435,80 @@ func (ec *executionContext) field_Mutation_cluster_register_args(ctx context.Con
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_stop_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	args["name"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["ip"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ip"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["ip"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["port"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["port"] = arg2
+	var arg3 int
+	if tmp, ok := rawArgs["level"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("level"))
+		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["level"] = arg3
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_cluster_unmortgage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 int64
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNInt642int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["id"] = arg0
 	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_cluster_withdrawal_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 int64
+	if tmp, ok := rawArgs["val"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("val"))
+		arg0, err = ec.unmarshalNInt642int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["val"] = arg0
+	var arg1 int64
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg1, err = ec.unmarshalNInt642int64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg1
 	return args, nil
 }
 
@@ -600,6 +679,138 @@ func (ec *executionContext) _mutationMiddleware(ctx context.Context, obj *ast.Op
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _Contract_BlockNumber(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_BlockNumber(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BlockNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_BlockNumber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_Minted(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_Minted(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Minted, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_Minted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Contract_Withdrawal(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_Withdrawal(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Withdrawal, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Contract_Withdrawal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Contract",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_loginAndBindRoot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_loginAndBindRoot(ctx, field)
 	if err != nil {
@@ -725,7 +936,7 @@ func (ec *executionContext) _Mutation_cluster_register(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterRegister(rctx, fc.Args["input"].(string))
+			return ec.resolvers.Mutation().ClusterRegister(rctx, fc.Args["name"].(string), fc.Args["ip"].(string), fc.Args["port"].(int), fc.Args["level"].(int))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
@@ -804,7 +1015,7 @@ func (ec *executionContext) _Mutation_cluster_mortgage(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterMortgage(rctx, fc.Args["input"].(string))
+			return ec.resolvers.Mutation().ClusterMortgage(rctx, fc.Args["cpu"].(int), fc.Args["mem"].(int), fc.Args["disk"].(int), fc.Args["deposit"].(int64))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
@@ -883,7 +1094,7 @@ func (ec *executionContext) _Mutation_cluster_unmortgage(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterUnmortgage(rctx, fc.Args["input"].(string))
+			return ec.resolvers.Mutation().ClusterUnmortgage(rctx, fc.Args["id"].(int64))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
@@ -962,7 +1173,7 @@ func (ec *executionContext) _Mutation_cluster_withdrawal(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterWithdrawal(rctx, fc.Args["input"].(string))
+			return ec.resolvers.Mutation().ClusterWithdrawal(rctx, fc.Args["val"].(int64), fc.Args["id"].(int64))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
@@ -1041,7 +1252,7 @@ func (ec *executionContext) _Mutation_cluster_stop(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterStop(rctx, fc.Args["input"].(string))
+			return ec.resolvers.Mutation().ClusterStop(rctx)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
@@ -1091,16 +1302,49 @@ func (ec *executionContext) fieldContext_Mutation_cluster_stop(ctx context.Conte
 			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_start_for_test(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_start_for_test(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
 	defer func() {
 		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
 		}
 	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_cluster_stop_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().StartForTest(rctx)
+	})
+	if err != nil {
 		ec.Error(ctx, err)
-		return fc, err
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_start_for_test(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -1140,10 +1384,10 @@ func (ec *executionContext) _Query_worker(ctx context.Context, field graphql.Col
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.([]string); ok {
+		if data, ok := tmp.([]*model.Contract); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []string`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*wetee.app/worker/graph/model.Contract`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1155,9 +1399,9 @@ func (ec *executionContext) _Query_worker(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]string)
+	res := resTmp.([]*model.Contract)
 	fc.Result = res
-	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+	return ec.marshalNContract2ᚕᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐContractᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_worker(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1167,7 +1411,15 @@ func (ec *executionContext) fieldContext_Query_worker(ctx context.Context, field
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "BlockNumber":
+				return ec.fieldContext_Contract_BlockNumber(ctx, field)
+			case "Minted":
+				return ec.fieldContext_Contract_Minted(ctx, field)
+			case "Withdrawal":
+				return ec.fieldContext_Contract_Withdrawal(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Contract", field.Name)
 		},
 	}
 	return fc, nil
@@ -3249,6 +3501,55 @@ func (ec *executionContext) unmarshalInputLoginContent(ctx context.Context, obj 
 
 // region    **************************** object.gotpl ****************************
 
+var contractImplementors = []string{"Contract"}
+
+func (ec *executionContext) _Contract(ctx context.Context, sel ast.SelectionSet, obj *model.Contract) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, contractImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Contract")
+		case "BlockNumber":
+			out.Values[i] = ec._Contract_BlockNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Minted":
+			out.Values[i] = ec._Contract_Minted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Withdrawal":
+			out.Values[i] = ec._Contract_Withdrawal(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3313,6 +3614,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "cluster_stop":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_cluster_stop(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "start_for_test":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_start_for_test(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -3802,6 +4110,60 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNContract2ᚕᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐContractᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Contract) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNContract2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐContract(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNContract2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐContract(ctx context.Context, sel ast.SelectionSet, v *model.Contract) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Contract(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3809,6 +4171,21 @@ func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface
 
 func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -3860,38 +4237,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

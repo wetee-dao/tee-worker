@@ -8,6 +8,12 @@ import (
 	"strconv"
 )
 
+type Contract struct {
+	BlockNumber string `json:"BlockNumber"`
+	Minted      string `json:"Minted"`
+	Withdrawal  string `json:"Withdrawal"`
+}
+
 type LoginContent struct {
 	Address   string `json:"address"`
 	Timestamp int64  `json:"timestamp"`

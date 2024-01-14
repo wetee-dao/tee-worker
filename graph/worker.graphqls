@@ -1,11 +1,19 @@
 extend type Query {
-  worker: [String!]!  @AuthCheck(role: ADMIN)
+  worker: [Contract!]!  @AuthCheck(role: ADMIN)
+}
+
+type Contract{
+  BlockNumber: String!
+  Minted: String!
+  Withdrawal: String!
 }
 
 extend type Mutation {
-  cluster_register(input: String!): String! @AuthCheck(role: ADMIN)
-  cluster_mortgage(input: String!): String! @AuthCheck(role: ADMIN)
-  cluster_unmortgage(input: String!): String! @AuthCheck(role: ADMIN)
-  cluster_withdrawal(input: String!): String! @AuthCheck(role: ADMIN)
-  cluster_stop(input: String!): String! @AuthCheck(role: ADMIN)
+  cluster_register(name: String!,ip: String!,port: Int!,level: Int!): String! @AuthCheck(role: ADMIN)
+  cluster_mortgage(cpu: Int!,mem: Int!,disk: Int!,deposit: Int64!): String! @AuthCheck(role: ADMIN)
+  cluster_unmortgage(id: Int64!): String! @AuthCheck(role: ADMIN)
+  cluster_withdrawal(val: Int64!,id: Int64!): String! @AuthCheck(role: ADMIN)
+  cluster_stop: String! @AuthCheck(role: ADMIN)
+
+  start_for_test: Boolean!
 }

@@ -116,14 +116,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 开启 worker 主线程
+	// 开启 mint 主线程
 	err = mint.InitMint(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to start mint")
 		os.Exit(1)
 	}
-
 	go mint.StartMint()
+
 	// 开启 http 服务器
 	go server.StartServer()
 

@@ -8,6 +8,9 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/config"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
+	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
+	"github.com/centrifuge/go-substrate-rpc-client/v4/xxhash"
+	"github.com/pkg/errors"
 
 	gtypes "wetee.app/worker/internal/mint/chain/gen/types"
 	"wetee.app/worker/util"
@@ -125,6 +128,80 @@ func (c *ChainClient) SignAndSubmit(signer *signature.KeyringPair, runtimeCall g
 			return nil
 		}
 	}
+}
+
+// query map data list
+func (c *ChainClient) QueryMapAll(pallet string, method string) ([]types.StorageChangeSet, error) {
+	key := createPrefixedKey(pallet, method)
+
+	keys, err := c.Api.RPC.State.GetKeysLatest(key)
+	if err != nil {
+		return []types.StorageChangeSet{}, errors.Wrap(err, "[GetKeysLatest]")
+	}
+
+	set, err := c.Api.RPC.State.QueryStorageAtLatest(keys)
+	if err != nil {
+		return []types.StorageChangeSet{}, errors.Wrap(err, "[QueryStorageAtLatest]")
+	}
+
+	return set, nil
+}
+
+// query double map data list
+func (c *ChainClient) QueryDoubleMapAll(pallet string, method string, keyarg interface{}) ([]types.StorageChangeSet, error) {
+	arg, err := codec.Encode(keyarg)
+	if err != nil {
+		return []types.StorageChangeSet{}, err
+	}
+
+	// create key prefix
+	key := createPrefixedKey(pallet, method)
+
+	// get entry metadata
+	// 获取储存元数据
+	entryMeta, err := c.Meta.FindStorageEntryMetadata(pallet, method)
+	if err != nil {
+		return nil, err
+	}
+
+	// check if it's a map
+	// 判断是否为map
+	if !entryMeta.IsMap() {
+		return nil, errors.New(pallet + "." + method + "is not map")
+	}
+
+	// get map hashers
+	// 获取储存的 hasher 函数
+	hashers, err := entryMeta.Hashers()
+	if err != nil {
+		return []types.StorageChangeSet{}, errors.Wrap(err, "[Hashers]")
+	}
+
+	// write key
+	_, err = hashers[0].Write(arg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to hash args[%d]: %s Error: %v", 0, arg, err)
+	}
+	// append hash to key
+	key = append(key, hashers[0].Sum(nil)...)
+
+	// query key
+	keys, err := c.Api.RPC.State.GetKeysLatest(key)
+	if err != nil {
+		return []types.StorageChangeSet{}, errors.Wrap(err, "[GetKeysLatest]")
+	}
+
+	// get all data
+	set, err := c.Api.RPC.State.QueryStorageAtLatest(keys)
+	if err != nil {
+		return []types.StorageChangeSet{}, errors.Wrap(err, "[QueryStorageAtLatest]")
+	}
+
+	return set, nil
+}
+
+func createPrefixedKey(pallet, method string) []byte {
+	return append(xxhash.New128([]byte(pallet)).Sum(nil), xxhash.New128([]byte(method)).Sum(nil)...)
 }
 
 // func ChainConnect() {

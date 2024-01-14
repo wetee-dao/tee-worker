@@ -2,10 +2,12 @@ package chain
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
+	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	"wetee.app/worker/internal/mint/chain/gen/weteeworker"
 
 	gtypes "wetee.app/worker/internal/mint/chain/gen/types"
@@ -18,58 +20,63 @@ type Worker struct {
 }
 
 // 集群注册
-// ClusterRegister
-func (w *Worker) ClusterRegister(ip []uint8) error {
+// Cluster register
+func (w *Worker) ClusterRegister(name string, ip []uint8, port uint32, level uint8) error {
 	runtimeCall := weteeworker.MakeClusterRegisterCall(
-		[]byte("test"),
+		[]byte(name),
 		[]gtypes.Ip{
 			{
 				Ipv4: gtypes.OptionTUint32{IsNone: false, IsSome: true, AsSomeField0: 100},
 				Ipv6: gtypes.OptionTU128{IsNone: false, IsSome: true, AsSomeField0: types.NewU128(*big.NewInt(100))},
 			},
 		},
-		100,
-		1,
+		port,
+		level,
 	)
 
 	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
 }
 
-func (w *Worker) ClusterMortgage() error {
+// 集群抵押
+// Cluster mortgage
+func (w *Worker) ClusterMortgage(id uint64, cpu uint16, mem uint16, disk uint16, deposit uint64) error {
+	d := big.NewInt(0)
+	d.SetUint64(deposit)
 	runtimeCall := weteeworker.MakeClusterMortgageCall(
-		1,
-		100,
-		100,
-		100,
-		types.UCompact(*big.NewInt(100)),
+		id,
+		cpu,
+		mem,
+		disk,
+		types.UCompact(*d),
 	)
 
 	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
 }
 
-func (w *Worker) ClusterWithdrawal() error {
+func (w *Worker) ClusterWithdrawal(id uint64, val int64) error {
 	runtimeCall := weteeworker.MakeClusterWithdrawalCall(
 		gtypes.WorkId{
 			Wtype: gtypes.WorkType{IsAPP: true, IsTASK: false},
+			Id:    id,
 		},
-		types.NewU128(*big.NewInt(100)),
+		types.NewU128(*big.NewInt(val)),
 	)
 
 	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
 }
 
-func (w *Worker) ClusterUnmortgage() error {
+func (w *Worker) ClusterUnmortgage(clusterID uint64, id uint64) error {
 	runtimeCall := weteeworker.MakeClusterUnmortgageCall(
-		1,
-		100,
+		clusterID,
+		id,
 	)
 
 	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
 }
 
-func (w *Worker) ClusterStop() error {
+func (w *Worker) ClusterStop(clusterID uint64) error {
 	runtimeCall := weteeworker.MakeClusterStopCall(
-		1,
+		clusterID,
 	)
 
 	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
@@ -93,7 +100,24 @@ func (w *Worker) Getk8sClusterAccounts(publey []byte) (uint64, error) {
 	return res, nil
 }
 
-func (w *Worker) GetClusterContracts() error {
-	// res, ok, err := weteeworker.GetClusterContractsLatest()
-	return nil
+func (w *Worker) GetClusterContracts(clusterID uint64) ([]gtypes.ContractState, error) {
+	set, err := w.Client.QueryDoubleMapAll("WeteeWorker", "ClusterContracts", clusterID)
+	if err != nil {
+		return nil, err
+	}
+
+	var list []gtypes.ContractState = make([]gtypes.ContractState, 0, len(set))
+	for _, elem := range set {
+		for _, change := range elem.Changes {
+			var cs gtypes.ContractState
+			if err := codec.Decode(change.StorageData, &cs); err != nil {
+				fmt.Println(err)
+				continue
+			}
+			list = append(list, cs)
+		}
+	}
+
+	fmt.Println(err)
+	return list, nil
 }
