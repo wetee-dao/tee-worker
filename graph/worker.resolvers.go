@@ -17,10 +17,10 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"wetee.app/worker/db"
 	"wetee.app/worker/graph/model"
-	"wetee.app/worker/internal/mint"
-	"wetee.app/worker/internal/mint/chain"
-	"wetee.app/worker/internal/mint/chain/gen/balances"
-	gtypes "wetee.app/worker/internal/mint/chain/gen/types"
+	"wetee.app/worker/mint"
+	"wetee.app/worker/mint/chain"
+	"wetee.app/worker/mint/chain/gen/balances"
+	gtypes "wetee.app/worker/mint/chain/gen/types"
 )
 
 // ClusterRegister is the resolver for the cluster_register field.

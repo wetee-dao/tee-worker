@@ -25,4 +25,4 @@ nutsdb
 *.swp
 *.swo
 *~
-internal/mint/chain/gen/wetee-meta.json
+mint/chain/gen/wetee-meta.json
