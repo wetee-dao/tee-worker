@@ -9,9 +9,9 @@ import (
 )
 
 type Contract struct {
-	BlockNumber string `json:"BlockNumber"`
-	Minted      string `json:"Minted"`
-	Withdrawal  string `json:"Withdrawal"`
+	StartNumber string `json:"StartNumber"`
+	User        string `json:"User"`
+	WorkID      string `json:"WorkId"`
 }
 
 type LoginContent struct {

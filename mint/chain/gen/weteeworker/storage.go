@@ -345,7 +345,7 @@ func MakeClusterContractsStorageKey(tupleOfUint64WorkId0 uint64, tupleOfUint64Wo
 	byteArgs = append(byteArgs, encBytes)
 	return types.CreateStorageKey(&types1.Meta, "WeteeWorker", "ClusterContracts", byteArgs...)
 }
-func GetClusterContracts(state state.State, bhash types.Hash, tupleOfUint64WorkId0 uint64, tupleOfUint64WorkId1 types1.WorkId) (ret types1.ContractState, isSome bool, err error) {
+func GetClusterContracts(state state.State, bhash types.Hash, tupleOfUint64WorkId0 uint64, tupleOfUint64WorkId1 types1.WorkId) (ret types1.ClusterContractState, isSome bool, err error) {
 	key, err := MakeClusterContractsStorageKey(tupleOfUint64WorkId0, tupleOfUint64WorkId1)
 	if err != nil {
 		return
@@ -356,7 +356,7 @@ func GetClusterContracts(state state.State, bhash types.Hash, tupleOfUint64WorkI
 	}
 	return
 }
-func GetClusterContractsLatest(state state.State, tupleOfUint64WorkId0 uint64, tupleOfUint64WorkId1 types1.WorkId) (ret types1.ContractState, isSome bool, err error) {
+func GetClusterContractsLatest(state state.State, tupleOfUint64WorkId0 uint64, tupleOfUint64WorkId1 types1.WorkId) (ret types1.ClusterContractState, isSome bool, err error) {
 	key, err := MakeClusterContractsStorageKey(tupleOfUint64WorkId0, tupleOfUint64WorkId1)
 	if err != nil {
 		return

@@ -49,9 +49,9 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Contract struct {
-		BlockNumber func(childComplexity int) int
-		Minted      func(childComplexity int) int
-		Withdrawal  func(childComplexity int) int
+		StartNumber func(childComplexity int) int
+		User        func(childComplexity int) int
+		WorkID      func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -109,26 +109,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Contract.BlockNumber":
-		if e.complexity.Contract.BlockNumber == nil {
+	case "Contract.StartNumber":
+		if e.complexity.Contract.StartNumber == nil {
 			break
 		}
 
-		return e.complexity.Contract.BlockNumber(childComplexity), true
+		return e.complexity.Contract.StartNumber(childComplexity), true
 
-	case "Contract.Minted":
-		if e.complexity.Contract.Minted == nil {
+	case "Contract.User":
+		if e.complexity.Contract.User == nil {
 			break
 		}
 
-		return e.complexity.Contract.Minted(childComplexity), true
+		return e.complexity.Contract.User(childComplexity), true
 
-	case "Contract.Withdrawal":
-		if e.complexity.Contract.Withdrawal == nil {
+	case "Contract.WorkId":
+		if e.complexity.Contract.WorkID == nil {
 			break
 		}
 
-		return e.complexity.Contract.Withdrawal(childComplexity), true
+		return e.complexity.Contract.WorkID(childComplexity), true
 
 	case "Mutation.cluster_mortgage":
 		if e.complexity.Mutation.ClusterMortgage == nil {
@@ -679,8 +679,8 @@ func (ec *executionContext) _mutationMiddleware(ctx context.Context, obj *ast.Op
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Contract_BlockNumber(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Contract_BlockNumber(ctx, field)
+func (ec *executionContext) _Contract_StartNumber(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_StartNumber(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -693,7 +693,7 @@ func (ec *executionContext) _Contract_BlockNumber(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.BlockNumber, nil
+		return obj.StartNumber, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -710,7 +710,7 @@ func (ec *executionContext) _Contract_BlockNumber(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Contract_BlockNumber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Contract_StartNumber(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Contract",
 		Field:      field,
@@ -723,8 +723,8 @@ func (ec *executionContext) fieldContext_Contract_BlockNumber(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Contract_Minted(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Contract_Minted(ctx, field)
+func (ec *executionContext) _Contract_User(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_User(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -737,7 +737,7 @@ func (ec *executionContext) _Contract_Minted(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Minted, nil
+		return obj.User, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -754,7 +754,7 @@ func (ec *executionContext) _Contract_Minted(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Contract_Minted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Contract_User(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Contract",
 		Field:      field,
@@ -767,8 +767,8 @@ func (ec *executionContext) fieldContext_Contract_Minted(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Contract_Withdrawal(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Contract_Withdrawal(ctx, field)
+func (ec *executionContext) _Contract_WorkId(ctx context.Context, field graphql.CollectedField, obj *model.Contract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Contract_WorkId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -781,7 +781,7 @@ func (ec *executionContext) _Contract_Withdrawal(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Withdrawal, nil
+		return obj.WorkID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -798,7 +798,7 @@ func (ec *executionContext) _Contract_Withdrawal(ctx context.Context, field grap
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Contract_Withdrawal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Contract_WorkId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Contract",
 		Field:      field,
@@ -1412,12 +1412,12 @@ func (ec *executionContext) fieldContext_Query_worker(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "BlockNumber":
-				return ec.fieldContext_Contract_BlockNumber(ctx, field)
-			case "Minted":
-				return ec.fieldContext_Contract_Minted(ctx, field)
-			case "Withdrawal":
-				return ec.fieldContext_Contract_Withdrawal(ctx, field)
+			case "StartNumber":
+				return ec.fieldContext_Contract_StartNumber(ctx, field)
+			case "User":
+				return ec.fieldContext_Contract_User(ctx, field)
+			case "WorkId":
+				return ec.fieldContext_Contract_WorkId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Contract", field.Name)
 		},
@@ -3512,18 +3512,18 @@ func (ec *executionContext) _Contract(ctx context.Context, sel ast.SelectionSet,
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Contract")
-		case "BlockNumber":
-			out.Values[i] = ec._Contract_BlockNumber(ctx, field, obj)
+		case "StartNumber":
+			out.Values[i] = ec._Contract_StartNumber(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "Minted":
-			out.Values[i] = ec._Contract_Minted(ctx, field, obj)
+		case "User":
+			out.Values[i] = ec._Contract_User(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "Withdrawal":
-			out.Values[i] = ec._Contract_Withdrawal(ctx, field, obj)
+		case "WorkId":
+			out.Values[i] = ec._Contract_WorkId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

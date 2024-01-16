@@ -100,24 +100,74 @@ func (w *Worker) Getk8sClusterAccounts(publey []byte) (uint64, error) {
 	return res, nil
 }
 
-func (w *Worker) GetClusterContracts(clusterID uint64) ([]gtypes.ContractState, error) {
-	set, err := w.Client.QueryDoubleMapAll("WeteeWorker", "ClusterContracts", clusterID)
+func (w *Worker) GetClusterContracts(clusterID uint64, at *types.Hash) ([]ContractStateWrap, error) {
+	var pallet, method = "WeteeWorker", "ClusterContracts"
+	set, err := w.Client.QueryDoubleMapAll(pallet, method, clusterID, at)
 	if err != nil {
 		return nil, err
 	}
 
-	var list []gtypes.ContractState = make([]gtypes.ContractState, 0, len(set))
+	var list []ContractStateWrap = make([]ContractStateWrap, 0, len(set))
 	for _, elem := range set {
 		for _, change := range elem.Changes {
-			var cs gtypes.ContractState
+			var cs gtypes.ClusterContractState
+			// key := change.StorageKey
+			// prefix, err := w.Client.GetDoubleMapPrefixKey(pallet, method, clusterID)
+			// if err != nil {
+			// 	fmt.Println(err)
+			// 	continue
+			// }
+
+			// key = key[len(prefix):]
+			// fmt.Println(key, len(key))
+
+			// hashers, err := w.Client.GetHashers(pallet, method)
+			// if err != nil {
+			// 	return nil, err
+			// }
+
 			if err := codec.Decode(change.StorageData, &cs); err != nil {
 				fmt.Println(err)
 				continue
 			}
-			list = append(list, cs)
+			// head, _ := w.Client.Api.RPC.Chain.GetHeader(elem.Block)
+			list = append(list, ContractStateWrap{
+				BlockHash:     elem.Block.Hex(),
+				ContractState: &cs,
+			})
 		}
 	}
 
 	fmt.Println(err)
 	return list, nil
+}
+
+func (w *Worker) ClusterProofUpload(id uint64, proof []byte) error {
+	runtimeCall := weteeworker.MakeClusterProofUploadCall(
+		id,
+		proof,
+	)
+	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
+}
+
+func (w *Worker) WorkProofUpload(workId gtypes.WorkId, log []string, cr []string, pubkey []byte) error {
+	runtimeCall := weteeworker.MakeWorkProofUploadCall(
+		workId,
+		gtypes.ProofOfWork{
+			LogHash: []byte(""),
+			CrHash:  []byte(""),
+			Cr: gtypes.Cr{
+				Cpu:  1,
+				Mem:  1,
+				Disk: 1,
+			},
+			PublicKey: pubkey,
+		},
+	)
+	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
+}
+
+type ContractStateWrap struct {
+	BlockHash     string
+	ContractState *gtypes.ClusterContractState
 }

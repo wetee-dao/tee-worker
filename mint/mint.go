@@ -103,6 +103,7 @@ mintStart:
 
 	// 触发区块监听
 	sub, err := chainAPI.RPC.Chain.SubscribeFinalizedHeads()
+
 	// 失败后等待10秒重新尝试
 	if err != nil {
 		util.LogWithRed("SubscribeNewHeads", err)
@@ -131,7 +132,7 @@ mintStart:
 					workId := startEvent.AsWorkRuningWorkId1
 					user := startEvent.AsWorkRuningUser0
 					fmt.Println("===========================================WorkRuning ID: ", workId)
-					err = CreateOrUpdatePod(user[:], workId, uint64(head.Number))
+					err = CreateOrUpdatePod(user[:], workId, blockHash.Hex())
 					fmt.Println("===========================================CreateOrUpdatePod error: ", err)
 				}
 			}
@@ -140,13 +141,14 @@ mintStart:
 				if appEvent.IsWorkStopped {
 					workId := appEvent.AsWorkStoppedWorkId1
 					fmt.Println("===========================================WorkStopped", workId)
-					StopPod()
+					err := StopPod(workId)
+					fmt.Println("===========================================StopPod error: ", err)
 				}
 				if appEvent.IsWorkUpdated {
 					workId := appEvent.AsWorkUpdatedWorkId1
 					user := appEvent.AsWorkUpdatedUser0
 					fmt.Println("===========================================WorkUpdated ID: ", workId)
-					err = CreateOrUpdatePod(user[:], workId, uint64(head.Number))
+					err = CreateOrUpdatePod(user[:], workId, blockHash.Hex())
 					fmt.Println("===========================================CreateOrUpdatePod error: ", err)
 				}
 				// e.AsWeteeAppField0.IsClusterCreated
@@ -157,19 +159,38 @@ mintStart:
 		}
 
 		// 获取合约列表
-		cs, err := worker.GetClusterContracts(clusterId)
+		cs, err := worker.GetClusterContracts(clusterId, &blockHash)
 		fmt.Println("GetClusterContracts", err)
 		fmt.Println("GetClusterContracts", cs)
 
 		// 校对合约状态
+		for _, c := range cs {
+			err := checkPodStatus(c, blockHash.Hex())
+			fmt.Println("checkPodStatus", err)
+		}
 	}
 }
 
-func CheckProjectStatus() {
+func checkPodStatus(state chain.ContractStateWrap, blockHash string) error {
+	ctx := context.Background()
+	k8s := MinterIns.K8sClient.CoreV1()
+	address := hex.EncodeToString(state.ContractState.User[:])
+	nameSpace := k8s.Pods(address[1:])
+	workID := state.ContractState.WorkId
+	name := GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
+	pod, err := nameSpace.Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	if pod.ObjectMeta.ResourceVersion == state.BlockHash {
+		return nil
+	}
+
+	return CreateOrUpdatePod(state.ContractState.User[:], workID, blockHash)
 }
 
-func CreateOrUpdatePod(user []byte, workID types.WorkId, blockNumber uint64) error {
+func CreateOrUpdatePod(user []byte, workID types.WorkId, blockHash string) error {
 	address := hex.EncodeToString(user[:])
 	saddress := address[1:] //去掉前面的 0x
 	ctx := context.Background()
@@ -186,11 +207,10 @@ func CreateOrUpdatePod(user []byte, workID types.WorkId, blockNumber uint64) err
 	if err != nil {
 		return err
 	}
-	fmt.Println(app)
 
 	k8s := MinterIns.K8sClient.CoreV1()
 	nameSpace := k8s.Pods(saddress)
-	name := getWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	name := GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
 	_, err = nameSpace.Get(ctx, name, metav1.GetOptions{})
 	if err == nil {
@@ -198,7 +218,7 @@ func CreateOrUpdatePod(user []byte, workID types.WorkId, blockNumber uint64) err
 		if err != nil {
 			return err
 		}
-		existingPod.ObjectMeta.ResourceVersion = fmt.Sprint(blockNumber)
+		existingPod.ObjectMeta.ResourceVersion = blockHash
 		existingPod.Spec.Containers[0].Image = string(app.Image)
 		existingPod.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
 		_, err = nameSpace.Update(ctx, existingPod, metav1.UpdateOptions{})
@@ -211,7 +231,7 @@ func CreateOrUpdatePod(user []byte, workID types.WorkId, blockNumber uint64) err
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            name,
-				ResourceVersion: fmt.Sprint(blockNumber),
+				ResourceVersion: blockHash,
 			},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
@@ -236,8 +256,19 @@ func CreateOrUpdatePod(user []byte, workID types.WorkId, blockNumber uint64) err
 	return err
 }
 
-func StopPod() {
+func StopPod(workID types.WorkId) error {
+	ctx := context.Background()
+	user, err := chain.GetAccount(MinterIns.ChainClient, workID)
+	if err != nil {
+		return err
+	}
+	address := hex.EncodeToString(user[:])
+	saddress := address[1:] //去掉前面的 0x
 
+	k8s := MinterIns.K8sClient.CoreV1()
+	nameSpace := k8s.Pods(saddress)
+	name := GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
 }
 
 func checkNameSpace(ctx context.Context, address string) error {
@@ -266,7 +297,7 @@ func checkNameSpace(ctx context.Context, address string) error {
 	return nil
 }
 
-func getWorkTypeStr(work types.WorkId) string {
+func GetWorkTypeStr(work types.WorkId) string {
 	if work.Wtype.IsAPP {
 		return "app"
 	}

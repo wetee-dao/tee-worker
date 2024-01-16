@@ -3,9 +3,9 @@ extend type Query {
 }
 
 type Contract{
-  BlockNumber: String!
-  Minted: String!
-  Withdrawal: String!
+  StartNumber: String!
+  User: String!
+  WorkId: String!
 }
 
 extend type Mutation {

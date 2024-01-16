@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -210,7 +211,7 @@ func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
 		return nil, gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
 
-	contracts, err := worker.GetClusterContracts(clusterID)
+	contracts, err := worker.GetClusterContracts(clusterID, nil)
 	if err != nil {
 		return nil, gqlerror.Errorf("GetClusterContracts:" + err.Error())
 	}
@@ -218,9 +219,9 @@ func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
 	list := make([]*model.Contract, 0, len(contracts))
 	for _, contract := range contracts {
 		list = append(list, &model.Contract{
-			Minted:      fmt.Sprint(contract.Minted),
-			Withdrawal:  fmt.Sprint(contract.Withdrawal),
-			BlockNumber: fmt.Sprint(contract.BlockNumber),
+			StartNumber: fmt.Sprint(contract.ContractState.StartNumber),
+			User:        hex.EncodeToString(contract.ContractState.User[:]),
+			WorkID:      mint.GetWorkTypeStr(contract.ContractState.WorkId) + "-" + fmt.Sprint(contract.ContractState.WorkId.Id),
 		})
 	}
 	return list, nil

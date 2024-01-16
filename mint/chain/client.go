@@ -2,6 +2,7 @@ package chain
 
 import (
 	"fmt"
+	"hash"
 	"time"
 
 	gsrpc "github.com/centrifuge/go-substrate-rpc-client/v4"
@@ -148,15 +149,63 @@ func (c *ChainClient) QueryMapAll(pallet string, method string) ([]types.Storage
 }
 
 // query double map data list
-func (c *ChainClient) QueryDoubleMapAll(pallet string, method string, keyarg interface{}) ([]types.StorageChangeSet, error) {
+func (c *ChainClient) QueryDoubleMapAll(pallet string, method string, keyarg interface{}, at *types.Hash) ([]types.StorageChangeSet, error) {
+	key, err := c.GetDoubleMapPrefixKey(pallet, method, keyarg)
+	if err != nil {
+		return nil, errors.Wrap(err, "[GetDoubleMapPrefixKey]")
+	}
+
+	// query key
+	var keys []types.StorageKey
+	if at == nil {
+		keys, err = c.Api.RPC.State.GetKeysLatest(key)
+	} else {
+		keys, err = c.Api.RPC.State.GetKeys(key, *at)
+	}
+
+	if err != nil {
+		return nil, errors.Wrap(err, "[GetKeysLatest]")
+	}
+
+	// get all data
+	var set []types.StorageChangeSet
+	if at == nil {
+		set, err = c.Api.RPC.State.QueryStorageAtLatest(keys)
+	} else {
+		set, err = c.Api.RPC.State.QueryStorageAt(keys, *at)
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "[QueryStorageAtLatest]")
+	}
+
+	return set, nil
+}
+
+func (c *ChainClient) GetDoubleMapPrefixKey(pallet string, method string, keyarg interface{}) ([]byte, error) {
 	arg, err := codec.Encode(keyarg)
 	if err != nil {
-		return []types.StorageChangeSet{}, err
+		return nil, err
 	}
 
 	// create key prefix
 	key := createPrefixedKey(pallet, method)
+	hashers, err := c.GetHashers(pallet, method)
+	if err != nil {
+		return nil, err
+	}
 
+	// write key
+	_, err = hashers[0].Write(arg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to hash args[%d]: %s Error: %v", 0, arg, err)
+	}
+	// append hash to key
+	key = append(key, hashers[0].Sum(nil)...)
+
+	return key, nil
+}
+
+func (c *ChainClient) GetHashers(pallet, method string) ([]hash.Hash, error) {
 	// get entry metadata
 	// 获取储存元数据
 	entryMeta, err := c.Meta.FindStorageEntryMetadata(pallet, method)
@@ -174,30 +223,9 @@ func (c *ChainClient) QueryDoubleMapAll(pallet string, method string, keyarg int
 	// 获取储存的 hasher 函数
 	hashers, err := entryMeta.Hashers()
 	if err != nil {
-		return []types.StorageChangeSet{}, errors.Wrap(err, "[Hashers]")
+		return nil, errors.Wrap(err, "[Hashers]")
 	}
-
-	// write key
-	_, err = hashers[0].Write(arg)
-	if err != nil {
-		return nil, fmt.Errorf("unable to hash args[%d]: %s Error: %v", 0, arg, err)
-	}
-	// append hash to key
-	key = append(key, hashers[0].Sum(nil)...)
-
-	// query key
-	keys, err := c.Api.RPC.State.GetKeysLatest(key)
-	if err != nil {
-		return []types.StorageChangeSet{}, errors.Wrap(err, "[GetKeysLatest]")
-	}
-
-	// get all data
-	set, err := c.Api.RPC.State.QueryStorageAtLatest(keys)
-	if err != nil {
-		return []types.StorageChangeSet{}, errors.Wrap(err, "[QueryStorageAtLatest]")
-	}
-
-	return set, nil
+	return hashers, nil
 }
 
 func createPrefixedKey(pallet, method string) []byte {

@@ -30,3 +30,14 @@ func (w *App) GetApp(publey []byte, id uint64) (*types.TeeApp, error) {
 	}
 	return &res, nil
 }
+
+func (w *App) GetAccount(id uint64) ([]byte, error) {
+	res, ok, err := weteeapp.GetAppIdAccountsLatest(w.Client.Api.RPC.State, id)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.New("GetAppIdAccountsLatest => not ok")
+	}
+	return res[:], nil
+}
