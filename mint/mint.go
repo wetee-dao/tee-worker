@@ -1,17 +1,23 @@
 package mint
 
 import (
+	"context"
+	"encoding/hex"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
 	"wetee.app/worker/db"
 	"wetee.app/worker/mint/chain"
 	"wetee.app/worker/mint/chain/gen/system"
+	"wetee.app/worker/mint/chain/gen/types"
 	"wetee.app/worker/util"
 )
 
@@ -123,14 +129,25 @@ mintStart:
 				startEvent := e.AsWeteeWorkerField0
 				if startEvent.IsWorkRuning {
 					workId := startEvent.AsWorkRuningWorkId1
-					fmt.Println("===========================================WorkRuning", workId)
+					user := startEvent.AsWorkRuningUser0
+					fmt.Println("===========================================WorkRuning ID: ", workId)
+					err = CreateOrUpdatePod(user[:], workId, uint64(head.Number))
+					fmt.Println("===========================================CreateOrUpdatePod error: ", err)
 				}
 			}
 			if e.IsWeteeApp {
-				stopEvent := e.AsWeteeAppField0
-				if stopEvent.IsWorkStopped {
-					workId := stopEvent.AsWorkStoppedWorkId1
+				appEvent := e.AsWeteeAppField0
+				if appEvent.IsWorkStopped {
+					workId := appEvent.AsWorkStoppedWorkId1
 					fmt.Println("===========================================WorkStopped", workId)
+					StopPod()
+				}
+				if appEvent.IsWorkUpdated {
+					workId := appEvent.AsWorkUpdatedWorkId1
+					user := appEvent.AsWorkUpdatedUser0
+					fmt.Println("===========================================WorkUpdated ID: ", workId)
+					err = CreateOrUpdatePod(user[:], workId, uint64(head.Number))
+					fmt.Println("===========================================CreateOrUpdatePod error: ", err)
 				}
 				// e.AsWeteeAppField0.IsClusterCreated
 			}
@@ -138,10 +155,12 @@ mintStart:
 			// fmt.Println("e.AsWeteeTaskField0")
 			// }
 		}
+
 		// 获取合约列表
 		cs, err := worker.GetClusterContracts(clusterId)
 		fmt.Println("GetClusterContracts", err)
 		fmt.Println("GetClusterContracts", cs)
+
 		// 校对合约状态
 	}
 }
@@ -150,12 +169,113 @@ func CheckProjectStatus() {
 
 }
 
-func CreatePod() {
+func CreateOrUpdatePod(user []byte, workID types.WorkId, blockNumber uint64) error {
+	address := hex.EncodeToString(user[:])
+	saddress := address[1:] //去掉前面的 0x
+	ctx := context.Background()
+	errc := checkNameSpace(ctx, saddress)
+	if errc != nil {
+		return errc
+	}
 
+	appIns := chain.App{
+		Client: MinterIns.ChainClient,
+		Signer: Signer,
+	}
+	app, err := appIns.GetApp(user[:], workID.Id)
+	if err != nil {
+		return err
+	}
+	fmt.Println(app)
+
+	k8s := MinterIns.K8sClient.CoreV1()
+	nameSpace := k8s.Pods(saddress)
+	name := getWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+
+	_, err = nameSpace.Get(ctx, name, metav1.GetOptions{})
+	if err == nil {
+		existingPod, err := nameSpace.Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		existingPod.ObjectMeta.ResourceVersion = fmt.Sprint(blockNumber)
+		existingPod.Spec.Containers[0].Image = string(app.Image)
+		existingPod.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
+		_, err = nameSpace.Update(ctx, existingPod, metav1.UpdateOptions{})
+		fmt.Println("================================================= Update", err)
+	} else {
+		pod := &v1.Pod{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "App",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            name,
+				ResourceVersion: fmt.Sprint(blockNumber),
+			},
+			Spec: v1.PodSpec{
+				Containers: []v1.Container{
+					{
+						Name:  "c1",
+						Image: string(app.Image),
+						Ports: []v1.ContainerPort{
+							{
+								Name:          string(app.Name) + "0",
+								ContainerPort: 80,
+								Protocol:      "TCP",
+							},
+						},
+					},
+				},
+			},
+		}
+		_, err = nameSpace.Create(ctx, pod, metav1.CreateOptions{})
+		fmt.Println("================================================= Create", err)
+	}
+
+	return err
 }
 
 func StopPod() {
 
+}
+
+func checkNameSpace(ctx context.Context, address string) error {
+	k8s := MinterIns.K8sClient.CoreV1()
+	nameSpaces, err := k8s.Namespaces().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	var found bool = false
+	for _, namespace := range nameSpaces.Items {
+		if namespace.Name == address {
+			found = true
+			break
+		}
+	}
+	if !found {
+		_, err = k8s.Namespaces().Create(ctx, &v1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: address,
+			},
+		}, metav1.CreateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func getWorkTypeStr(work types.WorkId) string {
+	if work.Wtype.IsAPP {
+		return "app"
+	}
+
+	if work.Wtype.IsTASK {
+		return "task"
+	}
+
+	return "unknown"
 }
 
 // func getPodInfo() {
