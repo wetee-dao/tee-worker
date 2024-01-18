@@ -167,6 +167,22 @@ func (w *Worker) WorkProofUpload(workId gtypes.WorkId, log []string, cr []string
 	return w.Client.SignAndSubmit(w.Signer, runtimeCall)
 }
 
+func (w *Worker) GetStage() (uint32, error) {
+	return weteeworker.GetStageLatest(w.Client.Api.RPC.State)
+}
+
+func (w *Worker) GetWorkContract(workId gtypes.WorkId, id uint64) (*gtypes.ContractState, error) {
+	res, ok, err := weteeworker.GetWorkContractStateLatest(w.Client.Api.RPC.State, workId, id)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.New("GetAppIdAccountsLatest => not ok")
+	}
+	return &res, nil
+
+}
+
 type ContractStateWrap struct {
 	BlockHash     string
 	ContractState *gtypes.ClusterContractState

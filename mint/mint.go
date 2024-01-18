@@ -160,13 +160,29 @@ mintStart:
 
 		// 获取合约列表
 		cs, err := worker.GetClusterContracts(clusterId, &blockHash)
-		fmt.Println("GetClusterContracts", err)
 		fmt.Println("GetClusterContracts", cs)
+		if err != nil {
+			fmt.Println("GetClusterContracts", err)
+			continue
+		}
+		stage, err := worker.GetStage()
+		if err != nil {
+			fmt.Println("GetStage", err)
+			continue
+		}
 
 		// 校对合约状态
 		for _, c := range cs {
 			err := checkPodStatus(c, blockHash.Hex())
 			fmt.Println("checkPodStatus", err)
+
+			state, err := worker.GetWorkContract(c.ContractState.WorkId, clusterId)
+
+			// 上传工作证明
+			if err != nil && (uint64(head.Number)-state.BlockNumber) >= uint64(stage) {
+				fmt.Println("===========================================WorkProofUpload")
+				worker.WorkProofUpload(c.ContractState.WorkId, []string{}, []string{}, []byte(""))
+			}
 		}
 	}
 }

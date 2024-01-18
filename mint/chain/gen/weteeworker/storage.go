@@ -449,6 +449,53 @@ func GetWorkContractStateLatest(state state.State, tupleOfWorkIdUint640 types1.W
 	return
 }
 
+// Make a storage key for Stage id={{false [8]}}
+//
+//	Work 结算周期
+//	Work settle period
+func MakeStageStorageKey() (types.StorageKey, error) {
+	return types.CreateStorageKey(&types1.Meta, "WeteeWorker", "Stage")
+}
+
+var StageResultDefaultBytes, _ = hex.DecodeString("01000000")
+
+func GetStage(state state.State, bhash types.Hash) (ret uint32, err error) {
+	key, err := MakeStageStorageKey()
+	if err != nil {
+		return
+	}
+	var isSome bool
+	isSome, err = state.GetStorage(key, &ret, bhash)
+	if err != nil {
+		return
+	}
+	if !isSome {
+		err = codec.Decode(StageResultDefaultBytes, &ret)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+func GetStageLatest(state state.State) (ret uint32, err error) {
+	key, err := MakeStageStorageKey()
+	if err != nil {
+		return
+	}
+	var isSome bool
+	isSome, err = state.GetStorageLatest(key, &ret)
+	if err != nil {
+		return
+	}
+	if !isSome {
+		err = codec.Decode(StageResultDefaultBytes, &ret)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
 // Make a storage key for ProofsOfWork
 //
 //	工作任务工作量证明
