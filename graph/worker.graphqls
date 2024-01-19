@@ -9,10 +9,21 @@ type Contract{
 }
 
 extend type Mutation {
+  """集群注册
+  Register cluster to chain"""
   cluster_register(name: String!,ip: String!,port: Int!,level: Int!): String! @AuthCheck(role: ADMIN)
+  """集群质押硬件
+  Cluster mortgage hardware
+  """
   cluster_mortgage(cpu: Int!,mem: Int!,disk: Int!,deposit: Int64!): String! @AuthCheck(role: ADMIN)
+  """解锁已经质押的集群硬件
+  Unlocking cluster hardware that has been mortgaged"""
   cluster_unmortgage(id: Int64!): String! @AuthCheck(role: ADMIN)
+  """集群收益提现
+  Withdrawal of Cluster Income"""
   cluster_withdrawal(val: Int64!,id: Int64!): String! @AuthCheck(role: ADMIN)
+  """停止集群
+  Stop Cluster"""
   cluster_stop: String! @AuthCheck(role: ADMIN)
 
   start_for_test: Boolean!

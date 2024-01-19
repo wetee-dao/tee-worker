@@ -24,6 +24,7 @@ type contextKey struct {
 	name string
 }
 
+// AuthCheck checks the user's role and timestamp
 func AuthCheck(ctx context.Context, obj interface{}, next graphql.Resolver, role model.Role) (res interface{}, err error) {
 	user := ctx.Value(loginStatCtxKey).(*model.User)
 	if user == nil {
@@ -59,6 +60,7 @@ func AuthMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
+// InitUser decodes the share session cookie and packs the session into context
 func InitUser(w http.ResponseWriter, r *http.Request) *model.User {
 	header := r.Header
 	token, ok := header["Authorization"]
@@ -69,6 +71,7 @@ func InitUser(w http.ResponseWriter, r *http.Request) *model.User {
 	return decodeToken(token[0])
 }
 
+// decodeToken decodes the share session cookie and packs the session into context
 func decodeToken(tokenStr string) *model.User {
 	token := strings.Split(tokenStr, "||")
 

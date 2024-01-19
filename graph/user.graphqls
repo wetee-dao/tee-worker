@@ -6,24 +6,29 @@ enum Role {
 }
 
 # 权限验证
+# Auth check for user
 directive @AuthCheck(role: Role!) on MUTATION | QUERY | FIELD_DEFINITION
 
-
+# User info
 type User {
   address: ID!
   timestamp: Int64!
   isRoot: Boolean!
 }
 
+# 登陆输入内容
+# Login content
 input LoginContent {
   address: String!
   timestamp: Int64!
 }
 
 extend type Mutation {
-  """Root用户登陆接口"""
+  """Root用户登陆接口 
+  Root admin login"""
   loginAndBindRoot(input: LoginContent!,signature: String!): String!
 
-  """用户登陆接口"""
+  """用户登陆接口
+  User login"""
   login(input: LoginContent!,signature: String!): String!
 }

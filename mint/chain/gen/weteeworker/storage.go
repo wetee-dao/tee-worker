@@ -457,7 +457,7 @@ func MakeStageStorageKey() (types.StorageKey, error) {
 	return types.CreateStorageKey(&types1.Meta, "WeteeWorker", "Stage")
 }
 
-var StageResultDefaultBytes, _ = hex.DecodeString("01000000")
+var StageResultDefaultBytes, _ = hex.DecodeString("03000000")
 
 func GetStage(state state.State, bhash types.Hash) (ret uint32, err error) {
 	key, err := MakeStageStorageKey()
