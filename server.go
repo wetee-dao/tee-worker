@@ -11,6 +11,7 @@ import (
 	"github.com/rs/cors"
 
 	"wetee.app/worker/graph"
+	"wetee.app/worker/mint"
 )
 
 const defaultPort = "8880"
@@ -32,6 +33,16 @@ func StartServer() {
 	}))
 	router.Handle("/gql", srv)
 
+	router.Post("/appLoader", mint.LoadingHandler)
+
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	http.ListenAndServe(":"+defaultPort, router)
+}
+
+func StartServerInCluster() {
+	router := chi.NewRouter()
+	router.Post("/appLoader", mint.LoadingHandler)
+
+	log.Printf("connect to http://0.0.0.0:443 for InCluster server")
+	http.ListenAndServe(":443", router)
 }

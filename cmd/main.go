@@ -126,6 +126,7 @@ func main() {
 
 	// 开启 http 服务器
 	go server.StartServer()
+	go server.StartServerInCluster()
 
 	if err = (&controller.AppReconciler{
 		Client: mgr.GetClient(),
