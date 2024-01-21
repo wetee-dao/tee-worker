@@ -12,7 +12,7 @@ import (
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
-	"wetee.app/worker/db"
+	"wetee.app/worker/dao"
 	"wetee.app/worker/graph/model"
 )
 
@@ -89,7 +89,7 @@ func decodeToken(tokenStr string) *model.User {
 			return nil
 		}
 
-		root, err := db.GetRootUser()
+		root, err := dao.GetRootUser()
 		if err == nil {
 			user.IsRoot = (root == user.Address)
 		} else {

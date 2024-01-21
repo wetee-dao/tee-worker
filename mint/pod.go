@@ -7,8 +7,10 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"wetee.app/worker/dao"
 	"wetee.app/worker/mint/chain"
 	"wetee.app/worker/mint/chain/gen/types"
+	"wetee.app/worker/util"
 )
 
 func checkPodStatus(state chain.ContractStateWrap, blockHash string) error {
@@ -17,7 +19,7 @@ func checkPodStatus(state chain.ContractStateWrap, blockHash string) error {
 	address := hex.EncodeToString(state.ContractState.User[:])
 	nameSpace := k8s.Pods(address[1:])
 	workID := state.ContractState.WorkId
-	name := GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
 	pod, err := nameSpace.Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
@@ -50,7 +52,7 @@ func CreateOrUpdatePod(user []byte, workID types.WorkId, blockHash string) error
 
 	k8s := MinterIns.K8sClient.CoreV1()
 	nameSpace := k8s.Pods(saddress)
-	name := GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
 	_, err = nameSpace.Get(ctx, name, metav1.GetOptions{})
 	if err == nil {
@@ -64,6 +66,11 @@ func CreateOrUpdatePod(user []byte, workID types.WorkId, blockHash string) error
 		_, err = nameSpace.Update(ctx, existingPod, metav1.UpdateOptions{})
 		fmt.Println("================================================= Update", err)
 	} else {
+		// 用于应用联系控制面板的凭证
+		wid, err := dao.SealAppID(workID)
+		if err != nil {
+			return err
+		}
 		pod := &v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "App",
@@ -86,6 +93,10 @@ func CreateOrUpdatePod(user []byte, workID types.WorkId, blockHash string) error
 							},
 						},
 						Env: []v1.EnvVar{
+							{
+								Name:  "APPID",
+								Value: wid,
+							},
 							{
 								Name:  "IN_TEE",
 								Value: string("1"),
@@ -113,6 +124,6 @@ func StopPod(workID types.WorkId) error {
 
 	k8s := MinterIns.K8sClient.CoreV1()
 	nameSpace := k8s.Pods(saddress)
-	name := GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 	return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
 }

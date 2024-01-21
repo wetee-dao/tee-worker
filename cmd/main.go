@@ -39,7 +39,7 @@ import (
 
 	server "wetee.app/worker"
 	secretv1 "wetee.app/worker/api/v1"
-	"wetee.app/worker/db"
+	"wetee.app/worker/dao"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/util"
@@ -110,7 +110,7 @@ func main() {
 	}
 
 	// 初始化数据库
-	err = db.DBInit()
+	err = dao.DBInit()
 	if err != nil {
 		setupLog.Error(err, "unable to start database")
 		os.Exit(1)

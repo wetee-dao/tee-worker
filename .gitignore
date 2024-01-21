@@ -17,7 +17,6 @@ Dockerfile.cross
 # Kubernetes Generated files - skip generated files, except for vendored files
 
 !vendor/**/zz_generated.*
-nutsdb
 
 # editor and IDE paraphernalia
 .idea

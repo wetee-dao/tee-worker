@@ -16,12 +16,13 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"wetee.app/worker/db"
+	"wetee.app/worker/dao"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/chain"
 	"wetee.app/worker/mint/chain/gen/balances"
 	gtypes "wetee.app/worker/mint/chain/gen/types"
+	"wetee.app/worker/util"
 )
 
 // ClusterRegister is the resolver for the cluster_register field.
@@ -66,7 +67,7 @@ func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int
 		Signer: mint.Signer,
 	}
 
-	id, err := db.GetClusterId()
+	id, err := dao.GetClusterId()
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
@@ -88,7 +89,7 @@ func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, id int64) (str
 		Signer: mint.Signer,
 	}
 
-	clusterID, err := db.GetClusterId()
+	clusterID, err := dao.GetClusterId()
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
@@ -129,7 +130,7 @@ func (r *mutationResolver) ClusterStop(ctx context.Context) (string, error) {
 		Signer: mint.Signer,
 	}
 
-	clusterID, err := db.GetClusterId()
+	clusterID, err := dao.GetClusterId()
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
@@ -180,9 +181,9 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		return false, gqlerror.Errorf("Getk8sClusterAccounts:" + err.Error())
 	}
 	fmt.Println("ClusterId => ", clusterId)
-	db.SetClusterId(clusterId)
+	dao.SetClusterId(clusterId)
 
-	id, err := db.GetClusterId()
+	id, err := dao.GetClusterId()
 	if err != nil {
 		return false, gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
@@ -206,7 +207,7 @@ func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
 		Signer: mint.Signer,
 	}
 
-	clusterID, err := db.GetClusterId()
+	clusterID, err := dao.GetClusterId()
 	if err != nil {
 		return nil, gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
@@ -221,7 +222,7 @@ func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
 		list = append(list, &model.Contract{
 			StartNumber: fmt.Sprint(contract.ContractState.StartNumber),
 			User:        hex.EncodeToString(contract.ContractState.User[:]),
-			WorkID:      mint.GetWorkTypeStr(contract.ContractState.WorkId) + "-" + fmt.Sprint(contract.ContractState.WorkId.Id),
+			WorkID:      util.GetWorkTypeStr(contract.ContractState.WorkId) + "-" + fmt.Sprint(contract.ContractState.WorkId.Id),
 		})
 	}
 	return list, nil

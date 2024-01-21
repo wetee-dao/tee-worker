@@ -1,9 +1,17 @@
 package worker
 
 import (
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -41,8 +49,31 @@ func StartServer() {
 
 func StartServerInCluster() {
 	router := chi.NewRouter()
-	router.Post("/appLoader", mint.LoadingHandler)
+	router.Post("/appLoader/{AppID}", mint.LoadingHandler)
 
-	log.Printf("connect to http://0.0.0.0:443 for InCluster server")
-	http.ListenAndServe(":443", router)
+	log.Printf("connect to http://0.0.0.0:8883 for InCluster server")
+
+	cert, priv := createCertificate()
+	tlsCfg := tls.Config{
+		Certificates: []tls.Certificate{
+			{
+				Certificate: [][]byte{cert},
+				PrivateKey:  priv,
+			},
+		},
+	}
+	server := &http.Server{Addr: ":8883", Handler: router, TLSConfig: &tlsCfg}
+	server.ListenAndServeTLS("", "")
+}
+
+func createCertificate() ([]byte, crypto.PrivateKey) {
+	template := &x509.Certificate{
+		SerialNumber: &big.Int{},
+		Subject:      pkix.Name{CommonName: "wetee-worker"},
+		NotAfter:     time.Now().Add(time.Hour),
+		DNSNames:     []string{"localhost"},
+	}
+	priv, _ := rsa.GenerateKey(rand.Reader, 2048)
+	cert, _ := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
+	return cert, priv
 }

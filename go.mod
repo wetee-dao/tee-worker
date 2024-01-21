@@ -18,11 +18,13 @@ require (
 	github.com/99designs/gqlgen v0.17.42
 	github.com/edgelesssys/ego v1.4.1
 	github.com/fatih/color v1.16.0
+	github.com/go-chi/render v1.0.3
 	github.com/vedhavyas/go-subkey/v2 v2.0.0
 	github.com/vektah/gqlparser/v2 v2.5.10
 )
 
 require (
+	github.com/ajg/form v1.5.1 // indirect
 	github.com/antlabs/stl v0.0.1 // indirect
 	github.com/antlabs/timer v0.0.11 // indirect
 	github.com/bwmarrin/snowflake v0.3.0 // indirect

@@ -10,10 +10,9 @@ import (
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"wetee.app/worker/db"
+	"wetee.app/worker/dao"
 	"wetee.app/worker/mint/chain"
 	"wetee.app/worker/mint/chain/gen/system"
-	"wetee.app/worker/mint/chain/gen/types"
 	"wetee.app/worker/util"
 )
 
@@ -89,12 +88,12 @@ mintStart:
 			time.Sleep(time.Second * 10)
 			continue
 		}
-		db.SetClusterId(clusterId)
+		dao.SetClusterId(clusterId)
 
 		break
 	}
 
-	clusterId, _ := db.GetClusterId()
+	clusterId, _ := dao.GetClusterId()
 	fmt.Println("ClusterId => ", clusterId)
 
 	// 触发区块监听
@@ -181,18 +180,6 @@ mintStart:
 			}
 		}
 	}
-}
-
-func GetWorkTypeStr(work types.WorkId) string {
-	if work.Wtype.IsAPP {
-		return "app"
-	}
-
-	if work.Wtype.IsTASK {
-		return "task"
-	}
-
-	return "unknown"
 }
 
 // func getPodInfo() {
