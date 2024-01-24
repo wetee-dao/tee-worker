@@ -8,6 +8,4 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd  )"
 cd $DIR/../
 
-curl -L -X POST -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "state_getMetadata"}' http://127.0.0.1:9944 > mint/chain/gen/wetee-meta.json
-
 go generate ./...

@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -80,12 +81,14 @@ func decodeToken(tokenStr string) *model.User {
 	} else {
 		bt, terr := subkey.DecodeHex(token[0])
 		if !terr {
+			fmt.Println(terr)
 			return nil
 		}
 
 		user := &model.User{}
 		err := json.Unmarshal(bt, user)
 		if err != nil {
+			fmt.Println(err)
 			return nil
 		}
 
@@ -99,24 +102,28 @@ func decodeToken(tokenStr string) *model.User {
 		// 解析地址
 		_, pubkeyBytes, err := subkey.SS58Decode(user.Address)
 		if err != nil {
+			fmt.Println(err)
 			return nil
 		}
 
 		// 解析公钥
 		pubkey, err := sr25519.Scheme{}.FromPublicKey(pubkeyBytes)
 		if err != nil {
+			fmt.Println(err)
 			return nil
 		}
 
 		// 解析签名
 		sig, chainerr := subkey.DecodeHex(token[1])
 		if !chainerr {
+			fmt.Println(err)
 			return nil
 		}
 
 		// 验证签名
 		ok := pubkey.Verify([]byte("<Bytes>"+string(bt)+"</Bytes>"), sig)
 		if !ok {
+			fmt.Println("Verify error")
 			return nil
 		}
 

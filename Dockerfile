@@ -25,7 +25,7 @@
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM wetee/ubuntu-ego:20.04
+FROM wetee/ego-ubuntu:20.04
 WORKDIR /
 # COPY --from=builder /workspace/manager .
 ADD bin/*  /

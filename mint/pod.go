@@ -5,11 +5,11 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	chain "github.com/wetee-dao/go-sdk"
+	"github.com/wetee-dao/go-sdk/gen/types"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/dao"
-	"wetee.app/worker/mint/chain"
-	"wetee.app/worker/mint/chain/gen/types"
 	"wetee.app/worker/util"
 )
 
@@ -53,6 +53,15 @@ func CreateOrUpdatePod(user []byte, workID types.WorkId, blockHash string) error
 	k8s := MinterIns.K8sClient.CoreV1()
 	nameSpace := k8s.Pods(saddress)
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+
+	err = dao.SetSecrets(workID, &dao.Secrets{
+		Env: map[string]string{
+			"": "",
+		},
+	})
+	if err != nil {
+		return err
+	}
 
 	_, err = nameSpace.Get(ctx, name, metav1.GetOptions{})
 	if err == nil {

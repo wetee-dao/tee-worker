@@ -10,9 +10,9 @@ import (
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	chain "github.com/wetee-dao/go-sdk"
+	"github.com/wetee-dao/go-sdk/gen/system"
 	"wetee.app/worker/dao"
-	"wetee.app/worker/mint/chain"
-	"wetee.app/worker/mint/chain/gen/system"
 	"wetee.app/worker/util"
 )
 

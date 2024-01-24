@@ -83,7 +83,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	rm -f  bin/manager
 	cd bin && export KUBECONFIG=/etc/kube/config &&  \
 		ego-go build -o manager ../cmd/main.go && \
-		ego sign && \
+		ego sign manager && \
 		ego run ./manager
 
 # If you wish to build the manager image targeting other platforms you can use the --platform flag.

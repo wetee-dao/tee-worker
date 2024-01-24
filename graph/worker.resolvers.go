@@ -16,12 +16,12 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	chain "github.com/wetee-dao/go-sdk"
+	"github.com/wetee-dao/go-sdk/gen/balances"
+	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"wetee.app/worker/dao"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/mint"
-	"wetee.app/worker/mint/chain"
-	"wetee.app/worker/mint/chain/gen/balances"
-	gtypes "wetee.app/worker/mint/chain/gen/types"
 	"wetee.app/worker/util"
 )
 

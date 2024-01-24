@@ -1,17 +1,20 @@
 package dao
 
 import (
+	"flag"
+	"fmt"
+
 	"github.com/edgelesssys/ego/ecrypto"
 	"github.com/nutsdb/nutsdb"
 )
 
 var DB *nutsdb.DB
 
-func DBInit() error {
+func DBInit(path string) error {
 	var err error
 	DB, err = nutsdb.Open(
 		nutsdb.DefaultOptions,
-		nutsdb.WithDir("/opt/nutsdb"),
+		nutsdb.WithDir(path),
 	)
 
 	return err
@@ -22,19 +25,60 @@ func DBClose() {
 }
 
 func SealSave(bucket string, key []byte, val []byte) error {
-	val, err := ecrypto.SealWithProductKey(val, nil)
+	val, err := SealWithProductKey(val, nil)
 	if err != nil {
 		return err
 	}
+
+	err = checkBucket(bucket)
+	if err != nil {
+		return err
+	}
+
 	return DB.Update(
 		func(tx *nutsdb.Tx) error {
-			if !tx.ExistBucket(nutsdb.DataStructureBTree, bucket) {
-				if err := tx.NewBucket(nutsdb.DataStructureBTree, bucket); err != nil {
+			err := tx.Put(bucket, key, val, 0)
+			return err
+		},
+	)
+}
+
+func SealGet(bucket string, key []byte) ([]byte, error) {
+	var data []byte = []byte{}
+	err := checkBucket(bucket)
+	if err != nil {
+		return nil, err
+	}
+	err = DB.View(
+		func(tx *nutsdb.Tx) error {
+			val, err := tx.Get(bucket, key)
+			if err != nil {
+				return err
+			}
+
+			if flag.Lookup("test.v") != nil {
+				data = val
+			} else {
+				val, err = ecrypto.Unseal(val, nil)
+				if err != nil {
 					return err
 				}
-				tx.SubmitBucket()
 			}
-			if err := tx.Put(UserBucket, key, val, 0); err != nil {
+
+			data = val
+			return nil
+		},
+	)
+	return data, err
+}
+
+func checkBucket(bucket string) error {
+	return DB.Update(
+		func(tx *nutsdb.Tx) error {
+			fmt.Println(tx.ExistBucket(nutsdb.DataStructureBTree, bucket))
+			fmt.Println("tx.ExistBucket", tx.ExistBucket(nutsdb.DataStructureBTree, bucket))
+			if !tx.ExistBucket(nutsdb.DataStructureBTree, bucket) {
+				err := tx.NewBucket(nutsdb.DataStructureBTree, bucket)
 				return err
 			}
 			return nil
@@ -42,22 +86,16 @@ func SealSave(bucket string, key []byte, val []byte) error {
 	)
 }
 
-func SealGet(bucket string, key []byte) ([]byte, error) {
-	var data []byte = []byte{}
-	err := DB.View(
-		func(tx *nutsdb.Tx) error {
-			val, err := tx.Get(bucket, key)
-			if err != nil {
-				return err
-			}
+func SealWithProductKey(val []byte, additionalData []byte) ([]byte, error) {
+	if flag.Lookup("test.v") == nil {
+		return ecrypto.SealWithProductKey(val, additionalData)
+	}
+	return val, nil
+}
 
-			val, err = ecrypto.Unseal(val, nil)
-			if err != nil {
-				return err
-			}
-			data = val
-			return nil
-		},
-	)
-	return data, err
+func Unseal(ciphertext []byte, additionalData []byte) ([]byte, error) {
+	if flag.Lookup("test.v") == nil {
+		return ecrypto.Unseal(ciphertext, additionalData)
+	}
+	return ciphertext, nil
 }

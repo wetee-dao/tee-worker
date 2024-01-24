@@ -8,9 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/edgelesssys/ego/ecrypto"
 	"github.com/nutsdb/nutsdb"
-	"wetee.app/worker/mint/chain/gen/types"
+	"github.com/wetee-dao/go-sdk/gen/types"
 	"wetee.app/worker/util"
 )
 
@@ -30,12 +29,15 @@ type Secrets struct {
 func SealAppID(WorkID types.WorkId) (string, error) {
 	// 添加时间戳防止id被劫持滥用
 	key := util.GetWorkTypeStr(WorkID) + "-" + fmt.Sprint(WorkID.Id) + "-" + fmt.Sprint(time.Now().Unix())
-	val, err := ecrypto.SealWithProductKey([]byte(key), nil)
+	var val []byte
+
+	val, err := SealWithProductKey([]byte(key), nil)
 	if err != nil {
 		return "", err
 	}
+
 	strVal := base64.StdEncoding.EncodeToString(val)
-	return strVal, err
+	return strVal, nil
 }
 
 func UnSealAppID(id string) (types.WorkId, error) {
@@ -43,10 +45,13 @@ func UnSealAppID(id string) (types.WorkId, error) {
 	if err != nil {
 		return types.WorkId{}, err
 	}
-	val, err := ecrypto.Unseal(buf, nil)
+
+	var val []byte
+	val, err = Unseal(buf, nil)
 	if err != nil {
 		return types.WorkId{}, err
 	}
+
 	str := string(val)
 	strs := strings.Split(str, "-")
 	if len(strs) != 3 {
@@ -92,13 +97,13 @@ func GetSetAppSignerAddress(id types.WorkId, address string) (string, error) {
 	val := []byte(address)
 
 	// 加密数据
-	val, errr := ecrypto.SealWithProductKey(val, nil)
+	val, errr := SealWithProductKey(val, nil)
 	if errr != nil {
 		return "", errr
 	}
 
 	var data []byte = []byte{}
-	err := DB.View(
+	err := DB.Update(
 		func(tx *nutsdb.Tx) error {
 			// 检查是否存在bucket
 			if !tx.ExistBucket(nutsdb.DataStructureBTree, SecretBucket) {
@@ -121,7 +126,7 @@ func GetSetAppSignerAddress(id types.WorkId, address string) (string, error) {
 			}
 
 			// 解析数据
-			val, err = ecrypto.Unseal(val, nil)
+			val, err = Unseal(val, nil)
 			if err != nil {
 				return err
 			}

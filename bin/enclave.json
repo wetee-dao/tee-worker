@@ -1,0 +1,43 @@
+{
+    "exe": "./manager",
+    "key": "private.pem",
+    "debug": true,
+    "heapSize": 512,
+    "executableHeap": false,
+    "productID": 1,
+    "securityVersion": 1,
+    "mounts": [
+        {
+            "source": "/var/run/secrets/kubernetes.io/serviceaccount/",
+            "target": "/var/run/secrets/kubernetes.io/serviceaccount/",
+            "type": "hostfs",
+            "readOnly": true
+        },
+        {
+            "source": "/opt/wetee-worker",
+            "target": "/opt/wetee-worker",
+            "type": "hostfs",
+            "readOnly": false
+        }
+    ],
+    "env": [
+        {
+            "name": "KUBECONFIG",
+            "fromHost": true
+        },
+        {
+            "name": "KUBERNETES_SERVICE_HOST",
+            "fromHost": true
+        },
+        {
+            "name": "KUBERNETES_SERVICE_PORT",
+            "fromHost": true
+        }
+    ],
+    "files": [
+        {
+            "source": "/etc/rancher/k3s/k3s.yaml",
+            "target": "/etc/kube/config"
+        }
+    ]
+}

@@ -59,6 +59,8 @@ func init() {
 }
 
 func main() {
+	fmt.Println(flag.Lookup("test.v"))
+
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -110,7 +112,7 @@ func main() {
 	}
 
 	// 初始化数据库
-	err = dao.DBInit()
+	err = dao.DBInit("/wetee/workerdb")
 	if err != nil {
 		setupLog.Error(err, "unable to start database")
 		os.Exit(1)

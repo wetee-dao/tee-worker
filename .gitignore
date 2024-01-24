@@ -5,7 +5,10 @@
 *.dll
 *.so
 *.dylib
-bin
+bin/controller-gen
+bin/manager
+**/bin/testdb/
+**.kube/config
 Dockerfile.cross
 
 # Test binary, build with `go test -c`

@@ -1,6 +1,6 @@
 package util
 
-import "wetee.app/worker/mint/chain/gen/types"
+import "github.com/wetee-dao/go-sdk/gen/types"
 
 func GetWorkTypeStr(work types.WorkId) string {
 	if work.Wtype.IsAPP {
