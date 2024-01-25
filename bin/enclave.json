@@ -1,6 +1,6 @@
 {
     "exe": "./manager",
-    "key": "private.pem",
+    "key": "./keys/private.pem",
     "debug": true,
     "heapSize": 512,
     "executableHeap": false,

@@ -112,7 +112,7 @@ func main() {
 	}
 
 	// 初始化数据库
-	err = dao.DBInit("/wetee/workerdb")
+	err = dao.DBInit("/opt/wetee-worker/db")
 	if err != nil {
 		setupLog.Error(err, "unable to start database")
 		os.Exit(1)

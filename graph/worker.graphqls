@@ -1,4 +1,5 @@
 extend type Query {
+  """Query worker mint list"""
   worker: [Contract!]!  @AuthCheck(role: ADMIN)
 }
 
@@ -24,6 +25,7 @@ extend type Mutation {
     """cluster level"""
     level: Int!
   ): String! @AuthCheck(role: ADMIN)
+
   """集群质押硬件
   Cluster mortgage hardware
   """
@@ -37,12 +39,15 @@ extend type Mutation {
     """Mortgage amount"""
     deposit: Int64!
   ): String! @AuthCheck(role: ADMIN)
+
   """解锁已经质押的集群硬件
   Unlocking cluster hardware that has been mortgaged"""
   cluster_unmortgage(id: Int64!): String! @AuthCheck(role: ADMIN)
+
   """集群收益提现
   Withdrawal of Cluster Income"""
   cluster_withdrawal(id: Int64!,val: Int64!): String! @AuthCheck(role: ADMIN)
+  
   """停止集群
   Stop Cluster"""
   cluster_stop: String! @AuthCheck(role: ADMIN)

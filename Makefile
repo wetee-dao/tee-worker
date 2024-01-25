@@ -71,7 +71,7 @@ build: manifests generate fmt vet ## Build manager binary.
 	rm -f  bin/manager
 	cd bin && \
 		ego-go build -o manager ../cmd/main.go && \
-		ego sign
+		ego sign manager
 
 .PHONY: gorun
 gorun: manifests generate fmt vet ## Run a controller from your host.
