@@ -3,25 +3,46 @@ extend type Query {
 }
 
 type Contract{
+  """Start of block number"""
   StartNumber: String!
+  """User address"""
   User: String!
+  """Work id"""
   WorkId: String!
 }
 
 extend type Mutation {
   """集群注册
   Register cluster to chain"""
-  cluster_register(name: String!,ip: String!,port: Int!,level: Int!): String! @AuthCheck(role: ADMIN)
+  cluster_register(
+    """cluster name"""
+    name: String!,
+    """cluster ip"""
+    ip: String!,
+    """cluster port"""
+    port: Int!,
+    """cluster level"""
+    level: Int!
+  ): String! @AuthCheck(role: ADMIN)
   """集群质押硬件
   Cluster mortgage hardware
   """
-  cluster_mortgage(cpu: Int!,mem: Int!,disk: Int!,deposit: Int64!): String! @AuthCheck(role: ADMIN)
+  cluster_mortgage(
+    """CPU, unit 1=1/100 core"""
+    cpu: Int!,
+    """Memory, unit 1=100MB"""
+    mem: Int!,
+    """Hard drive, unit 1=1GB"""
+    disk: Int!,
+    """Mortgage amount"""
+    deposit: Int64!
+  ): String! @AuthCheck(role: ADMIN)
   """解锁已经质押的集群硬件
   Unlocking cluster hardware that has been mortgaged"""
   cluster_unmortgage(id: Int64!): String! @AuthCheck(role: ADMIN)
   """集群收益提现
   Withdrawal of Cluster Income"""
-  cluster_withdrawal(val: Int64!,id: Int64!): String! @AuthCheck(role: ADMIN)
+  cluster_withdrawal(id: Int64!,val: Int64!): String! @AuthCheck(role: ADMIN)
   """停止集群
   Stop Cluster"""
   cluster_stop: String! @AuthCheck(role: ADMIN)

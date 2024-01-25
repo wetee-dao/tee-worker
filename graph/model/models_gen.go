@@ -9,14 +9,19 @@ import (
 )
 
 type Contract struct {
+	// Start of block number
 	StartNumber string `json:"StartNumber"`
-	User        string `json:"User"`
-	WorkID      string `json:"WorkId"`
+	// User address
+	User string `json:"User"`
+	// Work id
+	WorkID string `json:"WorkId"`
 }
 
 type LoginContent struct {
-	Address   string `json:"address"`
-	Timestamp int64  `json:"timestamp"`
+	// User SS58 address
+	Address string `json:"address"`
+	// User sign time
+	Timestamp int64 `json:"timestamp"`
 }
 
 type Mutation struct {
@@ -26,16 +31,21 @@ type Query struct {
 }
 
 type User struct {
-	Address   string `json:"address"`
-	Timestamp int64  `json:"timestamp"`
-	IsRoot    bool   `json:"isRoot"`
+	// User SS58 address
+	Address string `json:"address"`
+	// User sign time
+	Timestamp int64 `json:"timestamp"`
+	// Is the root of cluster
+	IsRoot bool `json:"isRoot"`
 }
 
 type Role string
 
 const (
+	// admin user
 	RoleAdmin Role = "ADMIN"
-	RoleUser  Role = "USER"
+	// user
+	RoleUser Role = "USER"
 )
 
 var AllRole = []Role{

@@ -1,7 +1,9 @@
 scalar Int64
 
 enum Role {
+    """admin user"""
     ADMIN
+    """user"""
     USER
 }
 
@@ -11,24 +13,39 @@ directive @AuthCheck(role: Role!) on MUTATION | QUERY | FIELD_DEFINITION
 
 # User info
 type User {
+  """User SS58 address"""
   address: ID!
+  """User sign time"""
   timestamp: Int64!
+  """Is the root of cluster"""
   isRoot: Boolean!
 }
 
 # 登陆输入内容
 # Login content
 input LoginContent {
+  """User SS58 address"""
   address: String!
+  """User sign time"""
   timestamp: Int64!
 }
 
 extend type Mutation {
   """Root用户登陆接口 
   Root admin login"""
-  loginAndBindRoot(input: LoginContent!,signature: String!): String!
+  loginAndBindRoot(
+    """login input"""
+    input: LoginContent!,
+    """login input signature"""
+    signature: String!
+  ): String!
 
   """用户登陆接口
   User login"""
-  login(input: LoginContent!,signature: String!): String!
+  login(
+    """login input"""
+    input: LoginContent!,
+    """login input signature"""
+    signature: String!
+  ): String!
 }
