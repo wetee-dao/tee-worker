@@ -88,3 +88,47 @@ func (e *Role) UnmarshalGQL(v interface{}) error {
 func (e Role) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
+
+// Work type
+type WorkType string
+
+const (
+	// app
+	WorkTypeApp WorkType = "APP"
+	// task
+	WorkTypeTask WorkType = "TASK"
+)
+
+var AllWorkType = []WorkType{
+	WorkTypeApp,
+	WorkTypeTask,
+}
+
+func (e WorkType) IsValid() bool {
+	switch e {
+	case WorkTypeApp, WorkTypeTask:
+		return true
+	}
+	return false
+}
+
+func (e WorkType) String() string {
+	return string(e)
+}
+
+func (e *WorkType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = WorkType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid WorkType", str)
+	}
+	return nil
+}
+
+func (e WorkType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}

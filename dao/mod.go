@@ -2,7 +2,6 @@ package dao
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/edgelesssys/ego/ecrypto"
 	"github.com/nutsdb/nutsdb"
@@ -75,8 +74,6 @@ func SealGet(bucket string, key []byte) ([]byte, error) {
 func checkBucket(bucket string, ds uint16) error {
 	return DB.Update(
 		func(tx *nutsdb.Tx) error {
-			fmt.Println(tx.ExistBucket(ds, bucket))
-			fmt.Println("tx.ExistBucket", tx.ExistBucket(ds, bucket))
 			if !tx.ExistBucket(ds, bucket) {
 				err := tx.NewBucket(ds, bucket)
 				return err

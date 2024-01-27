@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	subkey "github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
@@ -43,7 +42,6 @@ type mutationResolver struct{ *Resolver }
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
 func login(input model.LoginContent, signature string) (string, error) {
 	inputbt, _ := json.Marshal(input)
-	fmt.Println(string(inputbt))
 
 	account := &model.User{
 		Address:   input.Address,

@@ -59,7 +59,7 @@ type ComplexityRoot struct {
 		ClusterRegister   func(childComplexity int, name string, ip string, port int, level int) int
 		ClusterStop       func(childComplexity int) int
 		ClusterUnmortgage func(childComplexity int, id int64) int
-		ClusterWithdrawal func(childComplexity int, id int64, val int64) int
+		ClusterWithdrawal func(childComplexity int, id int64, ty model.WorkType, val int64) int
 		Login             func(childComplexity int, input model.LoginContent, signature string) int
 		LoginAndBindRoot  func(childComplexity int, input model.LoginContent, signature string) int
 		StartForTest      func(childComplexity int) int
@@ -88,7 +88,7 @@ type MutationResolver interface {
 	ClusterRegister(ctx context.Context, name string, ip string, port int, level int) (string, error)
 	ClusterMortgage(ctx context.Context, cpu int, mem int, disk int, deposit int64) (string, error)
 	ClusterUnmortgage(ctx context.Context, id int64) (string, error)
-	ClusterWithdrawal(ctx context.Context, id int64, val int64) (string, error)
+	ClusterWithdrawal(ctx context.Context, id int64, ty model.WorkType, val int64) (string, error)
 	ClusterStop(ctx context.Context) (string, error)
 	StartForTest(ctx context.Context) (bool, error)
 }
@@ -190,7 +190,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ClusterWithdrawal(childComplexity, args["id"].(int64), args["val"].(int64)), true
+		return e.complexity.Mutation.ClusterWithdrawal(childComplexity, args["id"].(int64), args["ty"].(model.WorkType), args["val"].(int64)), true
 
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
@@ -528,15 +528,24 @@ func (ec *executionContext) field_Mutation_cluster_withdrawal_args(ctx context.C
 		}
 	}
 	args["id"] = arg0
-	var arg1 int64
-	if tmp, ok := rawArgs["val"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("val"))
-		arg1, err = ec.unmarshalNInt642int64(ctx, tmp)
+	var arg1 model.WorkType
+	if tmp, ok := rawArgs["ty"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ty"))
+		arg1, err = ec.unmarshalNWorkType2weteeᚗappᚋworkerᚋgraphᚋmodelᚐWorkType(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["val"] = arg1
+	args["ty"] = arg1
+	var arg2 int64
+	if tmp, ok := rawArgs["val"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("val"))
+		arg2, err = ec.unmarshalNInt642int64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["val"] = arg2
 	return args, nil
 }
 
@@ -1201,7 +1210,7 @@ func (ec *executionContext) _Mutation_cluster_withdrawal(ctx context.Context, fi
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterWithdrawal(rctx, fc.Args["id"].(int64), fc.Args["val"].(int64))
+			return ec.resolvers.Mutation().ClusterWithdrawal(rctx, fc.Args["id"].(int64), fc.Args["ty"].(model.WorkType), fc.Args["val"].(int64))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
@@ -4469,6 +4478,16 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNWorkType2weteeᚗappᚋworkerᚋgraphᚋmodelᚐWorkType(ctx context.Context, v interface{}) (model.WorkType, error) {
+	var res model.WorkType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNWorkType2weteeᚗappᚋworkerᚋgraphᚋmodelᚐWorkType(ctx context.Context, sel ast.SelectionSet, v model.WorkType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNWorkerInfo2weteeᚗappᚋworkerᚋgraphᚋmodelᚐWorkerInfo(ctx context.Context, sel ast.SelectionSet, v model.WorkerInfo) graphql.Marshaler {

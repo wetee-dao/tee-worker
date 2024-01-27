@@ -5,15 +5,17 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	stypes "github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/gen/types"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/dao"
 	"wetee.app/worker/util"
 )
 
-func checkTaskStatus(state chain.ContractStateWrap, blockHash string) (*v1.Pod, error) {
+func checkTaskStatus(state chain.ContractStateWrap, blockHash stypes.Hash) (*v1.Pod, error) {
 	ctx := context.Background()
 	k8s := MinterIns.K8sClient.CoreV1()
 	address := hex.EncodeToString(state.ContractState.User[:])
@@ -22,11 +24,17 @@ func checkTaskStatus(state chain.ContractStateWrap, blockHash string) (*v1.Pod, 
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
 	pod, err := nameSpace.Get(ctx, name, metav1.GetOptions{})
+	if err != nil && err.Error() != "pods \""+name+"\" not found" {
+		return nil, err
+	}
+
+	version, err := chain.GetVersion(MinterIns.ChainClient, workID)
 	if err != nil {
 		return nil, err
 	}
-	if pod.ObjectMeta.ResourceVersion != state.BlockHash {
-		err := CreateOrUpdateTask(state.ContractState.User[:], workID, blockHash)
+
+	if pod.ObjectMeta.Annotations["version"] == fmt.Sprint(version) {
+		err := CreateOrUpdateTask(state.ContractState.User[:], workID, blockHash, version)
 		if err != nil {
 			return nil, err
 		}
@@ -36,7 +44,7 @@ func checkTaskStatus(state chain.ContractStateWrap, blockHash string) (*v1.Pod, 
 	return pod, nil
 }
 
-func CreateOrUpdateTask(user []byte, workID types.WorkId, blockHash string) error {
+func CreateOrUpdateTask(user []byte, workID types.WorkId, blockHash stypes.Hash, version uint64) error {
 	saddress := AccountToAddress(user[:])
 	ctx := context.Background()
 	errc := checkNameSpace(ctx, saddress)
@@ -72,7 +80,9 @@ func CreateOrUpdateTask(user []byte, workID types.WorkId, blockHash string) erro
 		if err != nil {
 			return err
 		}
-		existingPod.ObjectMeta.ResourceVersion = blockHash
+		existingPod.ObjectMeta.Annotations = map[string]string{
+			"version": fmt.Sprint(version),
+		}
 		existingPod.Spec.Containers[0].Image = string(app.Image)
 		existingPod.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
 		_, err = nameSpace.Update(ctx, existingPod, metav1.UpdateOptions{})
@@ -89,8 +99,10 @@ func CreateOrUpdateTask(user []byte, workID types.WorkId, blockHash string) erro
 				APIVersion: "v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:            name,
-				ResourceVersion: blockHash,
+				Name: name,
+				Annotations: map[string]string{
+					"version": fmt.Sprint(version),
+				},
 			},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
@@ -112,6 +124,14 @@ func CreateOrUpdateTask(user []byte, workID types.WorkId, blockHash string) erro
 							{
 								Name:  "IN_TEE",
 								Value: string("1"),
+							},
+						},
+						Resources: v1.ResourceRequirements{
+							Limits: v1.ResourceList{
+								"alibabacloud.com/sgx_epc_MiB": *resource.NewMilliQuantity(int64(20), resource.DecimalSI),
+							},
+							Requests: v1.ResourceList{
+								"alibabacloud.com/sgx_epc_MiB": *resource.NewMilliQuantity(int64(20), resource.DecimalSI),
 							},
 						},
 					},

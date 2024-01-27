@@ -132,11 +132,12 @@ mintStart:
 					workId := startEvent.AsWorkRuningWorkId1
 					user := startEvent.AsWorkRuningUser0
 					fmt.Println("===========================================WorkRuning ID: ", workId)
+					version, _ := chain.GetVersion(MinterIns.ChainClient, workId)
 					if workId.Wtype.IsAPP {
-						err = CreateOrUpdateApp(user[:], workId, blockHash.Hex())
+						err = CreateOrUpdateApp(user[:], workId, blockHash, version)
 						fmt.Println("===========================================CreateOrUpdateApp error: ", err)
 					} else {
-						err = CreateOrUpdateTask(user[:], workId, blockHash.Hex())
+						err = CreateOrUpdateTask(user[:], workId, blockHash, version)
 						fmt.Println("===========================================CreateOrUpdateTask error: ", err)
 					}
 				}
@@ -153,7 +154,8 @@ mintStart:
 					workId := appEvent.AsWorkUpdatedWorkId1
 					user := appEvent.AsWorkUpdatedUser0
 					fmt.Println("===========================================WorkUpdated ID: ", workId)
-					err = CreateOrUpdateApp(user[:], workId, blockHash.Hex())
+					version, _ := chain.GetVersion(MinterIns.ChainClient, workId)
+					err = CreateOrUpdateApp(user[:], workId, blockHash, version)
 					fmt.Println("===========================================CreateOrUpdatePod error: ", err)
 				}
 			}
@@ -183,14 +185,25 @@ mintStart:
 
 			// 如果是APP类型，检查Pod状态，检查是否需要上传工作证明
 			if c.ContractState.WorkId.Wtype.IsAPP {
-				err := checkAppStatus(c, blockHash.Hex())
+				_, err := checkAppStatus(c, blockHash)
 				if err != nil {
 					fmt.Println("checkPodStatus", err)
 					continue
 				}
 
+				appIns := chain.App{
+					Client: MinterIns.ChainClient,
+					Signer: Signer,
+				}
+				app, err := appIns.GetApp(c.ContractState.User[:], c.ContractState.WorkId.Id)
+				if err != nil {
+					fmt.Println("appIns.GetApp", err)
+					StopApp(c.ContractState.WorkId)
+					continue
+				}
+
 				// 判断是否上传工作证明
-				if err != nil && (uint64(head.Number)-state.BlockNumber) >= uint64(stage) {
+				if uint64(app.Status) == 1 && uint64(head.Number)-state.BlockNumber >= uint64(stage) {
 					fmt.Println("===========================================WorkProofUpload")
 					nameSpace := AccountToAddress(c.ContractState.User[:])
 					workID := c.ContractState.WorkId
@@ -222,7 +235,7 @@ mintStart:
 					err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, types.Cr{
 						Cpu:  cr[0],
 						Mem:  cr[1],
-						Disk: cr[2],
+						Disk: 0,
 					}, []byte(""))
 					if err != nil {
 						fmt.Println("WorkProofUpload", err)
@@ -233,11 +246,13 @@ mintStart:
 
 			// 如果是TASK类型，检查Pod状态，Pod如果执行完成，则上传日志和结果
 			if c.ContractState.WorkId.Wtype.IsTASK {
-				pod, err := checkTaskStatus(c, blockHash.Hex())
+				pod, err := checkTaskStatus(c, blockHash)
 				if err != nil {
 					fmt.Println("checkTaskStatus", err)
 					continue
 				}
+
+				// 判断是否上传工作证明
 				if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
 					fmt.Println("===========================================WorkProofUpload")
 					nameSpace := AccountToAddress(c.ContractState.User[:])
@@ -289,7 +304,7 @@ func getWorkLogHash(name string, log []string, blockNumber uint64) ([]byte, erro
 		Logs:        log,
 	}
 	bt, _ := json.Marshal(&pf)
-	hash := blake2b.Sum512(bt)
+	hash := blake2b.Sum256(bt)
 
 	err := dao.Addlog([]byte(name), bt)
 	return hash[:], err
@@ -303,7 +318,7 @@ func getWorkCrHash(name string, cr map[string][]int64, blockNumber uint64) ([]by
 		Cr:          cr,
 	}
 	bt, _ := json.Marshal(&pf)
-	hash := blake2b.Sum512(bt)
+	hash := blake2b.Sum256(bt)
 
 	err := dao.Addlog([]byte(name), bt)
 

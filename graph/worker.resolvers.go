@@ -102,7 +102,7 @@ func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, id int64) (str
 }
 
 // ClusterWithdrawal is the resolver for the cluster_withdrawal field.
-func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, id int64, val int64) (string, error) {
+func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, id int64, ty model.WorkType, val int64) (string, error) {
 	client := mint.MinterIns.ChainClient
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
@@ -112,7 +112,10 @@ func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, id int64, val 
 		Signer: mint.Signer,
 	}
 
-	err := worker.ClusterWithdrawal(uint64(id), val)
+	err := worker.ClusterWithdrawal(gtypes.WorkId{
+		Wtype: gtypes.WorkType{IsAPP: ty == model.WorkTypeApp, IsTASK: ty == model.WorkTypeTask},
+		Id:    uint64(id),
+	}, val)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}

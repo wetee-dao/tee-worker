@@ -13,7 +13,6 @@ import (
 
 func getMetricInfo(ctx context.Context, nameSpace, name string, stage uint64) ([]string, map[string][]int64, error) {
 	podLogOpts := &corev1.PodLogOptions{
-		Container: "worker",
 		SinceTime: &metav1.Time{
 			Time: time.Now().Add(-6 * time.Second * time.Duration(stage)),
 		},
@@ -32,7 +31,6 @@ func getMetricInfo(ctx context.Context, nameSpace, name string, stage uint64) ([
 	logs := []string{}
 	scanner := bufio.NewScanner(podLogs)
 	for scanner.Scan() {
-		// logs += scanner.Text() + "\n"
 		logs = append(logs, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
@@ -53,9 +51,9 @@ func getMetricInfo(ctx context.Context, nameSpace, name string, stage uint64) ([
 	var mem map[string][]int64 = map[string][]int64{}
 	for _, container := range podMetrics.Containers {
 		fmt.Println("Pod ", podMetrics.Name, " CPU使用情况: ", container.Usage.Cpu().Value())
-		fmt.Println("Pod ", podMetrics.Name, " 内存使用情况: ", container.Usage.Memory().Value())
+		fmt.Println("Pod ", podMetrics.Name, " 内存使用情况: ", container.Usage.Memory().Value()/1024/1024)
 
-		mem[container.Name] = []int64{container.Usage.Cpu().Value(), container.Usage.Memory().Value()}
+		mem[container.Name] = []int64{container.Usage.Cpu().Value(), container.Usage.Memory().Value() / 1024 / 1024}
 	}
 
 	return logs, mem, nil

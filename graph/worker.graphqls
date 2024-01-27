@@ -1,3 +1,11 @@
+"""Work type"""
+enum WorkType {
+  """app"""
+  APP
+  """task"""
+  TASK
+}
+
 extend type Query {
   """Query worker info"""
   workerInfo: WorkerInfo!
@@ -55,7 +63,7 @@ extend type Mutation {
 
   """集群收益提现
   Withdrawal of Cluster Income"""
-  cluster_withdrawal(id: Int64!,val: Int64!): String! @AuthCheck(role: ADMIN)
+  cluster_withdrawal(id: Int64!,ty :WorkType!,val: Int64!): String! @AuthCheck(role: ADMIN)
   
   """停止集群
   Stop Cluster"""
