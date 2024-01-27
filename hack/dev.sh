@@ -8,6 +8,7 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd  )"
 cd $DIR/../
 
+sudo chmod 777 /etc/rancher/k3s/k3s.yaml
 sudo mkdir /opt/wetee-worker
 sudo chmod 777 /opt/wetee-worker
 

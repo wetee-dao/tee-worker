@@ -37,14 +37,14 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 	}
 
 	ipstrs := strings.Split(ip, ".")
-	if len(ipstrs) == 4 {
+	if len(ipstrs) != 4 {
 		return "", gqlerror.Errorf("Ip address format error")
 	}
 	iparr := []uint8{}
 	for _, ipstr := range ipstrs {
 		i, err := strconv.Atoi(ipstr)
 		if err != nil {
-			return "", gqlerror.Errorf("Ip address format error")
+			return "", gqlerror.Errorf("Ip address int transfer error")
 		}
 		iparr = append(iparr, uint8(i))
 	}
@@ -194,6 +194,24 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// WorkerInfo is the resolver for the workerInfo field.
+func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, error) {
+	root, err := dao.GetRootUser()
+	if err != nil {
+		root = ""
+	}
+	var maddress = ""
+	minter, err := mint.GetMintKey()
+	if err == nil {
+		maddress = minter.Address
+	}
+
+	return &model.WorkerInfo{
+		RootAddress: root,
+		MintAddress: maddress,
+	}, nil
 }
 
 // Worker is the resolver for the worker field.

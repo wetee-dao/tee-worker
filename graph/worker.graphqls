@@ -1,6 +1,15 @@
 extend type Query {
+  """Query worker info"""
+  workerInfo: WorkerInfo!
   """Query worker mint list"""
   worker: [Contract!]!  @AuthCheck(role: ADMIN)
+}
+
+type WorkerInfo{
+  """Root user of worker"""
+  RootAddress: String!
+  """Worker mint user"""
+  MintAddress: String!
 }
 
 type Contract{

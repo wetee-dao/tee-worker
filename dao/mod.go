@@ -30,7 +30,7 @@ func SealSave(bucket string, key []byte, val []byte) error {
 		return err
 	}
 
-	err = checkBucket(bucket)
+	err = checkBucket(bucket, nutsdb.DataStructureBTree)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func SealSave(bucket string, key []byte, val []byte) error {
 
 func SealGet(bucket string, key []byte) ([]byte, error) {
 	var data []byte = []byte{}
-	err := checkBucket(bucket)
+	err := checkBucket(bucket, nutsdb.DataStructureBTree)
 	if err != nil {
 		return nil, err
 	}
@@ -72,13 +72,13 @@ func SealGet(bucket string, key []byte) ([]byte, error) {
 	return data, err
 }
 
-func checkBucket(bucket string) error {
+func checkBucket(bucket string, ds uint16) error {
 	return DB.Update(
 		func(tx *nutsdb.Tx) error {
-			fmt.Println(tx.ExistBucket(nutsdb.DataStructureBTree, bucket))
-			fmt.Println("tx.ExistBucket", tx.ExistBucket(nutsdb.DataStructureBTree, bucket))
-			if !tx.ExistBucket(nutsdb.DataStructureBTree, bucket) {
-				err := tx.NewBucket(nutsdb.DataStructureBTree, bucket)
+			fmt.Println(tx.ExistBucket(ds, bucket))
+			fmt.Println("tx.ExistBucket", tx.ExistBucket(ds, bucket))
+			if !tx.ExistBucket(ds, bucket) {
+				err := tx.NewBucket(ds, bucket)
 				return err
 			}
 			return nil

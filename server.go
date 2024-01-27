@@ -34,7 +34,7 @@ func StartServer() {
 	router.Use(graph.AuthMiddleware())
 	router.Use(cors.AllowAll().Handler)
 
-	router.Handle("/", playground.ApolloSandboxHandler("Wetee-Worker", "/gql"))
+	router.Handle("/", playground.Handler("Wetee-Worker", "/gql"))
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers:  &graph.Resolver{},
 		Directives: graph.NewDirectiveRoot(),

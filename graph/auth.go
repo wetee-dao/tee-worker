@@ -120,8 +120,14 @@ func decodeToken(tokenStr string) *model.User {
 			return nil
 		}
 
+		uinput := model.LoginContent{
+			Address:   user.Address,
+			Timestamp: user.Timestamp,
+		}
+		inputbt, _ := json.Marshal(uinput)
+
 		// 验证签名
-		ok := pubkey.Verify([]byte("<Bytes>"+string(bt)+"</Bytes>"), sig)
+		ok := pubkey.Verify([]byte("<Bytes>"+string(inputbt)+"</Bytes>"), sig)
 		if !ok {
 			fmt.Println("Verify error")
 			return nil

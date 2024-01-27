@@ -3,6 +3,8 @@ package dao
 import (
 	"log"
 	"testing"
+
+	"github.com/nutsdb/nutsdb"
 )
 
 func Test(t *testing.T) {
@@ -16,7 +18,7 @@ func Test(t *testing.T) {
 func TestCheckBucket(t *testing.T) {
 	DBInit("bin/testdb")
 	defer DBClose()
-	if err := checkBucket("b"); err != nil {
+	if err := checkBucket("b", nutsdb.DataStructureBTree); err != nil {
 		t.Fail()
 	}
 }

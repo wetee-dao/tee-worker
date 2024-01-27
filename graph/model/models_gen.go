@@ -39,6 +39,13 @@ type User struct {
 	IsRoot bool `json:"isRoot"`
 }
 
+type WorkerInfo struct {
+	// Root user of worker
+	RootAddress string `json:"RootAddress"`
+	// Worker mint user
+	MintAddress string `json:"MintAddress"`
+}
+
 type Role string
 
 const (
