@@ -6,6 +6,7 @@ import (
 	"github.com/fatih/color"
 )
 
+// LogWith red title
 func LogWithRed(tag string, a ...interface{}) {
 	red := color.New(color.FgRed).SprintFunc()
 	b := make([]interface{}, 0, len(a)+1)
