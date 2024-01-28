@@ -39,14 +39,6 @@ make build
 # Build wetee-worker image
 docker build -t wetee/worker:dev .
 
-# get local ip
-ip addr show | grep -oP 'inet \K[\d.]+'
-127.0.0.1
-192.168.111.105
-172.17.0.1
-10.42.0.0
-10.42.0.1
-
 # Run worker in docker
 docker run --device /dev/sgx/enclave --device /dev/sgx/provision \
      --network host \
