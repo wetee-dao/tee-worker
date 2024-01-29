@@ -11,14 +11,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func getMetricInfo(ctx context.Context, nameSpace, name string, stage uint64) ([]string, map[string][]int64, error) {
+func (m *Minter) getMetricInfo(ctx context.Context, nameSpace, name string, stage uint64) ([]string, map[string][]int64, error) {
 	podLogOpts := &corev1.PodLogOptions{
 		SinceTime: &metav1.Time{
 			Time: time.Now().Add(-6 * time.Second * time.Duration(stage)),
 		},
 	}
-	clientset := MinterIns.K8sClient
-	metricsClient := MinterIns.MetricsClient
+	clientset := m.K8sClient
+	metricsClient := m.MetricsClient
 
 	req := clientset.CoreV1().Pods(nameSpace).GetLogs(name, podLogOpts)
 	podLogs, err := req.Stream(ctx)

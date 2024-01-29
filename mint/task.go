@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	stypes "github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/gen/types"
 	v1 "k8s.io/api/core/v1"
@@ -15,26 +14,22 @@ import (
 	"wetee.app/worker/util"
 )
 
-func checkTaskStatus(state chain.ContractStateWrap, blockHash stypes.Hash) (*v1.Pod, error) {
-	ctx := context.Background()
-	k8s := MinterIns.K8sClient.CoreV1()
+// check task status，if task is running, return pod, if task not run, create pod
+func (m *Minter) CheckTaskStatus(ctx context.Context, state chain.ContractStateWrap) (*v1.Pod, error) {
+	k8s := m.K8sClient.CoreV1()
 	address := hex.EncodeToString(state.ContractState.User[:])
 	nameSpace := k8s.Pods(address[1:])
 	workID := state.ContractState.WorkId
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
-	pod, err := nameSpace.Get(ctx, name, metav1.GetOptions{})
-	if err != nil && err.Error() != "pods \""+name+"\" not found" {
-		return nil, err
-	}
-
-	version, err := chain.GetVersion(MinterIns.ChainClient, workID)
+	version, err := chain.GetVersion(m.ChainClient, workID)
 	if err != nil {
 		return nil, err
 	}
 
-	if pod.ObjectMeta.Annotations["version"] == fmt.Sprint(version) {
-		err := CreateOrUpdateTask(state.ContractState.User[:], workID, blockHash, version)
+	pod, err := nameSpace.Get(ctx, name, metav1.GetOptions{})
+	if err != nil && err.Error() != "pods \""+name+"\" not found" {
+		err := m.CreateTask(state.ContractState.User[:], workID, version)
 		if err != nil {
 			return nil, err
 		}
@@ -44,16 +39,16 @@ func checkTaskStatus(state chain.ContractStateWrap, blockHash stypes.Hash) (*v1.
 	return pod, nil
 }
 
-func CreateOrUpdateTask(user []byte, workID types.WorkId, blockHash stypes.Hash, version uint64) error {
+func (m *Minter) CreateTask(user []byte, workID types.WorkId, version uint64) error {
 	saddress := AccountToAddress(user[:])
 	ctx := context.Background()
-	errc := checkNameSpace(ctx, saddress)
+	errc := m.checkNameSpace(ctx, saddress)
 	if errc != nil {
 		return errc
 	}
 
 	appIns := chain.App{
-		Client: MinterIns.ChainClient,
+		Client: m.ChainClient,
 		Signer: Signer,
 	}
 	app, err := appIns.GetApp(user[:], workID.Id)
@@ -61,7 +56,7 @@ func CreateOrUpdateTask(user []byte, workID types.WorkId, blockHash stypes.Hash,
 		return err
 	}
 
-	k8s := MinterIns.K8sClient.CoreV1()
+	k8s := m.K8sClient.CoreV1()
 	nameSpace := k8s.Pods(saddress)
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 

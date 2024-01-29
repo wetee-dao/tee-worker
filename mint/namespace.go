@@ -7,8 +7,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func checkNameSpace(ctx context.Context, address string) error {
-	k8s := MinterIns.K8sClient.CoreV1()
+func (m *Minter) checkNameSpace(ctx context.Context, address string) error {
+	k8s := m.K8sClient.CoreV1()
 	nameSpaces, err := k8s.Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err

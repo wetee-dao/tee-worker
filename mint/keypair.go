@@ -18,7 +18,7 @@ func GetMintKey() (*signature.KeyringPair, error) {
 		util.LogWithRed("GetKey error", err)
 		return nil, err
 	}
-	util.LogWithRed("GetKey", k)
+	// util.LogWithRed("GetKey", k)
 	// LogWithRed("GetKeyInfo", info)
 
 	var mss [32]byte

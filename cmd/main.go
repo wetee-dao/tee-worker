@@ -124,7 +124,7 @@ func main() {
 		setupLog.Error(err, "unable to start mint")
 		os.Exit(1)
 	}
-	go mint.StartMint()
+	go mint.MinterIns.StartMint()
 
 	// 开启 http 服务器
 	go server.StartServer()
