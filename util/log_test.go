@@ -1,7 +1,10 @@
 package util
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestLogWithRed(t *testing.T) {
-	LogWithRed("testLog")
+	LogWithRed("testLog" + time.Now().String())
 }
