@@ -60,10 +60,10 @@ func InitMint(mgr manager.Manager) error {
 		MetricsClient: metricsClient,
 		ChainClient:   client,
 	}
-	lock.Unlock()
-
 	// 获取签名账户
 	Signer, err = GetMintKey()
+	lock.Unlock()
+
 	return err
 }
 

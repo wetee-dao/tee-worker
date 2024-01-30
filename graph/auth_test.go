@@ -20,7 +20,7 @@ func TestDecodeToken(t *testing.T) {
 		t.Error(err)
 	}
 
-	account := &model.User{
+	account := &model.LoginContent{
 		Address:   prikey.SS58Address(42),
 		Timestamp: time.Now().Unix(),
 	}
