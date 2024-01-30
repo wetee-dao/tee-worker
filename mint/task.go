@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/gen/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -15,52 +14,41 @@ import (
 )
 
 // check task status，if task is running, return pod, if task not run, create pod
-func (m *Minter) CheckTaskStatus(ctx context.Context, state chain.ContractStateWrap) (*v1.Pod, error) {
+func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) (*v1.Pod, error) {
 	k8s := m.K8sClient.CoreV1()
 	address := hex.EncodeToString(state.ContractState.User[:])
 	nameSpace := k8s.Pods(address[1:])
 	workID := state.ContractState.WorkId
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
-	version, err := chain.GetVersion(m.ChainClient, workID)
-	if err != nil {
-		return nil, err
-	}
+	app := state.Task
+	version := state.Version
 
-	pod, err := nameSpace.Get(ctx, name, metav1.GetOptions{})
+	pod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil && err.Error() != "pods \""+name+"\" not found" {
-		err := m.CreateTask(state.ContractState.User[:], workID, version)
+		err := m.CreateTask(ctx, state.ContractState.User[:], workID, app, version)
 		if err != nil {
 			return nil, err
 		}
-		return nameSpace.Get(ctx, name, metav1.GetOptions{})
+		return nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	}
 
 	return pod, nil
 }
 
-func (m *Minter) CreateTask(user []byte, workID types.WorkId, version uint64) error {
+// create task
+func (m *Minter) CreateTask(ctx *context.Context, user []byte, workID types.WorkId, app *types.TeeTask, version uint64) error {
 	saddress := AccountToAddress(user[:])
-	ctx := context.Background()
-	errc := m.checkNameSpace(ctx, saddress)
+	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
 		return errc
-	}
-
-	appIns := chain.App{
-		Client: m.ChainClient,
-		Signer: Signer,
-	}
-	app, err := appIns.GetApp(user[:], workID.Id)
-	if err != nil {
-		return err
 	}
 
 	k8s := m.K8sClient.CoreV1()
 	nameSpace := k8s.Pods(saddress)
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
-	err = dao.SetSecrets(workID, &dao.Secrets{
+	err := dao.SetSecrets(workID, &dao.Secrets{
 		Env: map[string]string{
 			"": "",
 		},
@@ -69,9 +57,9 @@ func (m *Minter) CreateTask(user []byte, workID types.WorkId, version uint64) er
 		return err
 	}
 
-	_, err = nameSpace.Get(ctx, name, metav1.GetOptions{})
+	_, err = nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err == nil {
-		existingPod, err := nameSpace.Get(ctx, name, metav1.GetOptions{})
+		existingPod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -80,7 +68,7 @@ func (m *Minter) CreateTask(user []byte, workID types.WorkId, version uint64) er
 		}
 		existingPod.Spec.Containers[0].Image = string(app.Image)
 		existingPod.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
-		_, err = nameSpace.Update(ctx, existingPod, metav1.UpdateOptions{})
+		_, err = nameSpace.Update(*ctx, existingPod, metav1.UpdateOptions{})
 		fmt.Println("================================================= Update", err)
 	} else {
 		// 用于应用联系控制面板的凭证
@@ -133,7 +121,7 @@ func (m *Minter) CreateTask(user []byte, workID types.WorkId, version uint64) er
 				},
 			},
 		}
-		_, err = nameSpace.Create(ctx, pod, metav1.CreateOptions{})
+		_, err = nameSpace.Create(*ctx, pod, metav1.CreateOptions{})
 		fmt.Println("================================================= Create", err)
 	}
 
