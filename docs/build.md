@@ -33,8 +33,10 @@ Then run the following command to start a single node development chain.
 A few useful ones are as follow:  
 
 ```bash
-# Use Ego build
-make build
+# Use Docker to build (ego build must be run in sgx)
+docker run --device /dev/sgx/enclave --device /dev/sgx/provision \
+    -v ${PWD}:/srv wetee/worker:dev \
+    bash -c "cd /srv && ego-go build -o ./bin/manager ./cmd/main.go"
 
 # Build wetee-worker image
 docker build -t wetee/worker:dev .
