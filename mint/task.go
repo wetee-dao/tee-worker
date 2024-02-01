@@ -5,13 +5,92 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/wetee-dao/go-sdk/gen/types"
+	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
+	"github.com/pkg/errors"
+	chain "github.com/wetee-dao/go-sdk"
+	gtype "github.com/wetee-dao/go-sdk/gen/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/dao"
 	"wetee.app/worker/util"
 )
+
+func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stage uint32, head types.Header) error {
+	if c.Task == nil || c.WorkState == nil {
+		return errors.New("task is nil")
+	}
+
+	app := c.Task
+	state := c.WorkState
+
+	// 处于调度状态，不处理
+	if uint64(app.Status) == 4 {
+		return nil
+	}
+
+	// 状态为停止状态，停止Pod
+	if uint64(app.Status) == 2 {
+		m.StopApp(c.ContractState.WorkId)
+		return nil
+	}
+
+	pod, err := m.CheckTaskStatus(ctx, c)
+	if err != nil {
+		util.LogWithRed("checkTaskStatus", err)
+		return err
+	}
+
+	// 判断是否上传工作证明
+	// Determine whether to upload proof of employment
+	if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
+		util.LogWithRed("===========================================WorkProofUpload TASK")
+		nameSpace := AccountToAddress(c.ContractState.User[:])
+		workId := c.ContractState.WorkId
+		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+
+		// 获取log和硬件资源使用量
+		// Obtain the log and hardware resource usage
+		logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, name, uint64(head.Number)-state.BlockNumber)
+		if err != nil {
+			util.LogWithRed("getMetricInfo", err)
+			return err
+		}
+
+		// 获取log hash
+		logHash, err := getWorkLogHash(name, logs, state.BlockNumber)
+		if err != nil {
+			util.LogWithRed("getWorkLogHash", err)
+			return err
+		}
+
+		// 获取 cr hash
+		crHash, cr, err := getWorkCrHash(name, crs, state.BlockNumber)
+		if err != nil {
+			util.LogWithRed("getWorkCrHash", err)
+			return err
+		}
+
+		// 初始化worker对象
+		worker := chain.Worker{
+			Client: m.ChainClient,
+			Signer: Signer,
+		}
+
+		// 上传工作证明结束任务
+		// Upload the end of the work proof
+		err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, gtype.Cr{
+			Cpu:  cr[0],
+			Mem:  cr[1],
+			Disk: 0,
+		}, []byte(""), false)
+		if err != nil {
+			util.LogWithRed("WorkProofUpload", err)
+			return err
+		}
+	}
+	return nil
+}
 
 // check task status，if task is running, return pod, if task not run, create pod
 func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) (*v1.Pod, error) {
@@ -40,7 +119,7 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 }
 
 // create task
-func (m *Minter) CreateTask(ctx *context.Context, user []byte, workID types.WorkId, app *types.TeeTask, version uint64) error {
+func (m *Minter) CreateTask(ctx *context.Context, user []byte, workID gtype.WorkId, app *gtype.TeeTask, version uint64) error {
 	saddress := AccountToAddress(user[:])
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {

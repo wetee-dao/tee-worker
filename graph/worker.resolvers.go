@@ -49,7 +49,7 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 		iparr = append(iparr, uint8(i))
 	}
 
-	err := worker.ClusterRegister(name, iparr, uint32(port), uint8(level))
+	err := worker.ClusterRegister(name, iparr, uint32(port), uint8(level), false)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -71,7 +71,7 @@ func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
-	err = worker.ClusterMortgage(id, uint16(cpu), uint16(mem), uint16(disk), uint64(deposit))
+	err = worker.ClusterMortgage(id, uint16(cpu), uint16(mem), uint16(disk), uint64(deposit), false)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -94,7 +94,7 @@ func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, id int64) (str
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
 
-	err = worker.ClusterUnmortgage(clusterID, uint64(id))
+	err = worker.ClusterUnmortgage(clusterID, uint64(id), false)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -115,7 +115,7 @@ func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, id int64, ty m
 	err := worker.ClusterWithdrawal(gtypes.WorkId{
 		Wtype: gtypes.WorkType{IsAPP: ty == model.WorkTypeApp, IsTASK: ty == model.WorkTypeTask},
 		Id:    uint64(id),
-	}, val)
+	}, val, false)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -138,7 +138,7 @@ func (r *mutationResolver) ClusterStop(ctx context.Context) (string, error) {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
 
-	err = worker.ClusterStop(clusterID)
+	err = worker.ClusterStop(clusterID, false)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -168,12 +168,12 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		AsIdField0: minter.AsID,
 	}
 	c := balances.MakeTransferCall(minterWrap, types.NewUCompact(bal))
-	err := client.SignAndSubmit(&signature.TestKeyringPairAlice, c)
+	err := client.SignAndSubmit(&signature.TestKeyringPairAlice, c, false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain call error:" + err.Error())
 	}
 
-	err = worker.ClusterRegister("", []uint8{127, 0, 0, 1}, uint32(80), uint8(1))
+	err = worker.ClusterRegister("", []uint8{127, 0, 0, 1}, uint32(80), uint8(1), false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain ClusterRegister error:" + err.Error())
 	}
@@ -191,7 +191,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		return false, gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
 
-	err = worker.ClusterMortgage(id, uint16(1000), uint16(1000), uint16(1000), uint64(1000000))
+	err = worker.ClusterMortgage(id, uint16(1000), uint16(1000), uint16(1000), uint64(1000000), false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain ClusterMortgage error:" + err.Error())
 	}

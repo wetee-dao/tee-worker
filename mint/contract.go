@@ -52,13 +52,15 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 			}
 
 			workIds = append(workIds, cs.WorkId)
-			// 获取work contract的key
+
+			// 获取 work contract的key
 			key, err := weteeworker.MakeWorkContractStateStorageKey(cs.WorkId, clusterID)
 			if err != nil {
 				continue
 			}
 			workContractkeys = append(workContractkeys, key)
 
+			// 记录 app 相关参数
 			if cs.WorkId.Wtype.IsAPP {
 				akey, err := weteeapp.MakeTEEAppsStorageKey(cs.User, cs.WorkId.Id)
 				if err != nil {
@@ -73,6 +75,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				appVersions = append(appVersions, vkey)
 			}
 
+			// 记录 task 相关参数
 			if cs.WorkId.Wtype.IsTASK {
 				tkey, err := weteetask.MakeTEETasksStorageKey(cs.User, cs.WorkId.Id)
 				if err != nil {
@@ -89,30 +92,35 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 		}
 	}
 
+	// 获取 work contract 的状态
 	err = m.GetWorkContracts(workIds, workContractkeys, list, at)
 	if err != nil {
 		util.LogWithRed("GetWorkContracts", err)
 		return nil, err
 	}
 
+	// 获取 app 的状态
 	err = m.GetApps(appIds, appKeys, list, at)
 	if err != nil {
 		util.LogWithRed("GetApps", err)
 		return nil, err
 	}
 
+	// 获取 task 的状态
 	err = m.GetTasks(taskIds, tasKeys, list, at)
 	if err != nil {
 		util.LogWithRed("GetTasks", err)
 		return nil, err
 	}
 
+	// 获取 app 的版本
 	err = m.GetVerions(appIds, appVersions, list, at)
 	if err != nil {
 		util.LogWithRed("GetVerions APP", err)
 		return nil, err
 	}
 
+	// 获取 task 的版本
 	err = m.GetVerions(taskIds, taskVersions, list, at)
 	if err != nil {
 		util.LogWithRed("GetVerions TASK", err)

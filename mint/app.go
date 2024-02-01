@@ -4,15 +4,91 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
 	chain "github.com/wetee-dao/go-sdk"
-	"github.com/wetee-dao/go-sdk/gen/types"
+	gtype "github.com/wetee-dao/go-sdk/gen/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/dao"
 	"wetee.app/worker/util"
 )
+
+func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage uint32, head types.Header) error {
+	if c.App == nil || c.WorkState == nil {
+		return errors.New("app is nil")
+	}
+
+	app := c.App
+	state := c.WorkState
+
+	// 状态为停止状态，停止Pod
+	if uint64(app.Status) == 2 {
+		m.StopApp(c.ContractState.WorkId)
+		return nil
+	}
+
+	_, err := m.CheckAppStatus(ctx, c)
+	if err != nil {
+		util.LogWithRed("checkPodStatus", err)
+		return err
+	}
+
+	// 判断是否上传工作证明
+	// Check if work proof needs to be uploaded
+	if uint64(app.Status) == 1 && uint64(head.Number)-state.BlockNumber >= uint64(stage) {
+		util.LogWithRed("=========================================== WorkProofUpload APP")
+
+		workId := c.ContractState.WorkId
+		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+		nameSpace := AccountToAddress(c.ContractState.User[:])
+
+		// 获取log和硬件资源使用量
+		// Get log and hardware resource usage
+		logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, name, uint64(head.Number)-state.BlockNumber)
+		if err != nil {
+			util.LogWithRed("getMetricInfo", err)
+			return err
+		}
+
+		// 获取log hash
+		// Get log hash
+		logHash, err := getWorkLogHash(name, logs, state.BlockNumber)
+		if err != nil {
+			util.LogWithRed("getWorkLogHash", err)
+			return err
+		}
+
+		// 获取计算资源hash
+		// Get Computing resource hash
+		crHash, cr, err := getWorkCrHash(name, crs, state.BlockNumber)
+		if err != nil {
+			util.LogWithRed("getWorkCrHash", err)
+			return err
+		}
+
+		// 初始化worker对象
+		worker := chain.Worker{
+			Client: m.ChainClient,
+			Signer: Signer,
+		}
+
+		// 上传工作证明
+		// Upload work proof
+		err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, gtype.Cr{
+			Cpu:  cr[0],
+			Mem:  cr[1],
+			Disk: 0,
+		}, []byte(""), false)
+		if err != nil {
+			util.LogWithRed("WorkProofUpload", err)
+			return err
+		}
+	}
+
+	return nil
+}
 
 // checkAppStatus check app status
 // 校对应用状态
@@ -47,7 +123,7 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID types.WorkId, app *types.TeeApp, version uint64) error {
+func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID gtype.WorkId, app *gtype.TeeApp, version uint64) error {
 	saddress := AccountToAddress(user)
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
@@ -137,7 +213,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID types.WorkI
 	return err
 }
 
-func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workID types.WorkId, app *types.TeeApp, version uint64) error {
+func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workID gtype.WorkId, app *gtype.TeeApp, version uint64) error {
 	saddress := AccountToAddress(user)
 	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
@@ -162,7 +238,7 @@ func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workID types.WorkI
 
 // StopApp
 // 停止应用
-func (m *Minter) StopApp(workID types.WorkId) error {
+func (m *Minter) StopApp(workID gtype.WorkId) error {
 	ctx := context.Background()
 	user, err := chain.GetAccount(m.ChainClient, workID)
 	if err != nil {
