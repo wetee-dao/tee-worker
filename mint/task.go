@@ -15,9 +15,8 @@ import (
 
 // check task status，if task is running, return pod, if task not run, create pod
 func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) (*v1.Pod, error) {
-	k8s := m.K8sClient.CoreV1()
 	address := hex.EncodeToString(state.ContractState.User[:])
-	nameSpace := k8s.Pods(address[1:])
+	nameSpace := m.K8sClient.CoreV1().Pods(address[1:])
 	workID := state.ContractState.WorkId
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
@@ -48,8 +47,7 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workID types.Work
 		return errc
 	}
 
-	k8s := m.K8sClient.CoreV1()
-	nameSpace := k8s.Pods(saddress)
+	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
 	err := dao.SetSecrets(workID, &dao.Secrets{

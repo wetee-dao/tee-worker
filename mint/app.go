@@ -17,9 +17,8 @@ import (
 // checkAppStatus check app status
 // 校对应用状态
 func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (*v1.Pod, error) {
-	k8s := m.K8sClient.CoreV1()
 	address := AccountToAddress(state.ContractState.User[:])
-	nameSpace := k8s.Pods(address)
+	nameSpace := m.K8sClient.CoreV1().Pods(address)
 	workID := state.ContractState.WorkId
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
@@ -55,8 +54,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID types.WorkI
 		return errc
 	}
 
-	k8s := m.K8sClient.CoreV1()
-	nameSpace := k8s.Pods(saddress)
+	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
 	err := dao.SetSecrets(workID, &dao.Secrets{
@@ -140,10 +138,8 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID types.WorkI
 }
 
 func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workID types.WorkId, app *types.TeeApp, version uint64) error {
-	k8s := m.K8sClient.CoreV1()
-
 	saddress := AccountToAddress(user)
-	nameSpace := k8s.Pods(saddress)
+	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 
 	existingPod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
@@ -175,8 +171,7 @@ func (m *Minter) StopApp(workID types.WorkId) error {
 
 	saddress := AccountToAddress(user[:])
 
-	k8s := m.K8sClient.CoreV1()
-	nameSpace := k8s.Pods(saddress)
+	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
 	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
 	return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
 }
