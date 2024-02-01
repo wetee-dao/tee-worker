@@ -35,7 +35,7 @@ A few useful ones are as follow:
 ```bash
 # Use Docker to build (ego build must be run in sgx)
 docker run --device /dev/sgx/enclave --device /dev/sgx/provision \
-    -v ${PWD}:/srv wetee/worker:dev \
+    -v ${PWD}:/srv wetee/ego-ubuntu:20.04 \
     bash -c "cd /srv && ego-go build -o ./bin/manager ./cmd/main.go"
 
 # Build wetee-worker image
