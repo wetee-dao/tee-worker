@@ -1,10 +1,9 @@
 package mint
 
 import (
-	"fmt"
-
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
+	"wetee.app/worker/util"
 
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"github.com/wetee-dao/go-sdk/gen/weteeapp"
@@ -44,7 +43,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 		for _, change := range elem.Changes {
 			var cs gtypes.ClusterContractState
 			if err := codec.Decode(change.StorageData, &cs); err != nil {
-				fmt.Println(err)
+				util.LogWithRed("codec.Decode", err)
 				continue
 			}
 			list[cs.WorkId] = ContractStateWrap{
@@ -92,35 +91,34 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 
 	err = m.GetWorkContracts(workIds, workContractkeys, list, at)
 	if err != nil {
-		fmt.Println("GetWorkContracts", err)
+		util.LogWithRed("GetWorkContracts", err)
 		return nil, err
 	}
 
 	err = m.GetApps(appIds, appKeys, list, at)
 	if err != nil {
-		fmt.Println("GetApps", err)
+		util.LogWithRed("GetApps", err)
 		return nil, err
 	}
 
 	err = m.GetTasks(taskIds, tasKeys, list, at)
 	if err != nil {
-		fmt.Println("GetTasks", err)
+		util.LogWithRed("GetTasks", err)
 		return nil, err
 	}
 
 	err = m.GetVerions(appIds, appVersions, list, at)
 	if err != nil {
-		fmt.Println("GetVerions APP", err)
+		util.LogWithRed("GetVerions APP", err)
 		return nil, err
 	}
 
 	err = m.GetVerions(taskIds, taskVersions, list, at)
 	if err != nil {
-		fmt.Println("GetVerions TASK", err)
+		util.LogWithRed("GetVerions TASK", err)
 		return nil, err
 	}
 
-	fmt.Println(err)
 	return list, nil
 }
 
@@ -135,7 +133,7 @@ func (m *Minter) GetWorkContracts(workID []gtypes.WorkId, wkeys []types.StorageK
 			var workId = workID[IndexOf(wkeys, key)]
 			var wcs gtypes.ContractState
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				fmt.Println(err)
+				util.LogWithRed("codec.Decode", err)
 				continue
 			}
 			d := data[workId]
@@ -159,7 +157,7 @@ func (m *Minter) GetApps(workID []gtypes.WorkId, wkeys []types.StorageKey, data 
 			var workId = workID[IndexOf(wkeys, key)]
 			var wcs gtypes.TeeApp
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				fmt.Println(err)
+				util.LogWithRed("codec.Decode", err)
 				continue
 			}
 			d := data[workId]
@@ -184,7 +182,7 @@ func (m *Minter) GetTasks(workID []gtypes.WorkId, wkeys []types.StorageKey, data
 			var workId = workID[IndexOf(wkeys, key)]
 			var wcs gtypes.TeeTask
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				fmt.Println(err)
+				util.LogWithRed("codec.Decode", err)
 				continue
 			}
 			d := data[workId]
@@ -208,7 +206,7 @@ func (m *Minter) GetVerions(workID []gtypes.WorkId, wkeys []types.StorageKey, da
 			var workId = workID[IndexOf(wkeys, key)]
 			var wcs uint64
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				fmt.Println(err)
+				util.LogWithRed("codec.Decode", err)
 				continue
 			}
 			d := data[workId]

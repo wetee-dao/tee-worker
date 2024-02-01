@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wetee-dao/go-sdk/gen/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (m *Minter) getMetricInfo(ctx context.Context, nameSpace, name string, stage uint64) ([]string, map[string][]int64, error) {
+func (m *Minter) getMetricInfo(ctx context.Context, wid types.WorkId, nameSpace, name string, stage uint64) ([]string, map[string][]int64, error) {
 	podLogOpts := &corev1.PodLogOptions{
 		SinceTime: &metav1.Time{
 			Time: time.Now().Add(-6 * time.Second * time.Duration(stage)),
@@ -41,22 +42,26 @@ func (m *Minter) getMetricInfo(ctx context.Context, nameSpace, name string, stag
 	}
 
 	fmt.Println("================================================logs: ", logs)
-
-	// 获取Pod的内存使用情况
-	// Gets the memory usage of the Pod
-	podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses(nameSpace).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// 遍历Pod的容器，获取内存使用情况
-	// Walk through the Pod container to get memory usage
 	var mem map[string][]int64 = map[string][]int64{}
-	for _, container := range podMetrics.Containers {
-		fmt.Println("Pod ", podMetrics.Name, " CPU使用情况: ", container.Usage.Cpu().Value())
-		fmt.Println("Pod ", podMetrics.Name, " 内存使用情况: ", container.Usage.Memory().Value()/1024/1024)
+	if wid.Wtype.IsAPP {
+		// 获取Pod的内存使用情况
+		// Gets the memory usage of the Pod
+		podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses(nameSpace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return nil, nil, err
+		}
 
-		mem[container.Name] = []int64{container.Usage.Cpu().Value(), container.Usage.Memory().Value() / 1024 / 1024}
+		// 遍历Pod的容器，获取内存使用情况
+		// Walk through the Pod container to get memory usage
+		var mem map[string][]int64 = map[string][]int64{}
+		for _, container := range podMetrics.Containers {
+			fmt.Println("Pod ", podMetrics.Name, " CPU使用情况: ", container.Usage.Cpu().Value())
+			fmt.Println("Pod ", podMetrics.Name, " 内存使用情况: ", container.Usage.Memory().Value()/1024/1024)
+
+			mem[container.Name] = []int64{container.Usage.Cpu().Value(), container.Usage.Memory().Value() / 1024 / 1024, 0}
+		}
+	} else {
+		mem["d"] = []int64{0, 0, 0}
 	}
 
 	return logs, mem, nil

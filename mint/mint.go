@@ -206,16 +206,18 @@ mintStart:
 			continue
 		}
 
+		fmt.Println("===========================================GetClusterContracts: ", cs)
+
 		// 校对合约状态
 		// Check contract status
 		for _, c := range cs {
 			state := c.WorkState
 			ctx := context.Background()
-			app := c.App
 
 			// 如果是APP类型，检查Pod状态，检查是否需要上传工作证明
 			// If it is APP type, check Pod status, check if it needs to upload work proof
 			if c.ContractState.WorkId.Wtype.IsAPP {
+				app := c.App
 				// 状态为停止状态，停止Pod
 				if uint64(app.Status) == 2 {
 					m.StopApp(c.ContractState.WorkId)
@@ -233,13 +235,13 @@ mintStart:
 				if uint64(app.Status) == 1 && uint64(head.Number)-state.BlockNumber >= uint64(stage) {
 					util.LogWithRed("=========================================== WorkProofUpload APP")
 
-					workID := c.ContractState.WorkId
-					name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+					workId := c.ContractState.WorkId
+					name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 					nameSpace := AccountToAddress(c.ContractState.User[:])
 
 					// 获取log和硬件资源使用量
 					// Get log and hardware resource usage
-					logs, crs, err := m.getMetricInfo(ctx, nameSpace, name, uint64(head.Number)-state.BlockNumber)
+					logs, crs, err := m.getMetricInfo(ctx, workId, nameSpace, name, uint64(head.Number)-state.BlockNumber)
 					if err != nil {
 						util.LogWithRed("getMetricInfo", err)
 						continue
@@ -278,6 +280,7 @@ mintStart:
 			// 如果是TASK类型，检查Pod状态，Pod如果执行完成，则上传日志和结果
 			// If it is TASK type, check Pod status, Pod if it is executed, upload logs and results
 			if c.ContractState.WorkId.Wtype.IsTASK {
+				app := c.Task
 				// 状态为停止状态，停止Pod
 				if uint64(app.Status) == 2 {
 					m.StopApp(c.ContractState.WorkId)
@@ -295,12 +298,12 @@ mintStart:
 				if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
 					util.LogWithRed("===========================================WorkProofUpload TASK")
 					nameSpace := AccountToAddress(c.ContractState.User[:])
-					workID := c.ContractState.WorkId
-					name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+					workId := c.ContractState.WorkId
+					name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
 					// 获取log和硬件资源使用量
 					// Obtain the log and hardware resource usage
-					logs, crs, err := m.getMetricInfo(ctx, nameSpace, name, uint64(head.Number)-state.BlockNumber)
+					logs, crs, err := m.getMetricInfo(ctx, workId, nameSpace, name, uint64(head.Number)-state.BlockNumber)
 					if err != nil {
 						util.LogWithRed("getMetricInfo", err)
 						continue
@@ -325,7 +328,7 @@ mintStart:
 					err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, types.Cr{
 						Cpu:  cr[0],
 						Mem:  cr[1],
-						Disk: cr[2],
+						Disk: 0,
 					}, []byte(""))
 					if err != nil {
 						util.LogWithRed("WorkProofUpload", err)

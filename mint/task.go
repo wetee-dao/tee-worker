@@ -25,12 +25,16 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 	version := state.Version
 
 	pod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
-	if err != nil && err.Error() != "pods \""+name+"\" not found" {
-		err := m.CreateTask(ctx, state.ContractState.User[:], workID, app, version)
-		if err != nil {
-			return nil, err
+	if err != nil {
+		if err.Error() == "pods \""+name+"\" not found" {
+			err := m.CreateTask(ctx, state.ContractState.User[:], workID, app, version)
+			if err != nil {
+				return nil, err
+			}
+			return nameSpace.Get(*ctx, name, metav1.GetOptions{})
 		}
-		return nameSpace.Get(*ctx, name, metav1.GetOptions{})
+
+		return nil, err
 	}
 
 	return pod, nil
@@ -111,14 +115,15 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workID types.Work
 						},
 						Resources: v1.ResourceRequirements{
 							Limits: v1.ResourceList{
-								"alibabacloud.com/sgx_epc_MiB": *resource.NewMilliQuantity(int64(20), resource.DecimalSI),
+								"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 							},
 							Requests: v1.ResourceList{
-								"alibabacloud.com/sgx_epc_MiB": *resource.NewMilliQuantity(int64(20), resource.DecimalSI),
+								"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 							},
 						},
 					},
 				},
+				RestartPolicy: v1.RestartPolicyNever,
 			},
 		}
 		_, err = nameSpace.Create(*ctx, pod, metav1.CreateOptions{})
