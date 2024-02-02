@@ -11,6 +11,8 @@ import (
 	"github.com/wetee-dao/go-sdk/gen/weteeworker"
 )
 
+// 合约状态
+// Contract State
 type ContractStateWrap struct {
 	BlockHash     string
 	ContractState *gtypes.ClusterContractState
@@ -20,6 +22,8 @@ type ContractStateWrap struct {
 	Version       uint64
 }
 
+// 获取合约状态
+// Get Cluster Contracts
 func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtypes.WorkId]ContractStateWrap, error) {
 	var pallet, method = "WeteeWorker", "ClusterContracts"
 	set, err := m.ChainClient.QueryDoubleMapAll(pallet, method, clusterID, at)
@@ -130,6 +134,8 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 	return list, nil
 }
 
+// 获取 work contract 的状态
+// Get Work Contracts
 func (m *Minter) GetWorkContracts(workID []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
 	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
 	if err != nil {
@@ -154,6 +160,8 @@ func (m *Minter) GetWorkContracts(workID []gtypes.WorkId, wkeys []types.StorageK
 	return nil
 }
 
+// 获取应用信息
+// Get app info
 func (m *Minter) GetApps(workID []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
 	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
 	if err != nil {
@@ -178,6 +186,8 @@ func (m *Minter) GetApps(workID []gtypes.WorkId, wkeys []types.StorageKey, data 
 	return nil
 }
 
+// 获取 task 的状态
+// Get Task info
 func (m *Minter) GetTasks(workID []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
 	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
 	if err != nil {
@@ -203,6 +213,8 @@ func (m *Minter) GetTasks(workID []gtypes.WorkId, wkeys []types.StorageKey, data
 	return nil
 }
 
+// 获取版本信息
+// Get Version info
 func (m *Minter) GetVerions(workID []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
 	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
 	if err != nil {
@@ -226,6 +238,8 @@ func (m *Minter) GetVerions(workID []gtypes.WorkId, wkeys []types.StorageKey, da
 	return nil
 }
 
+// 获取索引
+// Get index of key
 func IndexOf(list []types.StorageKey, val types.StorageKey) int {
 	for i, x := range list {
 		if x.Hex() == val.Hex() {
