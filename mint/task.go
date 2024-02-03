@@ -96,8 +96,8 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) (*v1.Pod, error) {
 	address := hex.EncodeToString(state.ContractState.User[:])
 	nameSpace := m.K8sClient.CoreV1().Pods(address[1:])
-	workID := state.ContractState.WorkId
-	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	workId := state.ContractState.WorkId
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
 	app := state.Task
 	version := state.Version
@@ -105,7 +105,11 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 	pod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if err.Error() == "pods \""+name+"\" not found" {
-			err := m.CreateTask(ctx, state.ContractState.User[:], workID, app, version)
+			envs, err := m.GetEnvsFromSettings(workId, state.Settings)
+			if err != nil {
+				return nil, err
+			}
+			err = m.CreateTask(ctx, state.ContractState.User[:], workId, app, envs, version)
 			if err != nil {
 				return nil, err
 			}
@@ -119,7 +123,7 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 }
 
 // create task
-func (m *Minter) CreateTask(ctx *context.Context, user []byte, workID gtype.WorkId, app *gtype.TeeTask, version uint64) error {
+func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeTask, envs []v1.EnvVar, version uint64) error {
 	saddress := AccountToAddress(user[:])
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
@@ -127,9 +131,9 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workID gtype.Work
 	}
 
 	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
-	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
-	err := dao.SetSecrets(workID, &dao.Secrets{
+	err := dao.SetSecrets(workId, &dao.Secrets{
 		Env: map[string]string{
 			"": "",
 		},
@@ -152,11 +156,6 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workID gtype.Work
 		_, err = nameSpace.Update(*ctx, existingPod, metav1.UpdateOptions{})
 		fmt.Println("================================================= Update", err)
 	} else {
-		// 用于应用联系控制面板的凭证
-		wid, err := dao.SealAppID(workID)
-		if err != nil {
-			return err
-		}
 		pod := &v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Task",
@@ -180,16 +179,7 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workID gtype.Work
 								Protocol:      "TCP",
 							},
 						},
-						Env: []v1.EnvVar{
-							{
-								Name:  "APPID",
-								Value: wid,
-							},
-							{
-								Name:  "IN_TEE",
-								Value: string("1"),
-							},
-						},
+						Env: envs,
 						Resources: v1.ResourceRequirements{
 							Limits: v1.ResourceList{
 								"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),

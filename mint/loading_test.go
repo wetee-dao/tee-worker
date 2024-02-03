@@ -16,18 +16,18 @@ func TestLoading(t *testing.T) {
 	dao.DBInit("bin/testdb")
 	defer dao.DBClose()
 
-	workID := types.WorkId{
+	workId := types.WorkId{
 		Id: 1,
 		Wtype: types.WorkType{
 			IsAPP: true,
 		},
 	}
-	wid, err := dao.SealAppID(workID)
+	wid, err := dao.SealAppID(workId)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = dao.SetSecrets(workID, &dao.Secrets{
+	err = dao.SetSecrets(workId, &dao.Secrets{
 		Env: map[string]string{
 			"": "",
 		},

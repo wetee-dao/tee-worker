@@ -20,6 +20,7 @@ type ContractStateWrap struct {
 	App           *gtypes.TeeApp
 	Task          *gtypes.TeeTask
 	Version       uint64
+	Settings      []*gtypes.AppSetting
 }
 
 // 获取合约状态
@@ -38,10 +39,14 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 	var appKeys = make([]types.StorageKey, 0, len(set))
 	var appIds = make([]gtypes.WorkId, 0, len(set))
 	var appVersions = make([]types.StorageKey, 0, len(set))
+	var appSettingIds = make([]gtypes.WorkId, 0, len(set))
+	var appSettings = make([]types.StorageKey, 0, len(set))
 
 	var tasKeys = make([]types.StorageKey, 0, len(set))
 	var taskIds = make([]gtypes.WorkId, 0, len(set))
 	var taskVersions = make([]types.StorageKey, 0, len(set))
+	var taskSettingIds = make([]gtypes.WorkId, 0, len(set))
+	var taskSettings = make([]types.StorageKey, 0, len(set))
 
 	for _, elem := range set {
 		for _, change := range elem.Changes {
@@ -77,6 +82,20 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 					continue
 				}
 				appVersions = append(appVersions, vkey)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeApp", "AppSettings", cs.WorkId.Id)
+				if err != nil {
+					continue
+				}
+				var keys []types.StorageKey
+				keys, err = m.ChainClient.Api.RPC.State.GetKeysLatest(skey)
+				if err != nil {
+					continue
+				}
+				for _, k := range keys {
+					appSettingIds = append(appSettingIds, cs.WorkId)
+					appSettings = append(appSettings, k)
+				}
+
 			}
 
 			// 记录 task 相关参数
@@ -92,6 +111,19 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 					continue
 				}
 				taskVersions = append(taskVersions, vkey)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeTask", "AppSettings", cs.WorkId.Id)
+				if err != nil {
+					continue
+				}
+				var keys []types.StorageKey
+				keys, err = m.ChainClient.Api.RPC.State.GetKeysLatest(skey)
+				if err != nil {
+					continue
+				}
+				for _, k := range keys {
+					taskSettingIds = append(taskSettingIds, cs.WorkId)
+					taskSettings = append(taskSettings, k)
+				}
 			}
 		}
 	}
@@ -131,12 +163,26 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 		return nil, err
 	}
 
+	// 获取 app 的设置
+	err = m.GetSettings(appSettingIds, appSettings, list, at)
+	if err != nil {
+		util.LogWithRed("GetSettings APP", err)
+		return nil, err
+	}
+
+	// 获取 task 的设置
+	err = m.GetSettings(taskSettingIds, taskSettings, list, at)
+	if err != nil {
+		util.LogWithRed("GetSettings TASK", err)
+		return nil, err
+	}
+
 	return list, nil
 }
 
 // 获取 work contract 的状态
 // Get Work Contracts
-func (m *Minter) GetWorkContracts(workID []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
+func (m *Minter) GetWorkContracts(workId []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
 	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
 	if err != nil {
 		return err
@@ -144,7 +190,7 @@ func (m *Minter) GetWorkContracts(workID []gtypes.WorkId, wkeys []types.StorageK
 	for _, elem := range wsets {
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
-			var workId = workID[IndexOf(wkeys, key)]
+			var workId = workId[IndexOf(wkeys, key)]
 			var wcs gtypes.ContractState
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
 				util.LogWithRed("codec.Decode", err)
@@ -162,7 +208,7 @@ func (m *Minter) GetWorkContracts(workID []gtypes.WorkId, wkeys []types.StorageK
 
 // 获取应用信息
 // Get app info
-func (m *Minter) GetApps(workID []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
+func (m *Minter) GetApps(workId []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
 	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
 	if err != nil {
 		return err
@@ -170,7 +216,7 @@ func (m *Minter) GetApps(workID []gtypes.WorkId, wkeys []types.StorageKey, data 
 	for _, elem := range wsets {
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
-			var workId = workID[IndexOf(wkeys, key)]
+			var workId = workId[IndexOf(wkeys, key)]
 			var wcs gtypes.TeeApp
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
 				util.LogWithRed("codec.Decode", err)
@@ -188,7 +234,7 @@ func (m *Minter) GetApps(workID []gtypes.WorkId, wkeys []types.StorageKey, data 
 
 // 获取 task 的状态
 // Get Task info
-func (m *Minter) GetTasks(workID []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
+func (m *Minter) GetTasks(workId []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
 	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
 	if err != nil {
 		return err
@@ -197,7 +243,7 @@ func (m *Minter) GetTasks(workID []gtypes.WorkId, wkeys []types.StorageKey, data
 	for _, elem := range wsets {
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
-			var workId = workID[IndexOf(wkeys, key)]
+			var workId = workId[IndexOf(wkeys, key)]
 			var wcs gtypes.TeeTask
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
 				util.LogWithRed("codec.Decode", err)
@@ -215,7 +261,7 @@ func (m *Minter) GetTasks(workID []gtypes.WorkId, wkeys []types.StorageKey, data
 
 // 获取版本信息
 // Get Version info
-func (m *Minter) GetVerions(workID []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
+func (m *Minter) GetVerions(workId []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
 	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
 	if err != nil {
 		return err
@@ -223,7 +269,7 @@ func (m *Minter) GetVerions(workID []gtypes.WorkId, wkeys []types.StorageKey, da
 	for _, elem := range wsets {
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
-			var workId = workID[IndexOf(wkeys, key)]
+			var workId = workId[IndexOf(wkeys, key)]
 			var wcs uint64
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
 				util.LogWithRed("codec.Decode", err)
@@ -236,6 +282,61 @@ func (m *Minter) GetVerions(workID []gtypes.WorkId, wkeys []types.StorageKey, da
 	}
 
 	return nil
+}
+
+// 获取版本信息
+// Get settings
+func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
+	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
+	if err != nil {
+		return err
+	}
+	for _, elem := range wsets {
+		for _, change := range elem.Changes {
+			var key = change.StorageKey
+			var workId = workId[IndexOf(wkeys, key)]
+			var wcs gtypes.AppSetting
+			if err := codec.Decode(change.StorageData, &wcs); err != nil {
+				util.LogWithRed("codec.Decode", err)
+				continue
+			}
+			d := data[workId]
+			d.Settings = append(d.Settings, &wcs)
+			data[workId] = d
+		}
+	}
+
+	return nil
+}
+
+func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*gtypes.AppSetting, error) {
+	var pallet, method string
+	if workId.Wtype.IsAPP {
+		pallet = "WeteeApp"
+		method = "AppSettings"
+	} else if workId.Wtype.IsTASK {
+		pallet = "WeteeTask"
+		method = "AppSettings"
+	}
+	sets, err := m.ChainClient.QueryDoubleMapAll(pallet, method, workId.Id, at)
+	if err != nil {
+		util.LogWithRed("QueryDoubleMapAll", err)
+		return []*gtypes.AppSetting{}, err
+	}
+
+	settings := make([]*gtypes.AppSetting, 0, len(sets))
+	for _, elem := range sets {
+		for _, change := range elem.Changes {
+			var wcs gtypes.AppSetting
+			if err := codec.Decode(change.StorageData, &wcs); err != nil {
+				util.LogWithRed("codec.Decode", err)
+				continue
+			}
+			settings = append(settings, &wcs)
+		}
+	}
+
+	return settings, nil
 }
 
 // 获取索引

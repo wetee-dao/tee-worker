@@ -178,7 +178,8 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		return false, gqlerror.Errorf("Chain ClusterRegister error:" + err.Error())
 	}
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(7 * time.Second)
+
 	clusterId, err := worker.Getk8sClusterAccounts(mint.Signer.PublicKey)
 	if err != nil {
 		return false, gqlerror.Errorf("Getk8sClusterAccounts:" + err.Error())

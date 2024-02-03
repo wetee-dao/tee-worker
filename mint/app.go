@@ -95,12 +95,12 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (*v1.Pod, error) {
 	address := AccountToAddress(state.ContractState.User[:])
 	nameSpace := m.K8sClient.CoreV1().Pods(address)
-	workID := state.ContractState.WorkId
-	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	workId := state.ContractState.WorkId
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
 	app := state.App
 	if uint8(app.Status) == 2 {
-		m.StopApp(workID)
+		m.StopApp(workId)
 		return nil, errors.New("app stop")
 	}
 
@@ -111,11 +111,18 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 
 	version := state.Version
 	if pod.ObjectMeta.Annotations["version"] != fmt.Sprint(version) {
-		err = m.CreateApp(ctx, state.ContractState.User[:], workID, app, version)
+		envs, err := m.GetEnvsFromSettings(workId, state.Settings)
+		if err != nil {
+			return nil, err
+		}
+		err = m.CreateApp(ctx, state.ContractState.User[:], workId, app, envs, version)
 		if err != nil {
 			return nil, err
 		}
 		pod, err = nameSpace.Get(*ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return pod, err
@@ -123,7 +130,7 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID gtype.WorkId, app *gtype.TeeApp, version uint64) error {
+func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeApp, envs []v1.EnvVar, version uint64) error {
 	saddress := AccountToAddress(user)
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
@@ -131,9 +138,9 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID gtype.WorkI
 	}
 
 	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
-	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
-	err := dao.SetSecrets(workID, &dao.Secrets{
+	err := dao.SetSecrets(workId, &dao.Secrets{
 		Env: map[string]string{
 			"": "",
 		},
@@ -145,7 +152,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID gtype.WorkI
 	existingPod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err == nil {
 		if uint8(app.Status) == 2 {
-			m.StopApp(workID)
+			m.StopApp(workId)
 			return nil
 		}
 		existingPod.ObjectMeta.Annotations = map[string]string{
@@ -156,11 +163,6 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID gtype.WorkI
 		_, err = nameSpace.Update(*ctx, existingPod, metav1.UpdateOptions{})
 		fmt.Println("================================================= Update", err)
 	} else {
-		// 用于应用联系控制面板的凭证
-		wid, err := dao.SealAppID(workID)
-		if err != nil {
-			return err
-		}
 		pod := &v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "App",
@@ -184,16 +186,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID gtype.WorkI
 								Protocol:      "TCP",
 							},
 						},
-						Env: []v1.EnvVar{
-							{
-								Name:  "APPID",
-								Value: wid,
-							},
-							{
-								Name:  "IN_TEE",
-								Value: string("1"),
-							},
-						},
+						Env: envs,
 						Resources: v1.ResourceRequirements{
 							Limits: v1.ResourceList{
 								"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
@@ -213,15 +206,15 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workID gtype.WorkI
 	return err
 }
 
-func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workID gtype.WorkId, app *gtype.TeeApp, version uint64) error {
+func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeApp, version uint64) error {
 	saddress := AccountToAddress(user)
 	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
-	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
 	existingPod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err == nil {
 		if uint8(app.Status) == 2 {
-			m.StopApp(workID)
+			m.StopApp(workId)
 			return nil
 		}
 		existingPod.ObjectMeta.Annotations = map[string]string{
@@ -238,9 +231,9 @@ func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workID gtype.WorkI
 
 // StopApp
 // 停止应用
-func (m *Minter) StopApp(workID gtype.WorkId) error {
+func (m *Minter) StopApp(workId gtype.WorkId) error {
 	ctx := context.Background()
-	user, err := chain.GetAccount(m.ChainClient, workID)
+	user, err := chain.GetAccount(m.ChainClient, workId)
 	if err != nil {
 		return err
 	}
@@ -248,6 +241,6 @@ func (m *Minter) StopApp(workID gtype.WorkId) error {
 	saddress := AccountToAddress(user[:])
 
 	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
-	name := util.GetWorkTypeStr(workID) + "-" + fmt.Sprint(workID.Id)
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 	return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
 }
