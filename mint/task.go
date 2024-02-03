@@ -148,54 +148,49 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtype.Work
 		if err != nil {
 			return err
 		}
-		existingPod.ObjectMeta.Annotations = map[string]string{
-			"version": fmt.Sprint(version),
-		}
+		existingPod.ObjectMeta.Annotations = map[string]string{"version": fmt.Sprint(version)}
 		existingPod.Spec.Containers[0].Image = string(app.Image)
 		existingPod.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
 		_, err = nameSpace.Update(*ctx, existingPod, metav1.UpdateOptions{})
 		fmt.Println("================================================= Update", err)
-	} else {
-		pod := &v1.Pod{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Task",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
-				Annotations: map[string]string{
-					"version": fmt.Sprint(version),
-				},
-			},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					{
-						Name:  "c1",
-						Image: string(app.Image),
-						Ports: []v1.ContainerPort{
-							{
-								Name:          string(app.Name) + "0",
-								ContainerPort: int32(app.Port[0]),
-								Protocol:      "TCP",
-							},
+		return err
+	}
+
+	pod := &v1.Pod{
+		TypeMeta: metav1.TypeMeta{Kind: "Task", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Annotations: map[string]string{"version": fmt.Sprint(version)},
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  "c1",
+					Image: string(app.Image),
+					Ports: []v1.ContainerPort{
+						{
+							Name:          string(app.Name) + "0",
+							ContainerPort: int32(app.Port[0]),
+							Protocol:      "TCP",
 						},
-						Env: envs,
-						Resources: v1.ResourceRequirements{
-							Limits: v1.ResourceList{
-								"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
-							},
-							Requests: v1.ResourceList{
-								"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
-							},
+					},
+					Env: envs,
+					Resources: v1.ResourceRequirements{
+						Limits: v1.ResourceList{
+							"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
+						},
+						Requests: v1.ResourceList{
+							"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 						},
 					},
 				},
-				RestartPolicy: v1.RestartPolicyNever,
 			},
-		}
-		_, err = nameSpace.Create(*ctx, pod, metav1.CreateOptions{})
-		fmt.Println("================================================= Create", err)
+			RestartPolicy: v1.RestartPolicyNever,
+		},
 	}
+
+	_, err = nameSpace.Create(*ctx, pod, metav1.CreateOptions{})
+	fmt.Println("================================================= Create", err)
 
 	return err
 }

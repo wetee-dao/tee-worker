@@ -2,6 +2,7 @@ package mint
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
@@ -155,53 +156,56 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 			m.StopApp(workId)
 			return nil
 		}
-		existingPod.ObjectMeta.Annotations = map[string]string{
-			"version": fmt.Sprint(version),
-		}
+
+		existingPod.ObjectMeta.Annotations = map[string]string{"version": fmt.Sprint(version)}
 		existingPod.Spec.Containers[0].Image = string(app.Image)
 		existingPod.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
 		_, err = nameSpace.Update(*ctx, existingPod, metav1.UpdateOptions{})
 		fmt.Println("================================================= Update", err)
-	} else {
-		pod := &v1.Pod{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "App",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
-				Annotations: map[string]string{
-					"version": fmt.Sprint(version),
-				},
-			},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					{
-						Name:  "c1",
-						Image: string(app.Image),
-						Ports: []v1.ContainerPort{
-							{
-								Name:          string(app.Name) + "0",
-								ContainerPort: int32(app.Port[0]),
-								Protocol:      "TCP",
-							},
+		return err
+	}
+	resource.NewMilliQuantity(int64(app.Cr.Mem)*1024*1024, resource.BinarySI)
+	pod := &v1.Pod{
+		TypeMeta: metav1.TypeMeta{Kind: "App", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Annotations: map[string]string{"version": fmt.Sprint(version)},
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  "c1",
+					Image: string(app.Image),
+					Ports: []v1.ContainerPort{
+						{
+							Name:          string(app.Name) + "0",
+							ContainerPort: int32(app.Port[0]),
+							Protocol:      "TCP",
 						},
-						Env: envs,
-						Resources: v1.ResourceRequirements{
-							Limits: v1.ResourceList{
-								"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
-							},
-							Requests: v1.ResourceList{
-								"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
-							},
+					},
+					Env: envs,
+					Resources: v1.ResourceRequirements{
+						Limits: v1.ResourceList{
+							// v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+							// v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+							"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
+						},
+						Requests: v1.ResourceList{
+							// v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+							// v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+							"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 						},
 					},
 				},
 			},
-		}
-		_, err = nameSpace.Create(*ctx, pod, metav1.CreateOptions{})
-		fmt.Println("================================================= Create", err)
+		},
 	}
+
+	bt, _ := json.Marshal(20)
+	fmt.Println(string(bt))
+
+	_, err = nameSpace.Create(*ctx, pod, metav1.CreateOptions{})
+	fmt.Println("================================================= Create", err)
 
 	return err
 }

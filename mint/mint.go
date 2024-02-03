@@ -115,7 +115,7 @@ mintStart:
 
 	for {
 		head := <-sub.Chan()
-		fmt.Printf("Chain is at block: #%v\n", head.Number)
+		util.LogWithRed("Chain is at block: #", fmt.Sprint(head.Number))
 		blockHash, _ := chainAPI.RPC.Chain.GetBlockHash(uint64(head.Number))
 
 		// 读取/处理新的区块信息
@@ -152,7 +152,7 @@ mintStart:
 			continue
 		}
 
-		fmt.Println("===========================================GetClusterContracts: ", cs)
+		fmt.Println("===========================================GetClusterContracts: ", len(cs))
 
 		// 校对合约状态
 		// Check contract status

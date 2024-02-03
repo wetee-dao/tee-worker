@@ -23,7 +23,7 @@ func getWorkLogHash(name string, log []string, blockNumber uint64) ([]byte, erro
 }
 
 // TODO 工作量证明查询
-func getWorkCrHash(name string, cr map[string][]int64, blockNumber uint64) ([]byte, []uint16, error) {
+func getWorkCrHash(name string, cr map[string][]int64, blockNumber uint64) ([]byte, []uint32, error) {
 	pf := WorkCrProof{
 		BlockNumber: blockNumber,
 		Time:        uint64(time.Now().Unix()),
@@ -34,10 +34,10 @@ func getWorkCrHash(name string, cr map[string][]int64, blockNumber uint64) ([]by
 
 	err := dao.Addlog([]byte(name), bt)
 
-	crA := []uint16{0, 0}
+	crA := []uint32{0, 0}
 	for _, v := range cr {
-		crA[0] += uint16(v[0])
-		crA[1] += uint16(v[1])
+		crA[0] += uint32(v[0])
+		crA[1] += uint32(v[1])
 	}
 	return hash[:], crA, err
 }

@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"context"
 	"encoding/hex"
+	"strconv"
+	"strings"
 
 	"fmt"
 	"time"
@@ -60,10 +62,10 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 		// 遍历Pod的容器，获取内存使用情况
 		// Walk through the Pod container to get memory usage
 		for _, container := range podMetrics.Containers {
-			fmt.Println("Pod ", podMetrics.Name, " CPU使用情况: ", container.Usage.Cpu().Value())
-			fmt.Println("Pod ", podMetrics.Name, " 内存使用情况: ", container.Usage.Memory().Value()/1024/1024)
+			fmt.Println("Pod ", podMetrics.Name, " CPU使用情况: ", container.Usage.Cpu().MilliValue(), " M")
+			fmt.Println("Pod ", podMetrics.Name, " 内存使用情况: ", container.Usage.Memory().Value()/(1024*1024), " MB")
 
-			mem[container.Name] = []int64{container.Usage.Cpu().Value(), container.Usage.Memory().Value() / 1024 / 1024, 0}
+			mem[container.Name] = []int64{container.Usage.Cpu().MilliValue(), container.Usage.Memory().Value() / (1024 * 1024), 0}
 		}
 	}
 
@@ -137,4 +139,12 @@ func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Ap
 	}
 
 	return envs, nil
+}
+
+// 将内存使用情况从 Ki 转换为 MB
+func convertMemoryUsageToMB(memoryUsage string) float64 {
+	// 将 Ki 转换为 MB
+	memoryInKi, _ := strconv.ParseFloat(strings.TrimSuffix(memoryUsage, "Ki"), 64)
+	memoryInMB := memoryInKi / 1024
+	return memoryInMB
 }

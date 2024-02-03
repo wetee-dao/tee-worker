@@ -71,7 +71,7 @@ func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
-	err = worker.ClusterMortgage(id, uint16(cpu), uint16(mem), uint16(disk), uint64(deposit), false)
+	err = worker.ClusterMortgage(id, uint32(cpu), uint32(mem), uint32(disk), uint64(deposit), false)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -192,7 +192,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		return false, gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
 
-	err = worker.ClusterMortgage(id, uint16(1000), uint16(1000), uint16(1000), uint64(1000000), false)
+	err = worker.ClusterMortgage(id, uint32(1000000), uint32(1000000), uint32(1000000), uint64(100000000000), false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain ClusterMortgage error:" + err.Error())
 	}

@@ -60,6 +60,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				ContractState: &cs,
 			}
 
+			// 记录 work id
 			workIds = append(workIds, cs.WorkId)
 
 			// 获取 work contract的key
@@ -75,27 +76,30 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				if err != nil {
 					continue
 				}
+
 				appKeys = append(appKeys, akey)
 				appIds = append(appIds, cs.WorkId)
 				vkey, err := weteeapp.MakeAppVersionStorageKey(cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
+
 				appVersions = append(appVersions, vkey)
 				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeApp", "AppSettings", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
+
 				var keys []types.StorageKey
 				keys, err = m.ChainClient.Api.RPC.State.GetKeysLatest(skey)
 				if err != nil {
 					continue
 				}
+
 				for _, k := range keys {
 					appSettingIds = append(appSettingIds, cs.WorkId)
 					appSettings = append(appSettings, k)
 				}
-
 			}
 
 			// 记录 task 相关参数
@@ -104,22 +108,26 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				if err != nil {
 					continue
 				}
+
 				tasKeys = append(tasKeys, tkey)
 				taskIds = append(taskIds, cs.WorkId)
 				vkey, err := weteetask.MakeTaskVersionStorageKey(cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
+
 				taskVersions = append(taskVersions, vkey)
 				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeTask", "AppSettings", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
+
 				var keys []types.StorageKey
 				keys, err = m.ChainClient.Api.RPC.State.GetKeysLatest(skey)
 				if err != nil {
 					continue
 				}
+
 				for _, k := range keys {
 					taskSettingIds = append(taskSettingIds, cs.WorkId)
 					taskSettings = append(taskSettings, k)
@@ -187,6 +195,7 @@ func (m *Minter) GetWorkContracts(workId []gtypes.WorkId, wkeys []types.StorageK
 	if err != nil {
 		return err
 	}
+
 	for _, elem := range wsets {
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
@@ -213,6 +222,7 @@ func (m *Minter) GetApps(workId []gtypes.WorkId, wkeys []types.StorageKey, data 
 	if err != nil {
 		return err
 	}
+
 	for _, elem := range wsets {
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
@@ -266,6 +276,7 @@ func (m *Minter) GetVerions(workId []gtypes.WorkId, wkeys []types.StorageKey, da
 	if err != nil {
 		return err
 	}
+
 	for _, elem := range wsets {
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
@@ -291,6 +302,7 @@ func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, d
 	if err != nil {
 		return err
 	}
+
 	for _, elem := range wsets {
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
@@ -318,6 +330,7 @@ func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*g
 		pallet = "WeteeTask"
 		method = "AppSettings"
 	}
+
 	sets, err := m.ChainClient.QueryDoubleMapAll(pallet, method, workId.Id, at)
 	if err != nil {
 		util.LogWithRed("QueryDoubleMapAll", err)
