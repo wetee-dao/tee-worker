@@ -2,7 +2,7 @@
     "exe": "./manager",
     "key": "./keys/private.pem",
     "debug": true,
-    "heapSize": 512,
+    "heapSize": 256,
     "executableHeap": false,
     "productID": 1,
     "securityVersion": 1,

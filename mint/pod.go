@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/hex"
-	"strconv"
-	"strings"
 
 	"fmt"
 	"time"
@@ -88,14 +86,8 @@ func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 	}
 
 	envs := []corev1.EnvVar{
-		{
-			Name:  "APPID",
-			Value: wid,
-		},
-		{
-			Name:  "IN_TEE",
-			Value: string("1"),
-		},
+		{Name: "APPID", Value: wid},
+		{Name: "IN_TEE", Value: string("1")},
 	}
 
 	settings, err := m.GetSettingsFromWork(workId, nil)
@@ -139,12 +131,4 @@ func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Ap
 	}
 
 	return envs, nil
-}
-
-// 将内存使用情况从 Ki 转换为 MB
-func convertMemoryUsageToMB(memoryUsage string) float64 {
-	// 将 Ki 转换为 MB
-	memoryInKi, _ := strconv.ParseFloat(strings.TrimSuffix(memoryUsage, "Ki"), 64)
-	memoryInMB := memoryInKi / 1024
-	return memoryInMB
 }

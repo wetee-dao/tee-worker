@@ -59,8 +59,6 @@ func init() {
 }
 
 func main() {
-	fmt.Println(flag.Lookup("test.v"))
-
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
