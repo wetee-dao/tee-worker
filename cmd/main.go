@@ -117,7 +117,7 @@ func main() {
 	}
 
 	// 开启 mint 主线程
-	err = mint.InitMint(mgr)
+	err = mint.InitMint(mgr, "")
 	if err != nil {
 		setupLog.Error(err, "unable to start mint")
 		os.Exit(1)

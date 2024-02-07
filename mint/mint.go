@@ -33,7 +33,7 @@ var (
 
 // InitMint
 // 初始化矿工
-func InitMint(mgr manager.Manager) error {
+func InitMint(mgr manager.Manager, chainUrl string) error {
 	// 创建K8s Client
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
 	if err != nil {
@@ -47,7 +47,7 @@ func InitMint(mgr manager.Manager) error {
 	}
 
 	// 创建Chain Client
-	client, err := chain.ClientInit()
+	client, err := chain.ClientInit(chainUrl)
 	if err != nil {
 		return err
 	}
