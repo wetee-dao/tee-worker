@@ -160,6 +160,8 @@ func main() {
 	}
 }
 
+// loadConfig 加载配置
+// load config from env or from file
 func loadConfig(context string) *rest.Config {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	util.LogWithRed("LoadingRules", loadingRules)
@@ -172,6 +174,8 @@ func loadConfig(context string) *rest.Config {
 	return conf
 }
 
+// loadConfigWithContext 加载配置
+// load config from env or from file
 func loadConfigWithContext(apiServerURL string, loader clientcmd.ClientConfigLoader, context string) (*rest.Config, error) {
 	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		loader,
