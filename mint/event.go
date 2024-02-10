@@ -68,7 +68,8 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 				Client: m.ChainClient,
 			}
 			app, _ := appIns.GetApp(user[:], workId.Id)
-			err = m.UpdateApp(&ctx, user[:], workId, app, version)
+			envs, _ := m.GetEnvs(workId)
+			err = m.UpdateApp(&ctx, user[:], workId, app, envs, version)
 			util.LogWithRed("===========================================CreateOrUpdatePod error: ", err)
 		}
 	}

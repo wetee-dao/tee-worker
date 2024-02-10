@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
@@ -106,12 +107,13 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 	}
 
 	pod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
-	if err != nil && err.Error() != "pods \""+name+"\" not found" {
-		return nil, err
-	}
-
 	version := state.Version
-	if pod.ObjectMeta.Annotations["version"] != fmt.Sprint(version) {
+	if err != nil {
+		if !strings.Contains(err.Error(), "not found") {
+			return nil, err
+		}
+
+		// 重新创建
 		envs, err := m.GetEnvsFromSettings(workId, state.Settings)
 		if err != nil {
 			return nil, err
@@ -150,20 +152,11 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 		return err
 	}
 
-	existingPod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
-	if err == nil {
-		if uint8(app.Status) == 2 {
-			m.StopApp(workId)
-			return nil
-		}
-
-		existingPod.ObjectMeta.Annotations = map[string]string{"version": fmt.Sprint(version)}
-		existingPod.Spec.Containers[0].Image = string(app.Image)
-		existingPod.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
-		_, err = nameSpace.Update(*ctx, existingPod, metav1.UpdateOptions{})
-		fmt.Println("================================================= Update", err)
-		return err
+	if uint8(app.Status) == 2 {
+		m.StopApp(workId)
+		return nil
 	}
+
 	resource.NewMilliQuantity(int64(app.Cr.Mem)*1024*1024, resource.BinarySI)
 	pod := &v1.Pod{
 		TypeMeta: metav1.TypeMeta{Kind: "App", APIVersion: "v1"},
@@ -210,25 +203,16 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 	return err
 }
 
-func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeApp, version uint64) error {
-	saddress := AccountToAddress(user)
-	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
-	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-
-	existingPod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
-	if err == nil {
-		if uint8(app.Status) == 2 {
-			m.StopApp(workId)
-			return nil
-		}
-		existingPod.ObjectMeta.Annotations = map[string]string{
-			"version": fmt.Sprint(version),
-		}
-		existingPod.Spec.Containers[0].Image = string(app.Image)
-		existingPod.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
-		_, err = nameSpace.Update(*ctx, existingPod, metav1.UpdateOptions{})
-		fmt.Println("================================================= Update", err)
+func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeApp, envs []v1.EnvVar, version uint64) error {
+	if uint8(app.Status) == 2 {
+		m.StopApp(workId)
+		return nil
 	}
+
+	// 停止镜像再部署
+	m.StopApp(workId)
+	err := m.CreateApp(ctx, user, workId, app, envs, version)
+	fmt.Println("================================================= Update", err)
 
 	return err
 }
