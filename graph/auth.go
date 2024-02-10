@@ -39,8 +39,8 @@ func AuthCheck(ctx context.Context, obj interface{}, next graphql.Resolver, role
 	}
 
 	if user.Timestamp+360000 < time.Now().Unix() {
-		err = gqlerror.Errorf("Login expired, please log in again.")
-		return
+		// err = gqlerror.Errorf("Login expired, please log in again.")
+		// return
 	}
 	return next(ctx)
 }

@@ -15,8 +15,8 @@ spec:
         - run
         - /manager
         args:
-        - "--health-probe-bind-address=:8081"
-        - "--metrics-bind-address=127.0.0.1:8080"
+        - "--health-probe-bind-address=:8181"
+        - "--metrics-bind-address=127.0.0.1:8180"
         - "--leader-elect"
       - name: kube-rbac-proxy
         securityContext:
@@ -27,7 +27,7 @@ spec:
         image: quay.io/brancz/kube-rbac-proxy:v0.14.1
         args:
         - "--secure-listen-address=0.0.0.0:8443"
-        - "--upstream=http://127.0.0.1:8080/"
+        - "--upstream=http://127.0.0.1:8180/"
         - "--logtostderr=true"
         - "--v=0"
         ports:
