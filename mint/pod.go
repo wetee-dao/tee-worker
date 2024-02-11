@@ -10,7 +10,6 @@ import (
 
 	"github.com/pkg/errors"
 	chain "github.com/wetee-dao/go-sdk"
-	gtype "github.com/wetee-dao/go-sdk/gen/types"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -138,7 +137,7 @@ func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Ap
 
 // StopApp
 // 停止应用
-func (m *Minter) StopApp(workId gtype.WorkId) error {
+func (m *Minter) StopApp(workId gtypes.WorkId) error {
 	ctx := context.Background()
 	user, err := chain.GetAccount(m.ChainClient, workId)
 	if err != nil {
