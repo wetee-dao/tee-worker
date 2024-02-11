@@ -250,19 +250,3 @@ func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 
 	return err
 }
-
-// StopApp
-// 停止应用
-func (m *Minter) StopApp(workId gtype.WorkId) error {
-	ctx := context.Background()
-	user, err := chain.GetAccount(m.ChainClient, workId)
-	if err != nil {
-		return err
-	}
-
-	saddress := AccountToAddress(user[:])
-
-	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
-	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-	return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
-}

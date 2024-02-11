@@ -88,6 +88,8 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 			util.LogWithRed("WorkProofUpload", err)
 			return err
 		}
+
+		m.StopApp(c.ContractState.WorkId)
 	}
 	return nil
 }

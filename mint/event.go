@@ -54,7 +54,6 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 		if appEvent.IsWorkStopped {
 			workId := appEvent.AsWorkStoppedWorkId1
 
-			util.LogWithRed("===========================================StopPod", workId)
 			err = m.StopApp(workId)
 			util.LogWithRed("===========================================StopPod error: ", err)
 		}

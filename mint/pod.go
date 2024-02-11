@@ -9,10 +9,13 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	chain "github.com/wetee-dao/go-sdk"
+	gtype "github.com/wetee-dao/go-sdk/gen/types"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/dao"
+	"wetee.app/worker/util"
 )
 
 func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace, name string, stage uint64) ([]string, map[string][]int64, error) {
@@ -131,4 +134,27 @@ func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Ap
 	}
 
 	return envs, nil
+}
+
+// StopApp
+// 停止应用
+func (m *Minter) StopApp(workId gtype.WorkId) error {
+	ctx := context.Background()
+	user, err := chain.GetAccount(m.ChainClient, workId)
+	if err != nil {
+		return err
+	}
+
+	saddress := AccountToAddress(user[:])
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	// util.LogWithRed("===========================================StopPod", workId, " ", name)
+
+	if workId.Wtype.IsAPP {
+		nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
+
+		return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
+	}
+
+	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
+	return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
 }
