@@ -239,9 +239,11 @@ func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 
 	existing, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err == nil {
+		fmt.Println("================================================= Updating", name)
 		existing.ObjectMeta.Annotations = map[string]string{
 			"version": fmt.Sprint(version),
 		}
+		existing.Spec.Template.Spec.Containers[0].Env = envs
 		existing.Spec.Template.Spec.Containers[0].Image = string(app.Image)
 		existing.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
 		_, err = nameSpace.Update(*ctx, existing, metav1.UpdateOptions{})
