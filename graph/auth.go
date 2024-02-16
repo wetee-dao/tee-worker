@@ -75,64 +75,65 @@ func InitUser(w http.ResponseWriter, r *http.Request) *model.User {
 // decodeToken decodes the share session cookie and packs the session into context
 func decodeToken(tokenStr string) *model.User {
 	token := strings.Split(tokenStr, "||")
-
 	if len(token) != 2 {
+		fmt.Println("token length error => ", len(token))
 		return nil
-	} else {
-		bt, terr := subkey.DecodeHex(token[0])
-		if !terr {
-			fmt.Println(terr)
-			return nil
-		}
-
-		user := &model.User{}
-		err := json.Unmarshal(bt, user)
-		if err != nil {
-			fmt.Println(err)
-			return nil
-		}
-
-		root, err := dao.GetRootUser()
-		if err == nil {
-			user.IsRoot = (root == user.Address)
-		} else {
-			user.IsRoot = false
-		}
-
-		// 解析地址
-		_, pubkeyBytes, err := subkey.SS58Decode(user.Address)
-		if err != nil {
-			fmt.Println(err)
-			return nil
-		}
-
-		// 解析公钥
-		pubkey, err := sr25519.Scheme{}.FromPublicKey(pubkeyBytes)
-		if err != nil {
-			fmt.Println(err)
-			return nil
-		}
-
-		// 解析签名
-		sig, chainerr := subkey.DecodeHex(token[1])
-		if !chainerr {
-			fmt.Println(err)
-			return nil
-		}
-
-		uinput := model.LoginContent{
-			Address:   user.Address,
-			Timestamp: user.Timestamp,
-		}
-		inputbt, _ := json.Marshal(uinput)
-
-		// 验证签名
-		ok := pubkey.Verify([]byte("<Bytes>"+string(inputbt)+"</Bytes>"), sig)
-		if !ok {
-			fmt.Println("Verify error")
-			return nil
-		}
-
-		return user
 	}
+
+	bt, terr := subkey.DecodeHex(token[0])
+	if !terr {
+		fmt.Println(terr)
+		return nil
+	}
+
+	user := &model.User{}
+	err := json.Unmarshal(bt, user)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	root, err := dao.GetRootUser()
+	if err == nil {
+		user.IsRoot = (root == user.Address)
+	} else {
+		user.IsRoot = false
+	}
+
+	// 解析地址
+	_, pubkeyBytes, err := subkey.SS58Decode(user.Address)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	// 解析公钥
+	pubkey, err := sr25519.Scheme{}.FromPublicKey(pubkeyBytes)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	// 解析签名
+	sig, chainerr := subkey.DecodeHex(token[1])
+	if !chainerr {
+		fmt.Println(err)
+		return nil
+	}
+
+	// 构造签名内容
+	uinput := model.LoginContent{
+		Address:   user.Address,
+		Timestamp: user.Timestamp,
+	}
+	inputbt, _ := json.Marshal(uinput)
+
+	// 验证签名
+	ok := pubkey.Verify([]byte("<Bytes>"+string(inputbt)+"</Bytes>"), sig)
+	if !ok {
+		fmt.Println("Verify error")
+		return nil
+	}
+
+	return user
 }
