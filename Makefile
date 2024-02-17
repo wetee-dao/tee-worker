@@ -60,6 +60,14 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: egofmt
+fmt: ## Run go fmt against code.
+	ego-go fmt ./...
+
+.PHONY: egovet
+vet: ## Run go vet against code.
+	ego-go vet ./...
+
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
@@ -67,7 +75,7 @@ test: manifests generate fmt vet envtest ## Run tests.
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet ## Build manager binary.
+build: manifests generate egofmt egovet ## Build manager binary.
 	rm -f  bin/manager
 	cd bin && \
 		ego-go build -o manager ../cmd/main.go && \
@@ -79,7 +87,7 @@ gorun: manifests generate fmt vet ## Run a controller from your host.
 		go run ./cmd/main.go
 
 .PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
+run: manifests generate egofmt egovet ## Run a controller from your host.
 	rm -f  bin/manager
 	cd bin && export KUBECONFIG=/etc/kube/config &&  \
 		ego-go build -o manager ../cmd/main.go && \

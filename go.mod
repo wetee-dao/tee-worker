@@ -1,6 +1,6 @@
 module wetee.app/worker
 
-go 1.20
+go 1.21
 
 require (
 	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1
