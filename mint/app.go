@@ -34,72 +34,73 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
-	if uint64(app.Status) == 1 && uint64(head.Number)-state.BlockNumber >= uint64(stage) {
-		util.LogWithRed("=========================================== WorkProofUpload APP")
+	if uint64(app.Status) != 1 || uint64(head.Number)-state.BlockNumber < uint64(stage) {
+		return nil
+	}
+	util.LogWithRed("=========================================== WorkProofUpload APP")
 
-		workId := c.ContractState.WorkId
-		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-		nameSpace := AccountToAddress(c.ContractState.User[:])
+	workId := c.ContractState.WorkId
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	nameSpace := AccountToAddress(c.ContractState.User[:])
 
-		// 获取pod信息
-		// Get pod information
-		clientset := m.K8sClient
-		pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: "app=" + name,
-		})
-		if err != nil {
-			util.LogWithRed("getPod", err)
-			return err
-		}
+	// 获取pod信息
+	// Get pod information
+	clientset := m.K8sClient
+	pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "app=" + name,
+	})
+	if err != nil {
+		util.LogWithRed("getPod", err)
+		return err
+	}
 
-		if len(pods.Items) == 0 {
-			util.LogWithRed("pods is empty")
-			return errors.New("pods is empty")
-		}
-		fmt.Println("pods: ", pods.Items[0].Name)
+	if len(pods.Items) == 0 {
+		util.LogWithRed("pods is empty")
+		return errors.New("pods is empty")
+	}
+	fmt.Println("pods: ", pods.Items[0].Name)
 
-		// 获取log和硬件资源使用量
-		// Get log and hardware resource usage
-		logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-state.BlockNumber)
-		if err != nil {
-			util.LogWithRed("getMetricInfo", err)
-			return err
-		}
+	// 获取log和硬件资源使用量
+	// Get log and hardware resource usage
+	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-state.BlockNumber)
+	if err != nil {
+		util.LogWithRed("getMetricInfo", err)
+		return err
+	}
 
-		// 获取log hash
-		// Get log hash
-		logHash, err := getWorkLogHash(name, logs, state.BlockNumber)
-		if err != nil {
-			util.LogWithRed("getWorkLogHash", err)
-			return err
-		}
+	// 获取log hash
+	// Get log hash
+	logHash, err := getWorkLogHash(name, logs, state.BlockNumber)
+	if err != nil {
+		util.LogWithRed("getWorkLogHash", err)
+		return err
+	}
 
-		// 获取计算资源hash
-		// Get Computing resource hash
-		crHash, cr, err := getWorkCrHash(name, crs, state.BlockNumber)
-		if err != nil {
-			util.LogWithRed("getWorkCrHash", err)
-			return err
-		}
+	// 获取计算资源hash
+	// Get Computing resource hash
+	crHash, cr, err := getWorkCrHash(name, crs, state.BlockNumber)
+	if err != nil {
+		util.LogWithRed("getWorkCrHash", err)
+		return err
+	}
 
-		// 初始化worker对象
-		// init worker object
-		worker := chain.Worker{
-			Client: m.ChainClient,
-			Signer: Signer,
-		}
+	// 初始化worker对象
+	// init worker object
+	worker := chain.Worker{
+		Client: m.ChainClient,
+		Signer: Signer,
+	}
 
-		// 上传工作证明
-		// Upload work proof
-		err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, gtype.Cr{
-			Cpu:  cr[0],
-			Mem:  cr[1],
-			Disk: 0,
-		}, []byte(""), false)
-		if err != nil {
-			util.LogWithRed("WorkProofUpload", err)
-			return err
-		}
+	// 上传工作证明
+	// Upload work proof
+	err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, gtype.Cr{
+		Cpu:  cr[0],
+		Mem:  cr[1],
+		Disk: 0,
+	}, []byte(""), false)
+	if err != nil {
+		util.LogWithRed("WorkProofUpload", err)
+		return err
 	}
 
 	return nil
