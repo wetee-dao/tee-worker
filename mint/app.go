@@ -47,11 +47,16 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 		pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: "app=" + name,
 		})
-		fmt.Println("pods: ", pods.Items[0].Name)
 		if err != nil {
-			util.LogWithRed("getMetricInfo", err)
+			util.LogWithRed("getPod", err)
 			return err
 		}
+
+		if len(pods.Items) == 0 {
+			util.LogWithRed("pods is empty")
+			return errors.New("pods is empty")
+		}
+		fmt.Println("pods: ", pods.Items[0].Name)
 
 		// 获取log和硬件资源使用量
 		// Get log and hardware resource usage
