@@ -3,6 +3,8 @@ package mint
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 
 	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/gen/system"
+	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"wetee.app/worker/dao"
 	"wetee.app/worker/util"
 )
@@ -144,6 +147,22 @@ mintStart:
 			continue
 		}
 
+		// 删除过期的合约
+		// Delete expired contracts
+		deletes, err := DeleteFormCache(cs)
+		if err != nil {
+			util.LogWithRed("DeleteFormCache", err)
+			continue
+		}
+		for _, d := range deletes {
+			err := m.StopApp(d)
+			name := util.GetWorkTypeStr(d) + "-" + fmt.Sprint(d.Id)
+			if err != nil {
+				util.LogWithRed("DeleteRuning "+name+" ", err)
+				continue
+			}
+		}
+
 		// 获取收费周期
 		// Get the charge cycle
 		stage, err := worker.GetStage()
@@ -180,4 +199,47 @@ mintStart:
 			}
 		}
 	}
+}
+
+func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap) ([]gtypes.WorkId, error) {
+	caches, err := dao.GetRuning()
+	if err != nil {
+		return nil, err
+	}
+
+	// 删除已经停止的应用
+	var deletes = []gtypes.WorkId{}
+	for name := range caches {
+		ids := strings.Split(name, "-")
+		id, err := strconv.ParseUint(ids[1], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+
+		wid := gtypes.WorkId{
+			Wtype: util.GetWorkType(ids[0]),
+			Id:    id,
+		}
+
+		if _, ok := cs[wid]; !ok {
+			deletes = append(deletes, wid)
+		}
+	}
+
+	// 重构新的缓存
+	var newCache = map[string]dao.RuningCache{}
+	for workId := range cs {
+		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+		newCache[name] = dao.RuningCache{
+			Status:   "running",
+			DeleteAt: 0,
+		}
+	}
+
+	err = dao.SetRuning(newCache)
+	if err != nil {
+		return nil, err
+	}
+
+	return deletes, nil
 }

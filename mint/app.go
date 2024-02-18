@@ -26,12 +26,6 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 	app := c.App
 	state := c.WorkState
 
-	// 状态为停止状态，停止Pod
-	if uint64(app.Status) == 2 {
-		m.StopApp(c.ContractState.WorkId)
-		return nil
-	}
-
 	_, err := m.CheckAppStatus(ctx, c)
 	if err != nil {
 		util.LogWithRed("checkPodStatus", err)
@@ -115,11 +109,6 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
 	app := state.App
-	if uint8(app.Status) == 2 {
-		m.StopApp(workId)
-		return nil, errors.New("app stop")
-	}
-
 	deployment, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	version := state.Version
 	if err != nil {
@@ -164,11 +153,6 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 	})
 	if err != nil {
 		return err
-	}
-
-	if uint8(app.Status) == 2 {
-		m.StopApp(workId)
-		return nil
 	}
 
 	resource.NewMilliQuantity(int64(app.Cr.Mem)*1024*1024, resource.BinarySI)
@@ -228,11 +212,6 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 }
 
 func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeApp, envs []v1.EnvVar, version uint64) error {
-	if uint8(app.Status) == 2 {
-		m.StopApp(workId)
-		return nil
-	}
-
 	saddress := AccountToAddress(user)
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)

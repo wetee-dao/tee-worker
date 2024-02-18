@@ -29,12 +29,6 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 		return nil
 	}
 
-	// 状态为停止状态，停止Pod
-	if uint64(app.Status) == 2 {
-		m.StopApp(c.ContractState.WorkId)
-		return nil
-	}
-
 	pod, err := m.CheckTaskStatus(ctx, c)
 	if err != nil {
 		util.LogWithRed("checkTaskStatus", err)
