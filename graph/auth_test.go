@@ -7,8 +7,8 @@ import (
 
 	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
-	"wetee.app/worker/dao"
 	"wetee.app/worker/graph/model"
+	dao "wetee.app/worker/store"
 )
 
 func TestDecodeToken(t *testing.T) {

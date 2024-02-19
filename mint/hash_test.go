@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/blake2b"
-	"wetee.app/worker/dao"
+	dao "wetee.app/worker/store"
 )
 
 func TestGetWorkLogHash(t *testing.T) {

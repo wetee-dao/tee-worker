@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/vedhavyas/go-subkey/sr25519"
+	dao "wetee.app/worker/store"
 
 	"github.com/wetee-dao/go-sdk/gen/types"
-	"wetee.app/worker/dao"
 )
 
 func TestLoading(t *testing.T) {

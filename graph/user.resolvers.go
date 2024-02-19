@@ -11,8 +11,8 @@ import (
 	subkey "github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"wetee.app/worker/dao"
 	"wetee.app/worker/graph/model"
+	dao "wetee.app/worker/store"
 )
 
 // LoginAndBindRoot is the resolver for the loginAndBindRoot field.

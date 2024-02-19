@@ -16,7 +16,7 @@ import (
 	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/gen/system"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
-	"wetee.app/worker/dao"
+	dao "wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 

@@ -39,9 +39,9 @@ import (
 
 	server "wetee.app/worker"
 	secretv1 "wetee.app/worker/api/v1"
-	"wetee.app/worker/dao"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/mint"
+	dao "wetee.app/worker/store"
 	"wetee.app/worker/util"
 	//+kubebuilder:scaffold:imports
 )
