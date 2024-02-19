@@ -21,7 +21,7 @@ import (
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/mint"
-	dao "wetee.app/worker/store"
+	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 
@@ -67,7 +67,7 @@ func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int
 		Signer: mint.Signer,
 	}
 
-	id, err := dao.GetClusterId()
+	id, err := store.GetClusterId()
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
@@ -89,7 +89,7 @@ func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, id int64) (str
 		Signer: mint.Signer,
 	}
 
-	clusterID, err := dao.GetClusterId()
+	clusterID, err := store.GetClusterId()
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
@@ -133,7 +133,7 @@ func (r *mutationResolver) ClusterStop(ctx context.Context) (string, error) {
 		Signer: mint.Signer,
 	}
 
-	clusterID, err := dao.GetClusterId()
+	clusterID, err := store.GetClusterId()
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
@@ -185,9 +185,9 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		return false, gqlerror.Errorf("Getk8sClusterAccounts:" + err.Error())
 	}
 	fmt.Println("ClusterId => ", clusterId)
-	dao.SetClusterId(clusterId)
+	store.SetClusterId(clusterId)
 
-	id, err := dao.GetClusterId()
+	id, err := store.GetClusterId()
 	if err != nil {
 		return false, gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
@@ -202,7 +202,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 
 // WorkerInfo is the resolver for the workerInfo field.
 func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, error) {
-	root, err := dao.GetRootUser()
+	root, err := store.GetRootUser()
 	if err != nil {
 		root = ""
 	}
@@ -229,7 +229,7 @@ func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
 		Signer: mint.Signer,
 	}
 
-	clusterID, err := dao.GetClusterId()
+	clusterID, err := store.GetClusterId()
 	if err != nil {
 		return nil, gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}

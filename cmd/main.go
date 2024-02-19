@@ -41,7 +41,7 @@ import (
 	secretv1 "wetee.app/worker/api/v1"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/mint"
-	dao "wetee.app/worker/store"
+	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 	//+kubebuilder:scaffold:imports
 )
@@ -110,7 +110,7 @@ func main() {
 	}
 
 	// 初始化数据库
-	err = dao.DBInit("/opt/wetee-worker/db")
+	err = store.DBInit("/opt/wetee-worker/db")
 	if err != nil {
 		setupLog.Error(err, "unable to start database")
 		os.Exit(1)

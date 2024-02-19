@@ -12,7 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	dao "wetee.app/worker/store"
+	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 
@@ -129,7 +129,7 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtype.Work
 	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
-	err := dao.SetSecrets(workId, &dao.Secrets{
+	err := store.SetSecrets(workId, &store.Secrets{
 		Env: map[string]string{
 			"": "",
 		},

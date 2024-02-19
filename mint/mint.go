@@ -16,7 +16,7 @@ import (
 	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/gen/system"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
-	dao "wetee.app/worker/store"
+	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 
@@ -96,12 +96,12 @@ mintStart:
 			time.Sleep(time.Second * 10)
 			continue
 		}
-		dao.SetClusterId(clusterId)
+		store.SetClusterId(clusterId)
 
 		break
 	}
 
-	clusterId, _ := dao.GetClusterId()
+	clusterId, _ := store.GetClusterId()
 	fmt.Println("ClusterId => ", clusterId)
 
 	// 订阅区块事件
@@ -202,7 +202,7 @@ mintStart:
 }
 
 func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap) ([]gtypes.WorkId, error) {
-	caches, err := dao.GetRuning()
+	caches, err := store.GetRuning()
 	if err != nil {
 		return nil, err
 	}
@@ -227,16 +227,16 @@ func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap) ([]gtypes.WorkId, e
 	}
 
 	// 重构新的缓存
-	var newCache = map[string]dao.RuningCache{}
+	var newCache = map[string]store.RuningCache{}
 	for workId := range cs {
 		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-		newCache[name] = dao.RuningCache{
+		newCache[name] = store.RuningCache{
 			Status:   "running",
 			DeleteAt: 0,
 		}
 	}
 
-	err = dao.SetRuning(newCache)
+	err = store.SetRuning(newCache)
 	if err != nil {
 		return nil, err
 	}

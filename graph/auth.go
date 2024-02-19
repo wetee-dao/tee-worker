@@ -14,7 +14,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
 	"wetee.app/worker/graph/model"
-	dao "wetee.app/worker/store"
+	"wetee.app/worker/store"
 )
 
 var (
@@ -93,7 +93,7 @@ func decodeToken(tokenStr string) *model.User {
 		return nil
 	}
 
-	root, err := dao.GetRootUser()
+	root, err := store.GetRootUser()
 	if err == nil {
 		user.IsRoot = (root == user.Address)
 	} else {

@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/vedhavyas/go-subkey"
 	"github.com/vedhavyas/go-subkey/sr25519"
-	dao "wetee.app/worker/store"
+	"wetee.app/worker/store"
 )
 
 func LoadingHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +25,7 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Read body error: " + err.Error()))
 		return
 	}
-	param := &dao.LoadParam{}
+	param := &store.LoadParam{}
 	err = json.Unmarshal(bodyBytes, param)
 	if err != nil {
 		w.WriteHeader(500)
@@ -45,8 +45,8 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(bt)
 }
 
-func loading(appID string, param *dao.LoadParam) (*dao.Secrets, error) {
-	wid, err := dao.UnSealAppID(appID)
+func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
+	wid, err := store.UnSealAppID(appID)
 	if err != nil {
 		return nil, errors.Wrap(err, "AppID error: ")
 	}
@@ -75,12 +75,12 @@ func loading(appID string, param *dao.LoadParam) (*dao.Secrets, error) {
 	}
 
 	// 验证地址
-	address, err := dao.GetSetAppSignerAddress(wid, param.Address)
+	address, err := store.GetSetAppSignerAddress(wid, param.Address)
 	if err != nil || address != param.Address {
 		return nil, errors.Wrap(err, "Address error: ")
 	}
 
-	s, err := dao.GetSecrets(wid)
+	s, err := store.GetSecrets(wid)
 	if err != nil {
 		return nil, errors.Wrap(err, "Secret error: ")
 	}
