@@ -110,19 +110,14 @@ func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.AppSetting) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
 	wid, err := store.SealAppID(workId)
+	fmt.Println(wid)
 	if err != nil {
 		return []corev1.EnvVar{}, err
 	}
 
 	envs := []corev1.EnvVar{
-		{
-			Name:  "APPID",
-			Value: wid,
-		},
-		{
-			Name:  "IN_TEE",
-			Value: string("1"),
-		},
+		{Name: "APPID", Value: wid},
+		{Name: "IN_TEE", Value: string("1")},
 	}
 
 	for _, setting := range settings {

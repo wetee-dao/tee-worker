@@ -41,6 +41,7 @@ import (
 	secretv1 "wetee.app/worker/api/v1"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/mint"
+	"wetee.app/worker/mint/secret"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 	//+kubebuilder:scaffold:imports
@@ -126,7 +127,7 @@ func main() {
 
 	// 开启 http 服务器
 	go server.StartServer()
-	go server.StartServerInCluster()
+	go secret.StartSecretServerInCluster(mint.Signer.Address)
 
 	if err = (&controller.AppReconciler{
 		Client: mgr.GetClient(),

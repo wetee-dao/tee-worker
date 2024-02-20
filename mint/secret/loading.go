@@ -1,4 +1,4 @@
-package mint
+package secret
 
 import (
 	"encoding/hex"
@@ -22,14 +22,14 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err != nil {
 		w.WriteHeader(500)
-		w.Write([]byte("Read body error: " + err.Error()))
+		w.Write([]byte("Read body error" + err.Error()))
 		return
 	}
 	param := &store.LoadParam{}
 	err = json.Unmarshal(bodyBytes, param)
 	if err != nil {
 		w.WriteHeader(500)
-		w.Write([]byte("Request body unmarshal error: " + err.Error()))
+		w.Write([]byte("Request body unmarshal error" + err.Error()))
 		return
 	}
 
@@ -48,26 +48,26 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
 	wid, err := store.UnSealAppID(appID)
 	if err != nil {
-		return nil, errors.Wrap(err, "AppID error: ")
+		return nil, errors.Wrap(err, "AppID error")
 	}
 
 	// 验证消息
 	// 解析地址
 	_, pubkeyBytes, err := subkey.SS58Decode(param.Address)
 	if err != nil {
-		return nil, errors.Wrap(err, "Address decode error: ")
+		return nil, errors.Wrap(err, "Address decode error")
 	}
 
 	// 解析公钥
 	pubkey, err := sr25519.Scheme{}.FromPublicKey(pubkeyBytes)
 	if err != nil {
-		return nil, errors.Wrap(err, "Pubkey error: ")
+		return nil, errors.Wrap(err, "Pubkey error")
 	}
 
 	// 验证签名
 	sig, err := hex.DecodeString(param.Signature)
 	if err != nil {
-		return nil, errors.Wrap(err, "Signature decode error: ")
+		return nil, errors.Wrap(err, "Signature decode error")
 	}
 	ok := pubkey.Verify([]byte(param.Time), sig)
 	if !ok {
@@ -77,12 +77,12 @@ func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
 	// 验证地址
 	address, err := store.GetSetAppSignerAddress(wid, param.Address)
 	if err != nil || address != param.Address {
-		return nil, errors.Wrap(err, "Address error: ")
+		return nil, errors.Wrap(err, "Address error")
 	}
 
 	s, err := store.GetSecrets(wid)
 	if err != nil {
-		return nil, errors.Wrap(err, "Secret error: ")
+		return nil, errors.Wrap(err, "Secret error")
 	}
 
 	return s, nil

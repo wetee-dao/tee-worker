@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,8 @@ type LoadParam struct {
 	Address   string
 	Time      string
 	Signature string
+	Cert      []byte
+	Report    []byte
 }
 
 type Secrets struct {
@@ -36,11 +39,16 @@ func SealAppID(WorkID types.WorkId) (string, error) {
 		return "", err
 	}
 
-	strVal := base64.StdEncoding.EncodeToString(val)
+	strVal := url.QueryEscape(base64.StdEncoding.EncodeToString(val))
 	return strVal, nil
 }
 
 func UnSealAppID(id string) (types.WorkId, error) {
+	var err error
+	id, err = url.QueryUnescape(id)
+	if err != nil {
+		return types.WorkId{}, err
+	}
 	buf, err := base64.StdEncoding.DecodeString(id)
 	if err != nil {
 		return types.WorkId{}, err
