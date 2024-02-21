@@ -80,6 +80,13 @@ func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
 		return nil, errors.Wrap(err, "Address error")
 	}
 
+	// 存入Work DCAP信息
+	err = store.SetWorkDcapReport(wid, param.Report)
+	if err != nil {
+		return nil, errors.Wrap(err, "DCAP Report set error")
+	}
+
+	// 获取加密信息
 	s, err := store.GetSecrets(wid)
 	if err != nil {
 		return nil, errors.Wrap(err, "Secret error")

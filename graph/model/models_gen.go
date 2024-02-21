@@ -44,6 +44,8 @@ type WorkerInfo struct {
 	RootAddress string `json:"RootAddress"`
 	// Worker mint user
 	MintAddress string `json:"MintAddress"`
+	// Report
+	Report string `json:"Report"`
 }
 
 type Role string

@@ -212,9 +212,15 @@ func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, erro
 		maddress = minter.Address
 	}
 
+	report, err := store.GetRootDcapReport()
+	if err != nil {
+		report = nil
+	}
+
 	return &model.WorkerInfo{
 		RootAddress: root,
 		MintAddress: maddress,
+		Report:      hex.EncodeToString(report),
 	}, nil
 }
 
