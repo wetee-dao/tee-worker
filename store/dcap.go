@@ -15,14 +15,14 @@ func SetWorkDcapReport(WorkID types.WorkId, val []byte) error {
 	return SealSave(DcapBucket, []byte(key), val)
 }
 
-func GetWorkDcapReport(WorkID types.WorkId) (string, error) {
+func GetWorkDcapReport(WorkID types.WorkId) ([]byte, error) {
 	key := util.GetWorkTypeStr(WorkID) + "-" + fmt.Sprint(WorkID.Id) + "_dcap_report"
 
 	val, err := SealGet(DcapBucket, []byte(key))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(val), err
+	return val, err
 }
 
 func SetRootDcapReport(val []byte) error {

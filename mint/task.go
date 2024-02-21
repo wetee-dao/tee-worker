@@ -71,13 +71,21 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 			Signer: Signer,
 		}
 
+		// 获取工作证明
+		// get report of work
+		report, err := store.GetWorkDcapReport(workId)
+		if err != nil {
+			util.LogWithRed("GetWorkDcapReport", err)
+			return err
+		}
+
 		// 上传工作证明结束任务
 		// Upload the end of the work proof
 		err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, gtype.Cr{
 			Cpu:  cr[0],
 			Mem:  cr[1],
 			Disk: 0,
-		}, []byte(""), false)
+		}, report, false)
 		if err != nil {
 			util.LogWithRed("WorkProofUpload", err)
 			return err

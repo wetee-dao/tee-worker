@@ -96,6 +96,23 @@ mintStart:
 			time.Sleep(time.Second * 10)
 			continue
 		}
+
+		// 获取dcap根证书
+		report, err := store.GetRootDcapReport()
+		if err != nil {
+			fmt.Println("GetRootDcapReport => ", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
+
+		// 上传dcap根证书
+		err = worker.ClusterProofUpload(clusterId, report, true)
+		if err != nil {
+			fmt.Println("worker.ClusterProofUpload => ", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
+
 		store.SetClusterId(clusterId)
 
 		break
