@@ -89,7 +89,7 @@ mintStart:
 	for {
 		clusterId, err := worker.Getk8sClusterAccounts(Signer.PublicKey)
 		if err != nil {
-			fmt.Println("ClusterId =>clusterId not found, mint not started")
+			fmt.Println("ClusterId => clusterId not found, mint not started")
 			time.Sleep(time.Second * 10)
 			continue
 		}
