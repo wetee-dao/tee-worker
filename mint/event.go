@@ -72,5 +72,19 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			util.LogWithRed("===========================================CreateOrUpdatePod error: ", err)
 		}
 	}
+
+	if e.IsWeteeTask {
+		taskEvent := e.AsWeteeTaskField0
+		if taskEvent.IsTaskStop {
+			taskID := taskEvent.AsTaskStopId1
+			workId := types.WorkId{Wtype: types.WorkType{
+				IsTASK: true,
+			}, Id: taskID}
+
+			err = m.StopApp(workId)
+			util.LogWithRed("===========================================StopTask error: ", err)
+		}
+	}
+
 	return err
 }
