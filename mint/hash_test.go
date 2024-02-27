@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"golang.org/x/crypto/blake2b"
-	"wetee.app/worker/dao"
+	"wetee.app/worker/store"
 )
 
 func TestGetWorkLogHash(t *testing.T) {
-	dao.DBInit("bin/testdb")
-	defer dao.DBClose()
+	store.DBInit("bin/testdb")
+	defer store.DBClose()
 
 	var blockNumber uint64 = 0
 	logs := []string{
@@ -40,8 +40,8 @@ func TestGetWorkLogHash(t *testing.T) {
 }
 
 func TestGetWorkCrHash(t *testing.T) {
-	dao.DBInit("bin/testdb")
-	defer dao.DBClose()
+	store.DBInit("bin/testdb")
+	defer store.DBClose()
 
 	cr := map[string][]int64{
 		"test": {1, 2, 3},

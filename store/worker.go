@@ -1,4 +1,4 @@
-package dao
+package store
 
 const WorkerBucket = "worker"
 

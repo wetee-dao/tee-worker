@@ -12,7 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"wetee.app/worker/dao"
+	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 
@@ -26,12 +26,6 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 
 	// 处于调度状态，不处理
 	if uint64(app.Status) == 4 {
-		return nil
-	}
-
-	// 状态为停止状态，停止Pod
-	if uint64(app.Status) == 2 {
-		m.StopApp(c.ContractState.WorkId)
 		return nil
 	}
 
@@ -77,13 +71,21 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 			Signer: Signer,
 		}
 
+		// 获取工作证明
+		// get report of work
+		report, err := store.GetWorkDcapReport(workId)
+		if err != nil {
+			util.LogWithRed("GetWorkDcapReport", err)
+			return err
+		}
+
 		// 上传工作证明结束任务
 		// Upload the end of the work proof
 		err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, gtype.Cr{
 			Cpu:  cr[0],
 			Mem:  cr[1],
 			Disk: 0,
-		}, []byte(""), false)
+		}, report, false)
 		if err != nil {
 			util.LogWithRed("WorkProofUpload", err)
 			return err
@@ -135,7 +137,7 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtype.Work
 	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
-	err := dao.SetSecrets(workId, &dao.Secrets{
+	err := store.SetSecrets(workId, &store.Secrets{
 		Env: map[string]string{
 			"": "",
 		},

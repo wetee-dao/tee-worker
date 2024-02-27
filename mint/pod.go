@@ -13,7 +13,7 @@ import (
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"wetee.app/worker/dao"
+	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 
@@ -82,7 +82,7 @@ func AccountToAddress(user []byte) string {
 
 func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
-	wid, err := dao.SealAppID(workId)
+	wid, err := store.SealAppID(workId)
 	if err != nil {
 		return []corev1.EnvVar{}, err
 	}
@@ -109,20 +109,15 @@ func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 
 func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.AppSetting) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
-	wid, err := dao.SealAppID(workId)
+	wid, err := store.SealAppID(workId)
+	fmt.Println(wid)
 	if err != nil {
 		return []corev1.EnvVar{}, err
 	}
 
 	envs := []corev1.EnvVar{
-		{
-			Name:  "APPID",
-			Value: wid,
-		},
-		{
-			Name:  "IN_TEE",
-			Value: string("1"),
-		},
+		{Name: "APPID", Value: wid},
+		{Name: "IN_TEE", Value: string("1")},
 	}
 
 	for _, setting := range settings {

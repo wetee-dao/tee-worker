@@ -7,13 +7,13 @@ import (
 
 	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
-	"wetee.app/worker/dao"
 	"wetee.app/worker/graph/model"
+	"wetee.app/worker/store"
 )
 
 func TestDecodeToken(t *testing.T) {
-	dao.DBInit("bin/testdb")
-	defer dao.DBClose()
+	store.DBInit("bin/testdb")
+	defer store.DBClose()
 
 	prikey, err := sr25519.Scheme{}.Generate()
 	if err != nil {

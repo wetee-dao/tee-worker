@@ -1,4 +1,4 @@
-package dao
+package store
 
 import "github.com/nutsdb/nutsdb"
 

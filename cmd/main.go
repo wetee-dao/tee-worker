@@ -39,9 +39,10 @@ import (
 
 	server "wetee.app/worker"
 	secretv1 "wetee.app/worker/api/v1"
-	"wetee.app/worker/dao"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/mint"
+	"wetee.app/worker/mint/secret"
+	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 	//+kubebuilder:scaffold:imports
 )
@@ -110,7 +111,7 @@ func main() {
 	}
 
 	// 初始化数据库
-	err = dao.DBInit("/opt/wetee-worker/db")
+	err = store.DBInit("/opt/wetee-worker/db")
 	if err != nil {
 		setupLog.Error(err, "unable to start database")
 		os.Exit(1)
@@ -122,11 +123,11 @@ func main() {
 		setupLog.Error(err, "unable to start mint")
 		os.Exit(1)
 	}
+	go secret.StartSecretServerInCluster(mint.Signer.Address)
 	go mint.MinterIns.StartMint()
 
 	// 开启 http 服务器
 	go server.StartServer()
-	go server.StartServerInCluster()
 
 	if err = (&controller.AppReconciler{
 		Client: mgr.GetClient(),

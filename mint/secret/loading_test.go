@@ -1,4 +1,4 @@
-package mint
+package secret
 
 import (
 	"encoding/hex"
@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/vedhavyas/go-subkey/sr25519"
+	"wetee.app/worker/store"
 
 	"github.com/wetee-dao/go-sdk/gen/types"
-	"wetee.app/worker/dao"
 )
 
 func TestLoading(t *testing.T) {
-	dao.DBInit("bin/testdb")
-	defer dao.DBClose()
+	store.DBInit("bin/testdb")
+	defer store.DBClose()
 
 	workId := types.WorkId{
 		Id: 1,
@@ -22,12 +22,12 @@ func TestLoading(t *testing.T) {
 			IsAPP: true,
 		},
 	}
-	wid, err := dao.SealAppID(workId)
+	wid, err := store.SealAppID(workId)
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = dao.SetSecrets(workId, &dao.Secrets{
+	err = store.SetSecrets(workId, &store.Secrets{
 		Env: map[string]string{
 			"": "",
 		},
@@ -41,7 +41,7 @@ func TestLoading(t *testing.T) {
 		t.Error(err)
 	}
 
-	param := &dao.LoadParam{
+	param := &store.LoadParam{
 		Address:   sigKey.SS58Address(42),
 		Time:      fmt.Sprint(time.Now().Unix()),
 		Signature: "NONE",

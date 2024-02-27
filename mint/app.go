@@ -14,7 +14,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"wetee.app/worker/dao"
+	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 
@@ -26,12 +26,6 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 	app := c.App
 	state := c.WorkState
 
-	// 状态为停止状态，停止Pod
-	if uint64(app.Status) == 2 {
-		m.StopApp(c.ContractState.WorkId)
-		return nil
-	}
-
 	_, err := m.CheckAppStatus(ctx, c)
 	if err != nil {
 		util.LogWithRed("checkPodStatus", err)
@@ -40,67 +34,81 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
-	if uint64(app.Status) == 1 && uint64(head.Number)-state.BlockNumber >= uint64(stage) {
-		util.LogWithRed("=========================================== WorkProofUpload APP")
+	if uint64(app.Status) != 1 || uint64(head.Number)-state.BlockNumber < uint64(stage) {
+		return nil
+	}
+	util.LogWithRed("=========================================== WorkProofUpload APP")
 
-		workId := c.ContractState.WorkId
-		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-		nameSpace := AccountToAddress(c.ContractState.User[:])
+	workId := c.ContractState.WorkId
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	nameSpace := AccountToAddress(c.ContractState.User[:])
 
-		// 获取pod信息
-		// Get pod information
-		clientset := m.K8sClient
-		pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: "app=" + name,
-		})
-		fmt.Println("pods: ", pods.Items[0].Name)
-		if err != nil {
-			util.LogWithRed("getMetricInfo", err)
-			return err
-		}
+	// 获取pod信息
+	// Get pod information
+	clientset := m.K8sClient
+	pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "app=" + name,
+	})
+	if err != nil {
+		util.LogWithRed("getPod", err)
+		return err
+	}
 
-		// 获取log和硬件资源使用量
-		// Get log and hardware resource usage
-		logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-state.BlockNumber)
-		if err != nil {
-			util.LogWithRed("getMetricInfo", err)
-			return err
-		}
+	if len(pods.Items) == 0 {
+		util.LogWithRed("pods is empty")
+		return errors.New("pods is empty")
+	}
+	fmt.Println("pods: ", pods.Items[0].Name)
 
-		// 获取log hash
-		// Get log hash
-		logHash, err := getWorkLogHash(name, logs, state.BlockNumber)
-		if err != nil {
-			util.LogWithRed("getWorkLogHash", err)
-			return err
-		}
+	// 获取log和硬件资源使用量
+	// Get log and hardware resource usage
+	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-state.BlockNumber)
+	if err != nil {
+		util.LogWithRed("getMetricInfo", err)
+		return err
+	}
 
-		// 获取计算资源hash
-		// Get Computing resource hash
-		crHash, cr, err := getWorkCrHash(name, crs, state.BlockNumber)
-		if err != nil {
-			util.LogWithRed("getWorkCrHash", err)
-			return err
-		}
+	// 获取log hash
+	// Get log hash
+	logHash, err := getWorkLogHash(name, logs, state.BlockNumber)
+	if err != nil {
+		util.LogWithRed("getWorkLogHash", err)
+		return err
+	}
 
-		// 初始化worker对象
-		// init worker object
-		worker := chain.Worker{
-			Client: m.ChainClient,
-			Signer: Signer,
-		}
+	// 获取计算资源hash
+	// Get Computing resource hash
+	crHash, cr, err := getWorkCrHash(name, crs, state.BlockNumber)
+	if err != nil {
+		util.LogWithRed("getWorkCrHash", err)
+		return err
+	}
 
-		// 上传工作证明
-		// Upload work proof
-		err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, gtype.Cr{
-			Cpu:  cr[0],
-			Mem:  cr[1],
-			Disk: 0,
-		}, []byte(""), false)
-		if err != nil {
-			util.LogWithRed("WorkProofUpload", err)
-			return err
-		}
+	// 初始化worker对象
+	// init worker object
+	worker := chain.Worker{
+		Client: m.ChainClient,
+		Signer: Signer,
+	}
+
+	// 获取工作证明
+	// get report of work
+	report, err := store.GetWorkDcapReport(workId)
+	if err != nil {
+		util.LogWithRed("GetWorkDcapReport", err)
+		return err
+	}
+
+	// 上传工作证明
+	// Upload work proof
+	err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, gtype.Cr{
+		Cpu:  cr[0],
+		Mem:  cr[1],
+		Disk: 0,
+	}, report, false)
+	if err != nil {
+		util.LogWithRed("WorkProofUpload", err)
+		return err
 	}
 
 	return nil
@@ -115,11 +123,6 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
 	app := state.App
-	if uint8(app.Status) == 2 {
-		m.StopApp(workId)
-		return nil, errors.New("app stop")
-	}
-
 	deployment, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	version := state.Version
 	if err != nil {
@@ -157,18 +160,13 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
-	err := dao.SetSecrets(workId, &dao.Secrets{
+	err := store.SetSecrets(workId, &store.Secrets{
 		Env: map[string]string{
 			"": "",
 		},
 	})
 	if err != nil {
 		return err
-	}
-
-	if uint8(app.Status) == 2 {
-		m.StopApp(workId)
-		return nil
 	}
 
 	resource.NewMilliQuantity(int64(app.Cr.Mem)*1024*1024, resource.BinarySI)
@@ -228,11 +226,6 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 }
 
 func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeApp, envs []v1.EnvVar, version uint64) error {
-	if uint8(app.Status) == 2 {
-		m.StopApp(workId)
-		return nil
-	}
-
 	saddress := AccountToAddress(user)
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)

@@ -18,6 +18,8 @@ type WorkerInfo{
   RootAddress: String!
   """Worker mint user"""
   MintAddress: String!
+  """Report"""
+  Report: String!
 }
 
 type Contract{

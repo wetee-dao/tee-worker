@@ -61,11 +61,11 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: egofmt
-fmt: ## Run go fmt against code.
+egofmt: ## Run go fmt against code.
 	ego-go fmt ./...
 
 .PHONY: egovet
-vet: ## Run go vet against code.
+egovet: ## Run go vet against code.
 	ego-go vet ./...
 
 .PHONY: test

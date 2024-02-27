@@ -11,13 +11,13 @@ import (
 	subkey "github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"wetee.app/worker/dao"
 	"wetee.app/worker/graph/model"
+	"wetee.app/worker/store"
 )
 
 // LoginAndBindRoot is the resolver for the loginAndBindRoot field.
 func (r *mutationResolver) LoginAndBindRoot(ctx context.Context, input model.LoginContent, signature string) (string, error) {
-	rootUser, _ := dao.GetRootUser()
+	rootUser, _ := store.GetRootUser()
 	if rootUser != "" && rootUser != input.Address {
 		return "", gqlerror.Errorf("Root user already exists")
 	}
@@ -75,7 +75,7 @@ func login(input model.LoginContent, signature string) (string, error) {
 	}
 
 	// 设置根用户
-	err = dao.SetRootUser(input.Address)
+	err = store.SetRootUser(input.Address)
 	if err != nil {
 		return "", gqlerror.Errorf("Set root user error: " + err.Error())
 	}

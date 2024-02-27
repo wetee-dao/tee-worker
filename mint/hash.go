@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/blake2b"
-	"wetee.app/worker/dao"
+	"wetee.app/worker/store"
 )
 
 // TODO 工作量证明查询
@@ -18,7 +18,7 @@ func getWorkLogHash(name string, log []string, blockNumber uint64) ([]byte, erro
 	bt, _ := json.Marshal(&pf)
 	hash := blake2b.Sum256(bt)
 
-	err := dao.Addlog([]byte(name), bt)
+	err := store.Addlog([]byte(name), bt)
 	return hash[:], err
 }
 
@@ -32,7 +32,7 @@ func getWorkCrHash(name string, cr map[string][]int64, blockNumber uint64) ([]by
 	bt, _ := json.Marshal(&pf)
 	hash := blake2b.Sum256(bt)
 
-	err := dao.Addlog([]byte(name), bt)
+	err := store.Addlog([]byte(name), bt)
 
 	crA := []uint32{0, 0}
 	for _, v := range cr {
