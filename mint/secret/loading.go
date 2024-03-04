@@ -3,6 +3,7 @@ package secret
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/vedhavyas/go-subkey"
 	"github.com/vedhavyas/go-subkey/sr25519"
+	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 )
 
@@ -25,6 +27,8 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Read body error" + err.Error()))
 		return
 	}
+
+	// 解析请求数据
 	param := &store.LoadParam{}
 	err = json.Unmarshal(bodyBytes, param)
 	if err != nil {
@@ -33,7 +37,9 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 加载应用的加密环境变量和文件
 	s, err := loading(appID, param)
+	fmt.Println("loading", err)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
@@ -77,7 +83,12 @@ func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
 	// 验证地址
 	address, err := store.GetSetAppSignerAddress(wid, param.Address)
 	if err != nil || address != param.Address {
-		return nil, errors.Wrap(err, "Address error")
+		// return nil, errors.New("VerifyAddress error")
+	}
+
+	_, err = proof.VerifyReportProof(param.Report, nil, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "VerifyLocalReport error")
 	}
 
 	// 存入Work DCAP信息

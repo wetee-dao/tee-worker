@@ -21,6 +21,7 @@ import (
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/mint"
+	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
@@ -212,7 +213,7 @@ func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, erro
 		maddress = minter.Address
 	}
 
-	report, err := store.GetRootDcapReport()
+	report, err := proof.GetRootReport()
 	if err != nil {
 		report = nil
 	}

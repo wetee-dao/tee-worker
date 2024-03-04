@@ -30,6 +30,7 @@ type Secrets struct {
 }
 
 func SealAppID(WorkID types.WorkId) (string, error) {
+	// Add timestamps to prevent id hijacking and misuse
 	// 添加时间戳防止id被劫持滥用
 	key := util.GetWorkTypeStr(WorkID) + "-" + fmt.Sprint(WorkID.Id) + "-" + fmt.Sprint(time.Now().Unix())
 	var val []byte

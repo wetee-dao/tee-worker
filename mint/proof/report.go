@@ -1,4 +1,4 @@
-package secret
+package proof
 
 import (
 	"crypto"
@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"math/big"
 	"time"
 
@@ -40,10 +41,17 @@ func CreateCertificate(addr string) ([]byte, crypto.PrivateKey) {
 	template := &x509.Certificate{
 		SerialNumber: &big.Int{},
 		Subject:      pkix.Name{CommonName: "wetee.app"},
-		NotAfter:     time.Now().Add(time.Hour),
+		NotAfter:     time.Now().Add(time.Hour * 24 * 365),
 		DNSNames:     []string{addr},
 	}
 	priv, _ := rsa.GenerateKey(rand.Reader, 2048)
 	cert, _ := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
 	return cert, priv
+}
+
+func GetRootReport() ([]byte, error) {
+	if Report == nil {
+		return nil, errors.New("report is nil")
+	}
+	return Report, nil
 }

@@ -22,20 +22,6 @@ func GetWorkDcapReport(WorkID types.WorkId) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return val, err
-}
-
-func SetRootDcapReport(val []byte) error {
-	key := []byte("rootDcapReport")
-
-	return SealSave(DcapBucket, key, val)
-}
-
-func GetRootDcapReport() ([]byte, error) {
-	val, err := SealGet(DcapBucket, []byte("rootDcapReport"))
-	if err != nil {
-		return nil, err
-	}
 
 	return val, err
 }

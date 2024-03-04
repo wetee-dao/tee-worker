@@ -12,6 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
@@ -52,14 +53,14 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 		}
 
 		// 获取log hash
-		logHash, err := getWorkLogHash(name, logs, state.BlockNumber)
+		logHash, err := proof.GetWorkLogHash(name, logs, state.BlockNumber)
 		if err != nil {
 			util.LogWithRed("getWorkLogHash", err)
 			return err
 		}
 
 		// 获取 cr hash
-		crHash, cr, err := getWorkCrHash(name, crs, state.BlockNumber)
+		crHash, cr, err := proof.GetWorkCrHash(name, crs, state.BlockNumber)
 		if err != nil {
 			util.LogWithRed("getWorkCrHash", err)
 			return err

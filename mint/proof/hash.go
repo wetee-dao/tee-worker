@@ -1,4 +1,4 @@
-package mint
+package proof
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 )
 
 // TODO 工作量证明查询
-func getWorkLogHash(name string, log []string, blockNumber uint64) ([]byte, error) {
+func GetWorkLogHash(id string, log []string, blockNumber uint64) ([]byte, error) {
 	pf := WorkLogProof{
 		BlockNumber: blockNumber,
 		Time:        uint64(time.Now().Unix()),
@@ -18,12 +18,12 @@ func getWorkLogHash(name string, log []string, blockNumber uint64) ([]byte, erro
 	bt, _ := json.Marshal(&pf)
 	hash := blake2b.Sum256(bt)
 
-	err := store.Addlog([]byte(name), bt)
+	err := store.Addlog([]byte(id), bt)
 	return hash[:], err
 }
 
 // TODO 工作量证明查询
-func getWorkCrHash(name string, cr map[string][]int64, blockNumber uint64) ([]byte, []uint32, error) {
+func GetWorkCrHash(id string, cr map[string][]int64, blockNumber uint64) ([]byte, []uint32, error) {
 	pf := WorkCrProof{
 		BlockNumber: blockNumber,
 		Time:        uint64(time.Now().Unix()),
@@ -32,7 +32,7 @@ func getWorkCrHash(name string, cr map[string][]int64, blockNumber uint64) ([]by
 	bt, _ := json.Marshal(&pf)
 	hash := blake2b.Sum256(bt)
 
-	err := store.Addlog([]byte(name), bt)
+	err := store.Addlog([]byte(id), bt)
 
 	crA := []uint32{0, 0}
 	for _, v := range cr {

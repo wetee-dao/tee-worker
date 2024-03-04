@@ -80,6 +80,8 @@ func AccountToAddress(user []byte) string {
 	return saddress
 }
 
+// Get Envs from Work
+// 获取环境变量
 func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
 	wid, err := store.SealAppID(workId)

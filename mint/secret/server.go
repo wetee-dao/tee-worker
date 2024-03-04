@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"wetee.app/worker/store"
+	"wetee.app/worker/mint/proof"
 )
 
 // 启动InCluster服务器
@@ -17,10 +17,7 @@ func StartSecretServerInCluster(addr string) {
 	router := chi.NewRouter()
 
 	// get root dcap report
-	cert, priv, report, _ := GetRemoteReport(addr)
-
-	// set root dcap report
-	store.SetRootDcapReport(report)
+	cert, priv, report, _ := proof.GetRemoteReport(addr)
 
 	// get root dcap report
 	router.Get("/report", func(w http.ResponseWriter, r *http.Request) {

@@ -16,6 +16,7 @@ import (
 	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/gen/system"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
+	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
@@ -98,7 +99,7 @@ mintStart:
 		}
 
 		// 获取dcap根证书
-		report, err := store.GetRootDcapReport()
+		report, err := proof.GetRootReport()
 		if err != nil {
 			fmt.Println("GetRootDcapReport => ", err)
 			time.Sleep(time.Second * 10)

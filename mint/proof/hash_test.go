@@ -1,4 +1,4 @@
-package mint
+package proof
 
 import (
 	"encoding/hex"
@@ -18,7 +18,7 @@ func TestGetWorkLogHash(t *testing.T) {
 	logs := []string{
 		"2021-01-01 12:00:00",
 	}
-	logHash, err := getWorkLogHash("test", logs, blockNumber)
+	logHash, err := GetWorkLogHash("test", logs, blockNumber)
 	if err != nil {
 		t.Error(err)
 	}
@@ -47,7 +47,7 @@ func TestGetWorkCrHash(t *testing.T) {
 		"test": {1, 2, 3},
 	}
 	blockNumber := uint64(0)
-	crHash, _, err := getWorkCrHash("test", cr, blockNumber)
+	crHash, _, err := GetWorkCrHash("test", cr, blockNumber)
 	if err != nil {
 		t.Error(err)
 	}
