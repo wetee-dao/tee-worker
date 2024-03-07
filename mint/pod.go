@@ -109,6 +109,7 @@ func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 	return envs, nil
 }
 
+// 获取配置文件
 func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.AppSetting) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
 	wid, err := store.SealAppID(workId)
@@ -134,23 +135,26 @@ func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Ap
 
 // StopApp
 // 停止应用
-func (m *Minter) StopApp(workId gtypes.WorkId) error {
+func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 	ctx := context.Background()
-	user, err := chain.GetAccount(m.ChainClient, workId)
-	if err != nil {
-		return err
+
+	if space == "" {
+		user, err := chain.GetAccount(m.ChainClient, workId)
+		if err != nil {
+			return err
+		}
+		space = AccountToAddress(user[:])
 	}
 
-	saddress := AccountToAddress(user[:])
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-	// util.LogWithRed("===========================================StopPod", workId, " ", name)
+	util.LogWithRed("StopApp: ", name)
 
 	if workId.Wtype.IsAPP {
-		nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
+		nameSpace := m.K8sClient.AppsV1().Deployments(space)
 
 		return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
 	}
 
-	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
+	nameSpace := m.K8sClient.CoreV1().Pods(space)
 	return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
 }

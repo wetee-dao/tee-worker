@@ -28,6 +28,9 @@ import (
 
 // ClusterRegister is the resolver for the cluster_register field.
 func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip string, port int, level int) (string, error) {
+	if mint.MinterIns.ChainClient == nil {
+		return "", gqlerror.Errorf("Invalid chain client")
+	}
 	client := mint.MinterIns.ChainClient
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
@@ -59,6 +62,9 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 
 // ClusterMortgage is the resolver for the cluster_mortgage field.
 func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int, disk int, deposit int64) (string, error) {
+	if mint.MinterIns.ChainClient == nil {
+		return "", gqlerror.Errorf("Invalid chain client")
+	}
 	client := mint.MinterIns.ChainClient
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
@@ -81,6 +87,9 @@ func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int
 
 // ClusterUnmortgage is the resolver for the cluster_unmortgage field.
 func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, id int64) (string, error) {
+	if mint.MinterIns.ChainClient == nil {
+		return "", gqlerror.Errorf("Invalid chain client")
+	}
 	client := mint.MinterIns.ChainClient
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
@@ -104,6 +113,9 @@ func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, id int64) (str
 
 // ClusterWithdrawal is the resolver for the cluster_withdrawal field.
 func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, id int64, ty model.WorkType, val int64) (string, error) {
+	if mint.MinterIns.ChainClient == nil {
+		return "", gqlerror.Errorf("Invalid chain client")
+	}
 	client := mint.MinterIns.ChainClient
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
@@ -125,6 +137,9 @@ func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, id int64, ty m
 
 // ClusterStop is the resolver for the cluster_stop field.
 func (r *mutationResolver) ClusterStop(ctx context.Context) (string, error) {
+	if mint.MinterIns.ChainClient == nil {
+		return "", gqlerror.Errorf("Invalid chain client")
+	}
 	client := mint.MinterIns.ChainClient
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
@@ -148,6 +163,9 @@ func (r *mutationResolver) ClusterStop(ctx context.Context) (string, error) {
 
 // StartForTest is the resolver for the start_for_test field.
 func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
+	if mint.MinterIns.ChainClient == nil {
+		return false, gqlerror.Errorf("Invalid chain client")
+	}
 	client := mint.MinterIns.ChainClient
 	if client == nil {
 		return false, gqlerror.Errorf("Cant connect to chain")

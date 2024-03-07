@@ -54,7 +54,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 		if appEvent.IsWorkStopped {
 			workId := appEvent.AsWorkStoppedWorkId1
 
-			err = m.StopApp(workId)
+			err = m.StopApp(workId, "")
 			util.LogWithRed("===========================================StopPod error: ", err)
 		}
 		if appEvent.IsWorkUpdated {
@@ -81,7 +81,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 				IsTASK: true,
 			}, Id: taskID}
 
-			err = m.StopApp(workId)
+			err = m.StopApp(workId, "")
 			util.LogWithRed("===========================================StopTask error: ", err)
 		}
 	}

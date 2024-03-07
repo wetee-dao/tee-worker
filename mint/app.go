@@ -2,7 +2,6 @@ package mint
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -64,40 +63,56 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 	// 获取log和硬件资源使用量
 	// Get log and hardware resource usage
 	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-state.BlockNumber)
+
+	// 获取log和硬件资源使用量
+	var logHash = []byte{}
+	var crHash = []byte{}
+	var cr = []uint32{0, 0, 0}
+
+	// 如果获取log和硬件资源使用量失败就不提交相关数据
 	if err != nil {
 		util.LogWithRed("getMetricInfo", err)
-		return err
 	}
 
-	// 获取log hash
-	// Get log hash
-	logHash, err := proof.GetWorkLogHash(name, logs, state.BlockNumber)
-	if err != nil {
-		util.LogWithRed("getWorkLogHash", err)
-		return err
+	if len(logs) > 0 {
+		// 获取log hash
+		// Get log hash
+		logHash, err = proof.GetWorkLogHash(name, logs, state.BlockNumber)
+		if err != nil {
+			util.LogWithRed("getWorkLogHash", err)
+			return err
+		}
 	}
 
-	// 获取计算资源hash
-	// Get Computing resource hash
-	crHash, cr, err := proof.GetWorkCrHash(name, crs, state.BlockNumber)
-	if err != nil {
-		util.LogWithRed("getWorkCrHash", err)
-		return err
+	if len(crs) > 0 {
+		// 获取计算资源hash
+		// Get Computing resource hash
+		crHash, cr, err = proof.GetWorkCrHash(name, crs, state.BlockNumber)
+		if err != nil {
+			util.LogWithRed("getWorkCrHash", err)
+			return err
+		}
 	}
 
 	// 初始化worker对象
-	// init worker object
+	// Init worker object
 	worker := chain.Worker{
 		Client: m.ChainClient,
 		Signer: Signer,
 	}
 
 	// 获取工作证明
-	// get report of work
+	// Get report of work
 	report, err := store.GetWorkDcapReport(workId)
 	if err != nil {
 		util.LogWithRed("GetWorkDcapReport", err)
-		return err
+		report = []byte{}
+	}
+
+	// 所有需要提交的信息都不存在，不继续提交
+	// All required submission information is missing, and the submission will not be continued.
+	if report == nil && crHash == nil && logHash == nil {
+		return errors.New("report, crHash and logHash are all nil")
 	}
 
 	// 上传工作证明
@@ -216,9 +231,6 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 			},
 		},
 	}
-
-	bt, _ := json.Marshal(20)
-	fmt.Println(string(bt))
 
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
 	fmt.Println("================================================= Create", err)

@@ -54,5 +54,19 @@ spec:
         name: dev
 EOF
 
+cat <<EOF | kubectl create -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: worker-addon
+  annotations:
+    field.cattle.io/containerDefaultResourceLimit: '{}'
+  labels:
+    {}
+EOF
+
+
 # 为wetee-worker赋予集群管理权限
 kubectl create clusterrolebinding wetee-admin --clusterrole=cluster-admin --user=system:serviceaccount:worker-system:worker-controller-manager
+
+# docker run -e APIKEY=8d375b775de84c2593e7694dedbbbe90 -p 8081:8081 --name pccs -d --restart=unless-stopped  wetee/pccs

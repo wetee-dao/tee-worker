@@ -17,7 +17,7 @@ make manifests
 make install
 
 # 创建暂时无用的目录
-mkdir -p /var/run/secrets/kubernetes.io/serviceaccount/
+sudo mkdir -p /var/run/secrets/kubernetes.io/serviceaccount/
 
 # 编译程序
 make build
@@ -27,3 +27,9 @@ make docker-build docker-push IMG=wetee/worker:$tag
 
 # 部署镜像
 make deploy IMG=wetee/worker:$tag
+
+# 创建内部服务
+kubectl create -f ./hack/manager_headless.yaml
+
+# 创建外部服务
+kubectl create -f ./hack/manager_nodeport.yaml

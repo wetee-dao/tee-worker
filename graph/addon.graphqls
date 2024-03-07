@@ -1,0 +1,21 @@
+extend type Mutation {
+  """Start a in cluster wetee node"""
+  start_local_wetee(
+    """version input"""
+    image_version: String!,
+  ): Boolean!
+
+  """Link to wetee node"""
+  link_wetee(
+    """wetee node url or 'local'"""
+    url: String!,
+  ): Boolean!
+
+  """Start a sgx pccs node"""
+  start_sgx_pccs(
+    """image version"""
+    image_version: String!,
+    """intel pccs api key"""
+    api_key: String!
+  ): Boolean!
+}

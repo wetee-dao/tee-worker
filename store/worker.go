@@ -15,3 +15,17 @@ func GetRootUser() (string, error) {
 	}
 	return string(val), err
 }
+
+func SetChainUrl(id string) error {
+	key := []byte("ChainUrl")
+	val := []byte(id)
+	return SealSave(WorkerBucket, key, val)
+}
+
+func GetChainUrl() (string, error) {
+	val, err := SealGet(WorkerBucket, []byte("ChainUrl"))
+	if err != nil {
+		return "", err
+	}
+	return string(val), nil
+}

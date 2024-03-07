@@ -8,8 +8,9 @@ import (
 const RuningBucket = "runing"
 
 type RuningCache struct {
-	Status   string
-	DeleteAt int64
+	NameSpace string
+	Status    string
+	DeleteAt  int64
 }
 
 func SetRuning(data map[string]RuningCache) error {

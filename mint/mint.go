@@ -30,14 +30,15 @@ type Minter struct {
 }
 
 var (
-	MinterIns *Minter
-	lock      sync.Mutex
-	Signer    *signature.KeyringPair
+	MinterIns       *Minter
+	lock            sync.Mutex
+	Signer          *signature.KeyringPair
+	DefaultChainUrl string = "ws://wetee-node.worker-addon.svc.cluster.local:9944"
 )
 
-// InitMint
+// InitCluster
 // 初始化矿工
-func InitMint(mgr manager.Manager, chainUrl string) error {
+func InitCluster(mgr manager.Manager) error {
 	// 创建K8s Client
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
 	if err != nil {
@@ -50,58 +51,73 @@ func InitMint(mgr manager.Manager, chainUrl string) error {
 		return err
 	}
 
-	// 创建Chain Client
-	client, err := chain.ClientInit(chainUrl)
-	if err != nil {
-		return err
-	}
-
 	// 初始化minter
 	lock.Lock()
 	MinterIns = &Minter{
 		K8sClient:     clientset,
 		MetricsClient: metricsClient,
-		ChainClient:   client,
+		ChainClient:   nil,
 	}
 
 	// 获取签名账户
 	Signer, err = GetMintKey()
 	lock.Unlock()
 
+	// 此处不捕获错误，因为如果初始化失败，程序可以继续运行
+	InitChainClient(DefaultChainUrl)
+
 	return err
+}
+
+func InitChainClient(url string) error {
+	client, err := chain.ClientInit(url)
+	if err != nil {
+		return err
+	}
+	MinterIns.ChainClient = client
+	store.SetChainUrl(url)
+
+	return nil
 }
 
 // start mint
 // 开始挖矿
 func (m *Minter) StartMint() {
 	fmt.Println("MintKey => ", Signer.Address)
-	client := m.ChainClient
-	chainAPI := client.Api
-
-	// 初始化worker对象
-	// Initialize the worker object
-	worker := chain.Worker{
-		Client: client,
-		Signer: Signer,
-	}
 
 	// 挖矿开始
 mintStart:
 
+	var worker chain.Worker
+
 	// 等待集群开启
 	// Waiting for cluster start
 	for {
-		clusterId, err := worker.Getk8sClusterAccounts(Signer.PublicKey)
-		if err != nil {
-			fmt.Println("ClusterId => clusterId not found, mint not started")
-			time.Sleep(time.Second * 10)
-			continue
-		}
-
 		// 获取dcap根证书
 		report, err := proof.GetRootReport()
 		if err != nil {
 			fmt.Println("GetRootDcapReport => ", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
+
+		if MinterIns.ChainClient == nil {
+			fmt.Println("Chain connect is not init => ", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
+
+		// 初始化worker对象
+		// Initialize the worker object
+		worker = chain.Worker{
+			Client: m.ChainClient,
+			Signer: Signer,
+		}
+
+		// 获取clusterId
+		clusterId, err := worker.Getk8sClusterAccounts(Signer.PublicKey)
+		if err != nil {
+			fmt.Println("ClusterId => clusterId not found, mint not started")
 			time.Sleep(time.Second * 10)
 			continue
 		}
@@ -114,6 +130,7 @@ mintStart:
 			continue
 		}
 
+		// 保存clusterId
 		store.SetClusterId(clusterId)
 
 		break
@@ -121,6 +138,9 @@ mintStart:
 
 	clusterId, _ := store.GetClusterId()
 	fmt.Println("ClusterId => ", clusterId)
+
+	client := m.ChainClient
+	chainAPI := client.Api
 
 	// 订阅区块事件
 	// Subscribe to block events
@@ -167,18 +187,18 @@ mintStart:
 
 		// 删除过期的合约
 		// Delete expired contracts
-		deletes, err := DeleteFormCache(cs)
+		_, err = DeleteFormCache(cs, func(wid gtypes.WorkId, d store.RuningCache) error {
+			name := util.GetWorkTypeStr(wid) + "-" + fmt.Sprint(wid.Id)
+			err := m.StopApp(wid, d.NameSpace)
+			if err != nil && !strings.Contains(err.Error(), "not found") {
+				util.LogWithRed("DeleteRuning "+name+" ", err)
+				return err
+			}
+			return nil
+		})
 		if err != nil {
 			util.LogWithRed("DeleteFormCache", err)
 			continue
-		}
-		for _, d := range deletes {
-			err := m.StopApp(d)
-			name := util.GetWorkTypeStr(d) + "-" + fmt.Sprint(d.Id)
-			if err != nil {
-				util.LogWithRed("DeleteRuning "+name+" ", err)
-				continue
-			}
 		}
 
 		// 获取收费周期
@@ -219,7 +239,8 @@ mintStart:
 	}
 }
 
-func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap) ([]gtypes.WorkId, error) {
+func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap, deleteFunc func(gtypes.WorkId, store.RuningCache) error) ([]gtypes.WorkId, error) {
+	// 获取缓存
 	caches, err := store.GetRuning()
 	if err != nil {
 		return nil, err
@@ -227,7 +248,7 @@ func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap) ([]gtypes.WorkId, e
 
 	// 删除已经停止的应用
 	var deletes = []gtypes.WorkId{}
-	for name := range caches {
+	for name, cache := range caches {
 		ids := strings.Split(name, "-")
 		id, err := strconv.ParseUint(ids[1], 10, 64)
 		if err != nil {
@@ -240,21 +261,27 @@ func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap) ([]gtypes.WorkId, e
 		}
 
 		if _, ok := cs[wid]; !ok {
-			deletes = append(deletes, wid)
+			util.LogWithRed("DeleteFormCache", fmt.Sprintf("Delete cache %s", name))
+			if deleteFunc(wid, cache) == nil {
+				delete(caches, name)
+				deletes = append(deletes, wid)
+			}
 		}
 	}
 
 	// 重构新的缓存
-	var newCache = map[string]store.RuningCache{}
-	for workId := range cs {
+	for workId, c := range cs {
 		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-		newCache[name] = store.RuningCache{
-			Status:   "running",
-			DeleteAt: 0,
+		nameSpace := AccountToAddress(c.ContractState.User[:])
+		caches[name] = store.RuningCache{
+			NameSpace: nameSpace,
+			Status:    "running",
+			DeleteAt:  0,
 		}
 	}
 
-	err = store.SetRuning(newCache)
+	// 设置新的缓存
+	err = store.SetRuning(caches)
 	if err != nil {
 		return nil, err
 	}

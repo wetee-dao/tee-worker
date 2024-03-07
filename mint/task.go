@@ -77,7 +77,8 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 		report, err := store.GetWorkDcapReport(workId)
 		if err != nil {
 			util.LogWithRed("GetWorkDcapReport", err)
-			return err
+			report = []byte{}
+			// return err
 		}
 
 		// 上传工作证明结束任务
@@ -92,7 +93,7 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 			return err
 		}
 
-		m.StopApp(c.ContractState.WorkId)
+		m.StopApp(c.ContractState.WorkId, "")
 	}
 	return nil
 }

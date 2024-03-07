@@ -1,7 +1,9 @@
 package mint
 
 import (
+	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/edgelesssys/ego/enclave"
@@ -23,6 +25,14 @@ func GetMintKey() (*signature.KeyringPair, error) {
 
 	var mss [32]byte
 	copy(mss[:], k)
+
+	token := make([]byte, 16)
+	rand.Read(token)
+	fmt.Println(len(k))
+	fmt.Println("GetKey", mss)
+
+	copy(mss[16:], token)
+	fmt.Println("GetKey", mss)
 
 	uri := hex.EncodeToString(mss[:])
 	scheme := sr25519.Scheme{}
