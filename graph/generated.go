@@ -69,8 +69,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Worker     func(childComplexity int) int
-		WorkerInfo func(childComplexity int) int
+		WorkLogList    func(childComplexity int, workType string, workID int, page int, size int) int
+		WorkMetricList func(childComplexity int, workType string, workID int, page int, size int) int
+		Worker         func(childComplexity int) int
+		WorkerInfo     func(childComplexity int) int
 	}
 
 	User struct {
@@ -100,6 +102,8 @@ type MutationResolver interface {
 	StartForTest(ctx context.Context) (bool, error)
 }
 type QueryResolver interface {
+	WorkLogList(ctx context.Context, workType string, workID int, page int, size int) (string, error)
+	WorkMetricList(ctx context.Context, workType string, workID int, page int, size int) (string, error)
 	WorkerInfo(ctx context.Context) (*model.WorkerInfo, error)
 	Worker(ctx context.Context) ([]*model.Contract, error)
 }
@@ -266,6 +270,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.StartSgxPccs(childComplexity, args["image_version"].(string), args["api_key"].(string)), true
 
+	case "Query.WorkLogList":
+		if e.complexity.Query.WorkLogList == nil {
+			break
+		}
+
+		args, err := ec.field_Query_WorkLogList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.WorkLogList(childComplexity, args["work_type"].(string), args["work_id"].(int), args["page"].(int), args["size"].(int)), true
+
+	case "Query.WorkMetricList":
+		if e.complexity.Query.WorkMetricList == nil {
+			break
+		}
+
+		args, err := ec.field_Query_WorkMetricList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.WorkMetricList(childComplexity, args["work_type"].(string), args["work_id"].(int), args["page"].(int), args["size"].(int)), true
+
 	case "Query.worker":
 		if e.complexity.Query.Worker == nil {
 			break
@@ -431,7 +459,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "addon.graphqls" "user.graphqls" "worker.graphqls"
+//go:embed "addon.graphqls" "proof.graphqls" "user.graphqls" "worker.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -444,6 +472,7 @@ func sourceData(filename string) string {
 
 var sources = []*ast.Source{
 	{Name: "addon.graphqls", Input: sourceData("addon.graphqls"), BuiltIn: false},
+	{Name: "proof.graphqls", Input: sourceData("proof.graphqls"), BuiltIn: false},
 	{Name: "user.graphqls", Input: sourceData("user.graphqls"), BuiltIn: false},
 	{Name: "worker.graphqls", Input: sourceData("worker.graphqls"), BuiltIn: false},
 }
@@ -699,6 +728,90 @@ func (ec *executionContext) field_Mutation_start_sgx_pccs_args(ctx context.Conte
 		}
 	}
 	args["api_key"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_WorkLogList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["work_type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_type"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["work_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_id"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg2
+	var arg3 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_WorkMetricList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["work_type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_type"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["work_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_id"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg2
+	var arg3 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg3
 	return args, nil
 }
 
@@ -1652,6 +1765,116 @@ func (ec *executionContext) fieldContext_Mutation_start_for_test(ctx context.Con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_WorkLogList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_WorkLogList(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().WorkLogList(rctx, fc.Args["work_type"].(string), fc.Args["work_id"].(int), fc.Args["page"].(int), fc.Args["size"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_WorkLogList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_WorkLogList_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_WorkMetricList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_WorkMetricList(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().WorkMetricList(rctx, fc.Args["work_type"].(string), fc.Args["work_id"].(int), fc.Args["page"].(int), fc.Args["size"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_WorkMetricList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_WorkMetricList_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -4179,6 +4402,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "WorkLogList":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_WorkLogList(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "WorkMetricList":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_WorkMetricList(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "workerInfo":
 			field := field
 

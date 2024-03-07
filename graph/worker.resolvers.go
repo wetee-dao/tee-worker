@@ -274,8 +274,3 @@ func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
 	}
 	return list, nil
 }
-
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-type queryResolver struct{ *Resolver }

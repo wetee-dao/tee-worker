@@ -17,10 +17,10 @@ func GetWorkTypeStr(work types.WorkId) string {
 
 // string to work type
 func GetWorkType(ty string) types.WorkType {
-	if ty == "app" {
+	if ty == "app" || ty == "APP" {
 		return types.WorkType{IsAPP: true}
 	}
-	if ty == "task" {
+	if ty == "task" || ty == "TASK" {
 		return types.WorkType{IsTASK: true}
 	}
 	return types.WorkType{}

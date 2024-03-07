@@ -80,29 +80,6 @@ func (r *mutationResolver) StartLocalWetee(ctx context.Context, imageVersion str
 		return false, gqlerror.Errorf(err.Error())
 	}
 
-	serviceNode := v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "wetee-node-port",
-		},
-		Spec: v1.ServiceSpec{
-			Selector: map[string]string{"app": "wetee-node"},
-			Type:     v1.ServiceTypeNodePort,
-			Ports: []v1.ServicePort{
-				{
-					Name:       "wetee-nodeport-9944",
-					Protocol:   "TCP",
-					Port:       9944,
-					TargetPort: intstr.FromInt(9944),
-					NodePort:   30001,
-				},
-			},
-		},
-	}
-	_, err = ServiceSpace.Create(ctx, &serviceNode, metav1.CreateOptions{})
-	if err != nil {
-		return false, gqlerror.Errorf(err.Error())
-	}
-
 	return true, nil
 }
 

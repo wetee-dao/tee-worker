@@ -1,3 +1,6 @@
 extend type Query {
-    
+  """Query log list"""
+  WorkLogList(work_type: String!,work_id: Int!,page: Int!,size: Int!): String!
+  """Query Metric list"""
+  WorkMetricList(work_type: String!,work_id: Int!,page: Int!,size: Int!): String!
 }

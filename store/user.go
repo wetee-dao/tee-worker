@@ -20,3 +20,17 @@ func GetClusterId() (uint64, error) {
 	}
 	return strconv.ParseUint(string(val), 10, 64)
 }
+
+func SetMintId(id []byte) error {
+	key := []byte("MinterId")
+	val := id
+	return SealSave(UserBucket, key, val)
+}
+
+func GetMintId() ([]byte, error) {
+	val, err := SealGet(UserBucket, []byte("MinterId"))
+	if err != nil {
+		return nil, err
+	}
+	return val, nil
+}

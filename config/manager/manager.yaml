@@ -29,6 +29,8 @@ spec:
     matchLabels:
       control-plane: controller-manager
   replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       annotations:
@@ -96,5 +98,13 @@ spec:
             alibabacloud.com/sgx_epc_MiB: 10
           requests:
             alibabacloud.com/sgx_epc_MiB: 10
+        volumeMounts:
+          - name: wetee-worker
+            mountPath: /opt/wetee-worker
+      volumes:
+        - name: wetee-worker
+          hostPath:
+            type: DirectoryOrCreate
+            path: /mnt/wetee-worker
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
