@@ -29,6 +29,7 @@ func StartSecretServerInCluster(addr string) {
 		w.WriteHeader(200)
 		w.Write(bt)
 	})
+
 	router.Post("/appLoader/{AppID}", LoadingHandler)
 
 	tlsCfg := tls.Config{

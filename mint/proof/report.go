@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"errors"
 	"math/big"
 	"time"
 
@@ -27,8 +26,13 @@ var (
 // GetRemoteReport get remote report
 // return: cert, priv, report, err
 func GetRemoteReport(addr string) ([]byte, crypto.PrivateKey, []byte, error) {
+	if Report != nil {
+		return SslCert, SslPriv, Report, nil
+	}
+
 	SslCert, SslPriv = CreateCertificate(addr)
 	hash := sha256.Sum256(SslCert)
+
 	var err error
 	Report, err = enclave.GetRemoteReport(hash[:])
 	return SslCert, SslPriv, Report, err
@@ -47,11 +51,4 @@ func CreateCertificate(addr string) ([]byte, crypto.PrivateKey) {
 	priv, _ := rsa.GenerateKey(rand.Reader, 2048)
 	cert, _ := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
 	return cert, priv
-}
-
-func GetRootReport() ([]byte, error) {
-	if Report == nil {
-		return nil, errors.New("report is nil")
-	}
-	return Report, nil
 }

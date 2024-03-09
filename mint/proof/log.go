@@ -19,6 +19,8 @@ type WorkLogProof struct {
 	Logs        []string
 }
 
+// 工作量日志列表
+// Work Log List
 func ListLogsById(id gtypes.WorkId, page int, size int) ([]WorkLogProof, error) {
 	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
 	res, err := store.GetLogList([]byte(name), page, size)
@@ -35,6 +37,7 @@ func ListLogsById(id gtypes.WorkId, page int, size int) ([]WorkLogProof, error) 
 		}
 		list = append(list, logProof)
 	}
+
 	return list, nil
 }
 

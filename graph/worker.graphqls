@@ -8,7 +8,7 @@ enum WorkType {
 
 extend type Query {
   """Query worker info"""
-  workerInfo: WorkerInfo!
+  worker_info: WorkerInfo!
   """Query worker mint list"""
   worker: [Contract!]!  @AuthCheck(role: ADMIN)
 }

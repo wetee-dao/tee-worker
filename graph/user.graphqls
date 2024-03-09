@@ -33,7 +33,7 @@ input LoginContent {
 extend type Mutation {
   """Root用户登陆接口 
   Root admin login"""
-  loginAndBindRoot(
+  login_as_root(
     """login input"""
     input: LoginContent!,
     """login input signature"""

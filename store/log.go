@@ -1,8 +1,6 @@
 package store
 
 import (
-	"fmt"
-
 	"github.com/nutsdb/nutsdb"
 )
 
@@ -32,7 +30,7 @@ func GetLogList(key []byte, page int, size int) ([][]byte, error) {
 		return nil, err
 	}
 
-	var list [][]byte
+	list := make([][]byte, 0, size)
 	err = DB.View(
 		func(tx *nutsdb.Tx) error {
 			var start = 0
@@ -41,8 +39,14 @@ func GetLogList(key []byte, page int, size int) ([][]byte, error) {
 				start = (page - 1) * size
 				end = start + size
 			}
-			list, err2 := tx.LRange(LogBucket, key, start, end)
-			fmt.Println(list)
+			clist, err2 := tx.LRange(LogBucket, key, start, end)
+			for _, v := range clist {
+				item, err := Unseal(v, nil)
+				if err != nil {
+					return err
+				}
+				list = append(list, item)
+			}
 			return err2
 		},
 	)
@@ -57,7 +61,7 @@ func GetMetricList(key []byte, page int, size int) ([][]byte, error) {
 		return nil, err
 	}
 
-	var list [][]byte
+	list := make([][]byte, 0, size)
 	err = DB.View(
 		func(tx *nutsdb.Tx) error {
 			var start = 0
@@ -66,8 +70,15 @@ func GetMetricList(key []byte, page int, size int) ([][]byte, error) {
 				start = (page - 1) * size
 				end = start + size
 			}
-			list, err2 := tx.LRange(CrBucket, key, start, end)
-			fmt.Println(list)
+
+			clist, err2 := tx.LRange(CrBucket, key, start, end)
+			for _, v := range clist {
+				item, err := Unseal(v, nil)
+				if err != nil {
+					return err
+				}
+				list = append(list, item)
+			}
 			return err2
 		},
 	)

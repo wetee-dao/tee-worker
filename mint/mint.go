@@ -94,7 +94,7 @@ mintStart:
 	// Waiting for cluster start
 	for {
 		// 获取dcap根证书
-		report, err := proof.GetRootReport()
+		_, _, report, err := proof.GetRemoteReport("")
 		if err != nil {
 			fmt.Println("GetRootDcapReport => ", err)
 			time.Sleep(time.Second * 10)

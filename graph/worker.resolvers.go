@@ -191,8 +191,9 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, gqlerror.Errorf("Chain call error:" + err.Error())
 	}
+	time.Sleep(7 * time.Second)
 
-	err = worker.ClusterRegister("", []uint8{127, 0, 0, 1}, uint32(80), uint8(1), false)
+	err = worker.ClusterRegister("xiaobai.asyou.me", []uint8{127, 0, 0, 1}, uint32(80), uint8(1), false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain ClusterRegister error:" + err.Error())
 	}
@@ -231,7 +232,7 @@ func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, erro
 		maddress = minter.Address
 	}
 
-	report, err := proof.GetRootReport()
+	_, _, report, err := proof.GetRemoteReport("")
 	if err != nil {
 		report = nil
 	}
