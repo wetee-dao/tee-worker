@@ -70,7 +70,7 @@ func InitCluster(mgr manager.Manager) error {
 }
 
 func InitChainClient(url string) error {
-	client, err := chain.ClientInit(url)
+	client, err := chain.ClientInit(url, true)
 	if err != nil {
 		return err
 	}
