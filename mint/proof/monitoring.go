@@ -18,29 +18,12 @@ type WorkCrProof struct {
 	Cr          map[string][]int64
 }
 
-// 工作量证明资源占用 hash
-func GetWorkCrHash(id string, cr map[string][]int64, blockNumber uint64) ([]byte, []uint32, error) {
-	pf := WorkCrProof{
-		BlockNumber: blockNumber,
-		Time:        uint64(time.Now().Unix()),
-		Cr:          cr,
-	}
-	bt, _ := json.Marshal(&pf)
-	hash := blake2b.Sum256(bt)
+var CrBucket = "cr"
 
-	err := store.AddCr([]byte(id), bt)
-
-	crA := []uint32{0, 0}
-	for _, v := range cr {
-		crA[0] += uint32(v[0])
-		crA[1] += uint32(v[1])
-	}
-	return hash[:], crA, err
-}
-
+// 工作量证明资源占用列表
 func ListMonitoringsById(id gtypes.WorkId, page int, size int) ([]WorkCrProof, error) {
-	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
-	res, err := store.GetMetricList([]byte(name), page, size)
+	name := CrBucket + util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
+	res, err := store.GetList(CrBucket, []byte(name), page, size)
 	if err != nil {
 		return nil, err
 	}
@@ -55,4 +38,22 @@ func ListMonitoringsById(id gtypes.WorkId, page int, size int) ([]WorkCrProof, e
 		list = append(list, proof)
 	}
 	return list, nil
+}
+
+// 工作量证明资源占用 hash
+func GetWorkCrHash(cr map[string][]int64, blockNumber uint64) ([]byte, []uint32, []byte, error) {
+	pf := WorkCrProof{
+		BlockNumber: blockNumber,
+		Time:        uint64(time.Now().Unix()),
+		Cr:          cr,
+	}
+	bt, err := json.Marshal(&pf)
+	hash := blake2b.Sum256(bt)
+
+	crA := []uint32{0, 0}
+	for _, v := range cr {
+		crA[0] += uint32(v[0])
+		crA[1] += uint32(v[1])
+	}
+	return hash[:], crA, bt, err
 }

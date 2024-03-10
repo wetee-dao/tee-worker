@@ -19,11 +19,13 @@ type WorkLogProof struct {
 	Logs        []string
 }
 
+var LogBucket = "log"
+
 // 工作量日志列表
 // Work Log List
 func ListLogsById(id gtypes.WorkId, page int, size int) ([]WorkLogProof, error) {
-	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
-	res, err := store.GetLogList([]byte(name), page, size)
+	name := LogBucket + util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
+	res, err := store.GetList(LogBucket, []byte(name), page, size)
 	if err != nil {
 		return nil, err
 	}
@@ -42,15 +44,14 @@ func ListLogsById(id gtypes.WorkId, page int, size int) ([]WorkLogProof, error) 
 }
 
 // 工作量日志 hash
-func GetWorkLogHash(id string, log []string, blockNumber uint64) ([]byte, error) {
+func GetWorkLogHash(log []string, blockNumber uint64) ([]byte, []byte, error) {
 	pf := WorkLogProof{
 		BlockNumber: blockNumber,
 		Time:        uint64(time.Now().Unix()),
 		Logs:        log,
 	}
-	bt, _ := json.Marshal(&pf)
+	bt, err := json.Marshal(&pf)
 	hash := blake2b.Sum256(bt)
 
-	err := store.Addlog([]byte(id), bt)
-	return hash[:], err
+	return hash[:], bt, err
 }

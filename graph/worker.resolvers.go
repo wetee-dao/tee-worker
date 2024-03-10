@@ -193,12 +193,12 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 	}
 	time.Sleep(7 * time.Second)
 
-	err = worker.ClusterRegister("xiaobai.asyou.me", []uint8{127, 0, 0, 1}, uint32(80), uint8(1), false)
+	err = worker.ClusterRegister("baiL", []uint8{127, 0, 0, 1}, uint32(30000), uint8(1), false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain ClusterRegister error:" + err.Error())
 	}
 
-	time.Sleep(7 * time.Second)
+	time.Sleep(18 * time.Second)
 
 	clusterId, err := worker.Getk8sClusterAccounts(mint.Signer.PublicKey)
 	if err != nil {
@@ -212,7 +212,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		return false, gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
 
-	err = worker.ClusterMortgage(id, uint32(1000000), uint32(1000000), uint32(1000000), uint64(100000000000), false)
+	err = worker.ClusterMortgage(id, uint32(1000000), uint32(100000000), uint32(1000000), uint64(1000000000000), false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain ClusterMortgage error:" + err.Error())
 	}

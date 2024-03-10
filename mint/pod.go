@@ -47,7 +47,7 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 	}
 
 	fmt.Println("================================================logs: ", logs)
-	var mem map[string][]int64 = map[string][]int64{}
+	var use map[string][]int64 = map[string][]int64{}
 
 	// 获取Pod的内存使用情况
 	// Gets the memory usage of the Pod
@@ -56,7 +56,7 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 		if wid.Wtype.IsAPP {
 			return nil, nil, err
 		} else {
-			mem["d"] = []int64{0, 0, 0}
+			use["d"] = []int64{0, 0, 0}
 		}
 	} else {
 		// 遍历Pod的容器，获取内存使用情况
@@ -65,11 +65,11 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 			fmt.Println("Pod ", podMetrics.Name, " CPU使用情况: ", container.Usage.Cpu().MilliValue(), " M")
 			fmt.Println("Pod ", podMetrics.Name, " 内存使用情况: ", container.Usage.Memory().Value()/(1024*1024), " MB")
 
-			mem[container.Name] = []int64{container.Usage.Cpu().MilliValue(), container.Usage.Memory().Value() / (1024 * 1024), 0}
+			use[container.Name] = []int64{container.Usage.Cpu().MilliValue(), container.Usage.Memory().Value() / (1024 * 1024), 0}
 		}
 	}
 
-	return logs, mem, nil
+	return logs, use, nil
 }
 
 // Account To Hex Address

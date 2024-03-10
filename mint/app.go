@@ -7,8 +7,8 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
-	chain "github.com/wetee-dao/go-sdk"
 	gtype "github.com/wetee-dao/go-sdk/gen/types"
+	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -18,9 +18,9 @@ import (
 	"wetee.app/worker/util"
 )
 
-func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage uint32, head types.Header) error {
+func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage uint32, head types.Header) (*gtypes.RuntimeCall, error) {
 	if c.App == nil || c.WorkState == nil {
-		return errors.New("app is nil")
+		return nil, errors.New("app is nil")
 	}
 
 	app := c.App
@@ -29,14 +29,15 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 	_, err := m.CheckAppStatus(ctx, c)
 	if err != nil {
 		util.LogWithRed("checkPodStatus", err)
-		return err
+		return nil, err
 	}
 
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
 	if uint64(app.Status) != 1 || uint64(head.Number)-state.BlockNumber < uint64(stage) {
-		return nil
+		return nil, nil
 	}
+
 	util.LogWithRed("=========================================== WorkProofUpload APP")
 
 	workId := c.ContractState.WorkId
@@ -51,83 +52,24 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 	})
 	if err != nil {
 		util.LogWithRed("getPod", err)
-		return err
+		return nil, err
 	}
 
 	if len(pods.Items) == 0 {
 		util.LogWithRed("pods is empty")
-		return errors.New("pods is empty")
+		return nil, errors.New("pods is empty")
 	}
 	fmt.Println("pods: ", pods.Items[0].Name)
 
 	// 获取log和硬件资源使用量
 	// Get log and hardware resource usage
 	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-state.BlockNumber)
-
-	// 获取log和硬件资源使用量
-	var logHash = []byte{}
-	var crHash = []byte{}
-	var cr = []uint32{0, 0, 0}
-
 	// 如果获取log和硬件资源使用量失败就不提交相关数据
 	if err != nil {
 		util.LogWithRed("getMetricInfo", err)
 	}
 
-	if len(logs) > 0 {
-		// 获取log hash
-		// Get log hash
-		logHash, err = proof.GetWorkLogHash(name, logs, state.BlockNumber)
-		if err != nil {
-			util.LogWithRed("getWorkLogHash", err)
-			return err
-		}
-	}
-
-	if len(crs) > 0 {
-		// 获取计算资源hash
-		// Get Computing resource hash
-		crHash, cr, err = proof.GetWorkCrHash(name, crs, state.BlockNumber)
-		if err != nil {
-			util.LogWithRed("getWorkCrHash", err)
-			return err
-		}
-	}
-
-	// 初始化worker对象
-	// Init worker object
-	worker := chain.Worker{
-		Client: m.ChainClient,
-		Signer: Signer,
-	}
-
-	// 获取工作证明
-	// Get report of work
-	report, err := store.GetWorkDcapReport(workId)
-	if err != nil {
-		util.LogWithRed("GetWorkDcapReport", err)
-		report = []byte{}
-	}
-
-	// 所有需要提交的信息都不存在，不继续提交
-	// All required submission information is missing, and the submission will not be continued.
-	if report == nil && crHash == nil && logHash == nil {
-		return errors.New("report, crHash and logHash are all nil")
-	}
-
-	// 上传工作证明
-	// Upload work proof
-	err = worker.WorkProofUpload(c.ContractState.WorkId, logHash, crHash, gtype.Cr{
-		Cpu:  cr[0],
-		Mem:  cr[1],
-		Disk: 0,
-	}, report, false)
-	if err != nil {
-		util.LogWithRed("WorkProofUpload", err)
-		return err
-	}
-
-	return nil
+	return proof.MakeWorkProof(workId, logs, crs, state.BlockNumber)
 }
 
 // checkAppStatus check app status
@@ -215,13 +157,13 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 							Env: envs,
 							Resources: v1.ResourceRequirements{
 								Limits: v1.ResourceList{
-									// v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									// v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+									v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+									v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
 									"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 								},
 								Requests: v1.ResourceList{
-									// v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									// v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+									v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+									v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
 									"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 								},
 							},

@@ -210,30 +210,45 @@ mintStart:
 		}
 
 		fmt.Println("===========================================GetClusterContracts: ", len(cs))
+		proofs := make([]gtypes.RuntimeCall, 0, 20)
 
 		// 校对合约状态
 		// Check contract status
 		for _, c := range cs {
 			ctx := context.Background()
 
-			// 如果是APP类型，检查Pod状态，检查是否需要上传工作证明
-			// If it is APP type, check Pod status, check if it needs to upload work proof
 			if c.ContractState.WorkId.Wtype.IsAPP {
-				err := m.DoWithAppState(&ctx, c, stage, head)
+				// 如果是APP类型，检查Pod状态，检查是否需要上传工作证明
+				// If it is APP type, check Pod status, check if it needs to upload work proof
+				call, err := m.DoWithAppState(&ctx, c, stage, head)
 				if err != nil {
 					util.LogWithRed("DoWithAppState", err)
 					continue
 				}
-			}
-
-			// 如果是TASK类型，检查Pod状态，Pod如果执行完成，则上传日志和结果
-			// If it is TASK type, check Pod status, Pod if it is executed, upload logs and results
-			if c.ContractState.WorkId.Wtype.IsTASK {
-				err := m.DoWithTaskState(&ctx, c, stage, head)
+				if call != nil {
+					proofs = append(proofs, *call)
+				}
+			} else if c.ContractState.WorkId.Wtype.IsTASK {
+				// 如果是TASK类型，检查Pod状态，Pod如果执行完成，则上传日志和结果
+				// If it is TASK type, check Pod status, Pod if it is executed, upload logs and results
+				call, err := m.DoWithTaskState(&ctx, c, stage, head)
 				if err != nil {
 					util.LogWithRed("DoWithTaskState", err)
 					continue
 				}
+				if call != nil {
+					proofs = append(proofs, *call)
+				}
+			}
+		}
+
+		if len(proofs) > 0 {
+			// 上传工作证明
+			// Upload work proof
+			err = proof.SubmitWorkProof(client, worker.Signer, proofs)
+			if err != nil {
+				util.LogWithRed("WorkProofUpload", err)
+				continue
 			}
 		}
 	}
