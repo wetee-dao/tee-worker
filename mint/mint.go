@@ -287,7 +287,7 @@ func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap, deleteFunc func(gty
 	// 重构新的缓存
 	for workId, c := range cs {
 		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-		nameSpace := AccountToAddress(c.ContractState.User[:])
+		nameSpace := AccountToSpace(c.ContractState.User[:])
 		caches[name] = store.RuningCache{
 			NameSpace: nameSpace,
 			Status:    "running",

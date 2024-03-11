@@ -3,7 +3,9 @@ package mint
 import (
 	"bufio"
 	"context"
+	"encoding/base32"
 	"encoding/hex"
+	"strings"
 
 	"fmt"
 	"time"
@@ -74,10 +76,18 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 
 // Account To Hex Address
 // 将用户公钥转换为hex地址
-func AccountToAddress(user []byte) string {
-	address := hex.EncodeToString(user[:])
-	saddress := address[1:] //去掉前面的 0x
-	return saddress
+func AccountToSpace(user []byte) string {
+	// address := hex.EncodeToString(user[:])
+	address := base32.HexEncoding.EncodeToString(user[:])
+	// address := base64.StdEncoding(user[:])
+	// saddress := address[1:] //去掉前面的 0x54c
+	return strings.ReplaceAll(strings.ToLower(address), "=", "")
+}
+
+func HexStringToSpace(address string) string {
+	address = strings.ReplaceAll(address, "0x", "")
+	user, _ := hex.DecodeString(address)
+	return AccountToSpace(user)
 }
 
 // Get Envs from Work
@@ -143,11 +153,17 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 		if err != nil {
 			return err
 		}
-		space = AccountToAddress(user[:])
+		space = AccountToSpace(user[:])
 	}
 
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 	util.LogWithRed("StopApp: ", name)
+
+	ServiceSpace := m.K8sClient.CoreV1().Services(space)
+	err := ServiceSpace.Delete(ctx, name+"-secret", metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
 
 	if workId.Wtype.IsAPP {
 		nameSpace := m.K8sClient.AppsV1().Deployments(space)

@@ -7,15 +7,19 @@ package graph
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/wetee-dao/go-sdk/gen/types"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"wetee.app/worker/graph/model"
+	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/util"
 )
 
-// WorkLogList is the resolver for the WorkLogList field.
-func (r *queryResolver) WorkLogList(ctx context.Context, workType string, workID int, page int, size int) (string, error) {
+// WorkLoglist is the resolver for the work_loglist field.
+func (r *queryResolver) WorkLoglist(ctx context.Context, workType string, workID int, page int, size int) (string, error) {
 	list, err := proof.ListLogsById(types.WorkId{
 		Id:    uint64(workID),
 		Wtype: util.GetWorkType(workType),
@@ -32,8 +36,8 @@ func (r *queryResolver) WorkLogList(ctx context.Context, workType string, workID
 	return string(bt), nil
 }
 
-// WorkMetricList is the resolver for the WorkMetricList field.
-func (r *queryResolver) WorkMetricList(ctx context.Context, workType string, workID int, page int, size int) (string, error) {
+// WorkWetriclist is the resolver for the work_wetriclist field.
+func (r *queryResolver) WorkWetriclist(ctx context.Context, workType string, workID int, page int, size int) (string, error) {
 	list, err := proof.ListMonitoringsById(types.WorkId{
 		Id:    uint64(workID),
 		Wtype: util.GetWorkType(workType),
@@ -49,6 +53,50 @@ func (r *queryResolver) WorkMetricList(ctx context.Context, workType string, wor
 	}
 
 	return string(bt), nil
+}
+
+// WorkServicelist is the resolver for the work_servicelist field.
+func (r *queryResolver) WorkServicelist(ctx context.Context, projectID string, workType string, workID int) ([]*model.Service, error) {
+	if mint.MinterIns.ChainClient == nil {
+		return nil, gqlerror.Errorf("Invalid chain client")
+	}
+
+	wid := types.WorkId{
+		Id:    uint64(workID),
+		Wtype: util.GetWorkType(workType),
+	}
+	name := util.GetWorkTypeStr(wid) + "-" + fmt.Sprint(wid.Id)
+
+	client := mint.MinterIns.K8sClient
+	ServiceSpace := client.CoreV1().Services(mint.HexStringToSpace(projectID))
+	list, err := ServiceSpace.List(ctx, v1.ListOptions{
+		LabelSelector: "service=" + name,
+	})
+	if err != nil {
+		return nil, gqlerror.Errorf("WorkServiceList:" + err.Error())
+	}
+
+	var services []*model.Service = make([]*model.Service, 0, len(list.Items))
+	if list != nil {
+		for i := 0; i < len(list.Items); i++ {
+			item := list.Items[i]
+			var ports = make([]*model.ServicePort, 0, len(item.Spec.Ports))
+			for j := 0; j < len(item.Spec.Ports); j++ {
+				ports = append(ports, &model.ServicePort{
+					Name:     item.ObjectMeta.Name,
+					Port:     int(item.Spec.Ports[j].Port),
+					Protocol: fmt.Sprint(item.Spec.Ports[j].Protocol),
+					NodePort: int(item.Spec.Ports[j].NodePort),
+				})
+			}
+			services = append(services, &model.Service{
+				Type:  fmt.Sprint(item.Spec.Type),
+				Ports: ports,
+			})
+		}
+	}
+
+	return services, nil
 }
 
 // Query returns QueryResolver implementation.

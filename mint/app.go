@@ -7,12 +7,12 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
-	gtype "github.com/wetee-dao/go-sdk/gen/types"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
@@ -42,7 +42,7 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 
 	workId := c.ContractState.WorkId
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-	nameSpace := AccountToAddress(c.ContractState.User[:])
+	nameSpace := AccountToSpace(c.ContractState.User[:])
 
 	// 获取pod信息
 	// Get pod information
@@ -75,7 +75,7 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 // checkAppStatus check app status
 // 校对应用状态
 func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (*appsv1.Deployment, error) {
-	address := AccountToAddress(state.ContractState.User[:])
+	address := AccountToSpace(state.ContractState.User[:])
 	nameSpace := m.K8sClient.AppsV1().Deployments(address)
 	workId := state.ContractState.WorkId
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
@@ -108,8 +108,8 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeApp, envs []v1.EnvVar, version uint64) error {
-	saddress := AccountToAddress(user)
+func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeApp, envs []v1.EnvVar, version uint64) error {
+	saddress := AccountToSpace(user)
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
 		return errc
@@ -149,7 +149,12 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 							Image: string(app.Image),
 							Ports: []v1.ContainerPort{
 								{
-									Name:          string(app.Name) + "0",
+									Name:          "port0",
+									ContainerPort: int32(8888),
+									Protocol:      "TCP",
+								},
+								{
+									Name:          string(app.Name) + "1",
 									ContainerPort: int32(app.Port[0]),
 									Protocol:      "TCP",
 								},
@@ -175,13 +180,42 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtype.WorkI
 	}
 
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+
+	// 创建机密认证服务
+	ServiceSpace := m.K8sClient.CoreV1().Services(saddress)
+	service := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name + "-secret",
+			Labels: map[string]string{"service": name},
+		},
+		Spec: v1.ServiceSpec{
+			Selector: map[string]string{"app": name},
+			Type:     "NodePort",
+			Ports: []v1.ServicePort{
+				{
+					Name:       name + "-8888",
+					Protocol:   "TCP",
+					Port:       8888,
+					TargetPort: intstr.FromInt(8888),
+				},
+			},
+		},
+	}
+	_, err = ServiceSpace.Create(*ctx, &service, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("================================================= Create", err)
 
 	return err
 }
 
-func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeApp, envs []v1.EnvVar, version uint64) error {
-	saddress := AccountToAddress(user)
+func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeApp, envs []v1.EnvVar, version uint64) error {
+	saddress := AccountToSpace(user)
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 

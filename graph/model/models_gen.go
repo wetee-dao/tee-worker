@@ -30,6 +30,18 @@ type Mutation struct {
 type Query struct {
 }
 
+type Service struct {
+	Type  string         `json:"Type"`
+	Ports []*ServicePort `json:"Ports"`
+}
+
+type ServicePort struct {
+	Name     string `json:"Name"`
+	Port     int    `json:"Port"`
+	Protocol string `json:"Protocol"`
+	NodePort int    `json:"NodePort"`
+}
+
 type User struct {
 	// User SS58 address
 	Address string `json:"address"`

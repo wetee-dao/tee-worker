@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	subkey "github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
@@ -15,13 +16,9 @@ import (
 	"wetee.app/worker/store"
 )
 
-// LoginAndBindRoot is the resolver for the loginAndBindRoot field.
-func (r *mutationResolver) LoginAndBindRoot(ctx context.Context, input model.LoginContent, signature string) (string, error) {
-	rootUser, _ := store.GetRootUser()
-	if rootUser != "" && rootUser != input.Address {
-		return "", gqlerror.Errorf("Root user already exists")
-	}
-	return login(input, signature)
+// LoginAsRoot is the resolver for the login_as_root field.
+func (r *mutationResolver) LoginAsRoot(ctx context.Context, input model.LoginContent, signature string) (string, error) {
+	panic(fmt.Errorf("not implemented: LoginAsRoot - login_as_root"))
 }
 
 // Login is the resolver for the login field.
@@ -35,6 +32,13 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginContent, 
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) LoginAndBindRoot(ctx context.Context, input model.LoginContent, signature string) (string, error) {
+	rootUser, _ := store.GetRootUser()
+	if rootUser != "" && rootUser != input.Address {
+		return "", gqlerror.Errorf("Root user already exists")
+	}
+	return login(input, signature)
+}
 func login(input model.LoginContent, signature string) (string, error) {
 	inputbt, _ := json.Marshal(input)
 

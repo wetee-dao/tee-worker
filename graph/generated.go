@@ -62,17 +62,30 @@ type ComplexityRoot struct {
 		ClusterWithdrawal func(childComplexity int, id int64, ty model.WorkType, val int64) int
 		LinkWetee         func(childComplexity int, url string) int
 		Login             func(childComplexity int, input model.LoginContent, signature string) int
-		LoginAndBindRoot  func(childComplexity int, input model.LoginContent, signature string) int
+		LoginAsRoot       func(childComplexity int, input model.LoginContent, signature string) int
 		StartForTest      func(childComplexity int) int
 		StartLocalWetee   func(childComplexity int, imageVersion string) int
 		StartSgxPccs      func(childComplexity int, imageVersion string, apiKey string) int
 	}
 
 	Query struct {
-		WorkLogList    func(childComplexity int, workType string, workID int, page int, size int) int
-		WorkMetricList func(childComplexity int, workType string, workID int, page int, size int) int
-		Worker         func(childComplexity int) int
-		WorkerInfo     func(childComplexity int) int
+		WorkLoglist     func(childComplexity int, workType string, workID int, page int, size int) int
+		WorkServicelist func(childComplexity int, projectID string, workType string, workID int) int
+		WorkWetriclist  func(childComplexity int, workType string, workID int, page int, size int) int
+		Worker          func(childComplexity int) int
+		WorkerInfo      func(childComplexity int) int
+	}
+
+	Service struct {
+		Ports func(childComplexity int) int
+		Type  func(childComplexity int) int
+	}
+
+	ServicePort struct {
+		Name     func(childComplexity int) int
+		NodePort func(childComplexity int) int
+		Port     func(childComplexity int) int
+		Protocol func(childComplexity int) int
 	}
 
 	User struct {
@@ -92,7 +105,7 @@ type MutationResolver interface {
 	StartLocalWetee(ctx context.Context, imageVersion string) (bool, error)
 	LinkWetee(ctx context.Context, url string) (bool, error)
 	StartSgxPccs(ctx context.Context, imageVersion string, apiKey string) (bool, error)
-	LoginAndBindRoot(ctx context.Context, input model.LoginContent, signature string) (string, error)
+	LoginAsRoot(ctx context.Context, input model.LoginContent, signature string) (string, error)
 	Login(ctx context.Context, input model.LoginContent, signature string) (string, error)
 	ClusterRegister(ctx context.Context, name string, ip string, port int, level int) (string, error)
 	ClusterMortgage(ctx context.Context, cpu int, mem int, disk int, deposit int64) (string, error)
@@ -102,8 +115,9 @@ type MutationResolver interface {
 	StartForTest(ctx context.Context) (bool, error)
 }
 type QueryResolver interface {
-	WorkLogList(ctx context.Context, workType string, workID int, page int, size int) (string, error)
-	WorkMetricList(ctx context.Context, workType string, workID int, page int, size int) (string, error)
+	WorkLoglist(ctx context.Context, workType string, workID int, page int, size int) (string, error)
+	WorkWetriclist(ctx context.Context, workType string, workID int, page int, size int) (string, error)
+	WorkServicelist(ctx context.Context, projectID string, workType string, workID int) ([]*model.Service, error)
 	WorkerInfo(ctx context.Context) (*model.WorkerInfo, error)
 	Worker(ctx context.Context) ([]*model.Contract, error)
 }
@@ -227,17 +241,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Login(childComplexity, args["input"].(model.LoginContent), args["signature"].(string)), true
 
-	case "Mutation.loginAndBindRoot":
-		if e.complexity.Mutation.LoginAndBindRoot == nil {
+	case "Mutation.login_as_root":
+		if e.complexity.Mutation.LoginAsRoot == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_loginAndBindRoot_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_login_as_root_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.LoginAndBindRoot(childComplexity, args["input"].(model.LoginContent), args["signature"].(string)), true
+		return e.complexity.Mutation.LoginAsRoot(childComplexity, args["input"].(model.LoginContent), args["signature"].(string)), true
 
 	case "Mutation.start_for_test":
 		if e.complexity.Mutation.StartForTest == nil {
@@ -270,29 +284,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.StartSgxPccs(childComplexity, args["image_version"].(string), args["api_key"].(string)), true
 
-	case "Query.WorkLogList":
-		if e.complexity.Query.WorkLogList == nil {
+	case "Query.work_loglist":
+		if e.complexity.Query.WorkLoglist == nil {
 			break
 		}
 
-		args, err := ec.field_Query_WorkLogList_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_work_loglist_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkLogList(childComplexity, args["work_type"].(string), args["work_id"].(int), args["page"].(int), args["size"].(int)), true
+		return e.complexity.Query.WorkLoglist(childComplexity, args["work_type"].(string), args["work_id"].(int), args["page"].(int), args["size"].(int)), true
 
-	case "Query.WorkMetricList":
-		if e.complexity.Query.WorkMetricList == nil {
+	case "Query.work_servicelist":
+		if e.complexity.Query.WorkServicelist == nil {
 			break
 		}
 
-		args, err := ec.field_Query_WorkMetricList_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_work_servicelist_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkMetricList(childComplexity, args["work_type"].(string), args["work_id"].(int), args["page"].(int), args["size"].(int)), true
+		return e.complexity.Query.WorkServicelist(childComplexity, args["project_id"].(string), args["work_type"].(string), args["work_id"].(int)), true
+
+	case "Query.work_wetriclist":
+		if e.complexity.Query.WorkWetriclist == nil {
+			break
+		}
+
+		args, err := ec.field_Query_work_wetriclist_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.WorkWetriclist(childComplexity, args["work_type"].(string), args["work_id"].(int), args["page"].(int), args["size"].(int)), true
 
 	case "Query.worker":
 		if e.complexity.Query.Worker == nil {
@@ -301,12 +327,54 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Worker(childComplexity), true
 
-	case "Query.workerInfo":
+	case "Query.worker_info":
 		if e.complexity.Query.WorkerInfo == nil {
 			break
 		}
 
 		return e.complexity.Query.WorkerInfo(childComplexity), true
+
+	case "Service.Ports":
+		if e.complexity.Service.Ports == nil {
+			break
+		}
+
+		return e.complexity.Service.Ports(childComplexity), true
+
+	case "Service.Type":
+		if e.complexity.Service.Type == nil {
+			break
+		}
+
+		return e.complexity.Service.Type(childComplexity), true
+
+	case "ServicePort.Name":
+		if e.complexity.ServicePort.Name == nil {
+			break
+		}
+
+		return e.complexity.ServicePort.Name(childComplexity), true
+
+	case "ServicePort.NodePort":
+		if e.complexity.ServicePort.NodePort == nil {
+			break
+		}
+
+		return e.complexity.ServicePort.NodePort(childComplexity), true
+
+	case "ServicePort.Port":
+		if e.complexity.ServicePort.Port == nil {
+			break
+		}
+
+		return e.complexity.ServicePort.Port(childComplexity), true
+
+	case "ServicePort.Protocol":
+		if e.complexity.ServicePort.Protocol == nil {
+			break
+		}
+
+		return e.complexity.ServicePort.Protocol(childComplexity), true
 
 	case "User.address":
 		if e.complexity.User.Address == nil {
@@ -644,7 +712,7 @@ func (ec *executionContext) field_Mutation_link_wetee_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_loginAndBindRoot_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 model.LoginContent
@@ -668,7 +736,7 @@ func (ec *executionContext) field_Mutation_loginAndBindRoot_args(ctx context.Con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_login_as_root_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 model.LoginContent
@@ -731,90 +799,6 @@ func (ec *executionContext) field_Mutation_start_sgx_pccs_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_WorkLogList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["work_type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["work_type"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["work_id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
-		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["work_id"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["page"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page"] = arg2
-	var arg3 int
-	if tmp, ok := rawArgs["size"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
-		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["size"] = arg3
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_WorkMetricList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["work_type"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["work_type"] = arg0
-	var arg1 int
-	if tmp, ok := rawArgs["work_id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
-		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["work_id"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["page"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["page"] = arg2
-	var arg3 int
-	if tmp, ok := rawArgs["size"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
-		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["size"] = arg3
-	return args, nil
-}
-
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -827,6 +811,123 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_work_loglist_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["work_type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_type"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["work_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_id"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg2
+	var arg3 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_work_servicelist_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["project_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("project_id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["project_id"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["work_type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_type"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["work_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_id"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_work_wetriclist_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["work_type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_type"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["work_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["work_id"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg2
+	var arg3 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg3
 	return args, nil
 }
 
@@ -1231,8 +1332,8 @@ func (ec *executionContext) fieldContext_Mutation_start_sgx_pccs(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_loginAndBindRoot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_loginAndBindRoot(ctx, field)
+func (ec *executionContext) _Mutation_login_as_root(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_login_as_root(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1245,7 +1346,7 @@ func (ec *executionContext) _Mutation_loginAndBindRoot(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().LoginAndBindRoot(rctx, fc.Args["input"].(model.LoginContent), fc.Args["signature"].(string))
+		return ec.resolvers.Mutation().LoginAsRoot(rctx, fc.Args["input"].(model.LoginContent), fc.Args["signature"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1262,7 +1363,7 @@ func (ec *executionContext) _Mutation_loginAndBindRoot(ctx context.Context, fiel
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_loginAndBindRoot(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_login_as_root(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -1279,7 +1380,7 @@ func (ec *executionContext) fieldContext_Mutation_loginAndBindRoot(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_loginAndBindRoot_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_login_as_root_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -1769,8 +1870,8 @@ func (ec *executionContext) fieldContext_Mutation_start_for_test(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_WorkLogList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_WorkLogList(ctx, field)
+func (ec *executionContext) _Query_work_loglist(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_work_loglist(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1783,7 +1884,7 @@ func (ec *executionContext) _Query_WorkLogList(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkLogList(rctx, fc.Args["work_type"].(string), fc.Args["work_id"].(int), fc.Args["page"].(int), fc.Args["size"].(int))
+		return ec.resolvers.Query().WorkLoglist(rctx, fc.Args["work_type"].(string), fc.Args["work_id"].(int), fc.Args["page"].(int), fc.Args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1800,7 +1901,7 @@ func (ec *executionContext) _Query_WorkLogList(ctx context.Context, field graphq
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_WorkLogList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_work_loglist(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1817,15 +1918,15 @@ func (ec *executionContext) fieldContext_Query_WorkLogList(ctx context.Context, 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_WorkLogList_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_work_loglist_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_WorkMetricList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_WorkMetricList(ctx, field)
+func (ec *executionContext) _Query_work_wetriclist(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_work_wetriclist(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1838,7 +1939,7 @@ func (ec *executionContext) _Query_WorkMetricList(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkMetricList(rctx, fc.Args["work_type"].(string), fc.Args["work_id"].(int), fc.Args["page"].(int), fc.Args["size"].(int))
+		return ec.resolvers.Query().WorkWetriclist(rctx, fc.Args["work_type"].(string), fc.Args["work_id"].(int), fc.Args["page"].(int), fc.Args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1855,7 +1956,7 @@ func (ec *executionContext) _Query_WorkMetricList(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_WorkMetricList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_work_wetriclist(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -1872,15 +1973,76 @@ func (ec *executionContext) fieldContext_Query_WorkMetricList(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_WorkMetricList_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_work_wetriclist_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_workerInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_workerInfo(ctx, field)
+func (ec *executionContext) _Query_work_servicelist(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_work_servicelist(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().WorkServicelist(rctx, fc.Args["project_id"].(string), fc.Args["work_type"].(string), fc.Args["work_id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Service)
+	fc.Result = res
+	return ec.marshalNService2ᚕᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐServiceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_work_servicelist(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Type":
+				return ec.fieldContext_Service_Type(ctx, field)
+			case "Ports":
+				return ec.fieldContext_Service_Ports(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Service", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_work_servicelist_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_worker_info(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_worker_info(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1910,7 +2072,7 @@ func (ec *executionContext) _Query_workerInfo(ctx context.Context, field graphql
 	return ec.marshalNWorkerInfo2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐWorkerInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_workerInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_worker_info(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -2131,6 +2293,280 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Service_Type(ctx context.Context, field graphql.CollectedField, obj *model.Service) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Service_Type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Service_Type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Service_Ports(ctx context.Context, field graphql.CollectedField, obj *model.Service) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Service_Ports(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ports, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ServicePort)
+	fc.Result = res
+	return ec.marshalNServicePort2ᚕᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐServicePortᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Service_Ports(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Service",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "Name":
+				return ec.fieldContext_ServicePort_Name(ctx, field)
+			case "Port":
+				return ec.fieldContext_ServicePort_Port(ctx, field)
+			case "Protocol":
+				return ec.fieldContext_ServicePort_Protocol(ctx, field)
+			case "NodePort":
+				return ec.fieldContext_ServicePort_NodePort(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ServicePort", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServicePort_Name(ctx context.Context, field graphql.CollectedField, obj *model.ServicePort) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServicePort_Name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServicePort_Name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServicePort",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServicePort_Port(ctx context.Context, field graphql.CollectedField, obj *model.ServicePort) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServicePort_Port(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Port, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServicePort_Port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServicePort",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServicePort_Protocol(ctx context.Context, field graphql.CollectedField, obj *model.ServicePort) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServicePort_Protocol(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Protocol, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServicePort_Protocol(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServicePort",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServicePort_NodePort(ctx context.Context, field graphql.CollectedField, obj *model.ServicePort) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServicePort_NodePort(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodePort, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServicePort_NodePort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServicePort",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4304,9 +4740,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "loginAndBindRoot":
+		case "login_as_root":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_loginAndBindRoot(ctx, field)
+				return ec._Mutation_login_as_root(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -4402,7 +4838,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "WorkLogList":
+		case "work_loglist":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -4411,7 +4847,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_WorkLogList(ctx, field)
+				res = ec._Query_work_loglist(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -4424,7 +4860,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "WorkMetricList":
+		case "work_wetriclist":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -4433,7 +4869,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_WorkMetricList(ctx, field)
+				res = ec._Query_work_wetriclist(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -4446,7 +4882,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "workerInfo":
+		case "work_servicelist":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -4455,7 +4891,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_workerInfo(ctx, field)
+				res = ec._Query_work_servicelist(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "worker_info":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_worker_info(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -4498,6 +4956,104 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var serviceImplementors = []string{"Service"}
+
+func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, obj *model.Service) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serviceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Service")
+		case "Type":
+			out.Values[i] = ec._Service_Type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Ports":
+			out.Values[i] = ec._Service_Ports(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var servicePortImplementors = []string{"ServicePort"}
+
+func (ec *executionContext) _ServicePort(ctx context.Context, sel ast.SelectionSet, obj *model.ServicePort) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, servicePortImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServicePort")
+		case "Name":
+			out.Values[i] = ec._ServicePort_Name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Port":
+			out.Values[i] = ec._ServicePort_Port(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "Protocol":
+			out.Values[i] = ec._ServicePort_Protocol(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "NodePort":
+			out.Values[i] = ec._ServicePort_NodePort(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5072,6 +5628,114 @@ func (ec *executionContext) unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodel�
 
 func (ec *executionContext) marshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx context.Context, sel ast.SelectionSet, v model.Role) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNService2ᚕᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐServiceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Service) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNService2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐService(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNService2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐService(ctx context.Context, sel ast.SelectionSet, v *model.Service) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Service(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNServicePort2ᚕᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐServicePortᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ServicePort) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNServicePort2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐServicePort(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNServicePort2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐServicePort(ctx context.Context, sel ast.SelectionSet, v *model.ServicePort) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ServicePort(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

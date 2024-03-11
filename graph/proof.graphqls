@@ -1,6 +1,40 @@
+type Service {
+  Type: String!
+  Ports: [ServicePort!]!
+}
+
+type ServicePort {
+  Name: String!
+  Port: Int!
+  Protocol: String!
+  NodePort: Int!
+}
+
 extend type Query {
-  """Query log list"""
-  work_loglist(work_type: String!,work_id: Int!,page: Int!,size: Int!): String!
-  """Query Metric list"""
-  work_wetriclist(work_type: String!,work_id: Int!,page: Int!,size: Int!): String!
+  """
+  Query log list
+  """
+  work_loglist(
+    work_type: String!
+    work_id: Int!
+    page: Int!
+    size: Int!
+  ): String!
+  """
+  Query Metric list
+  """
+  work_wetriclist(
+    work_type: String!
+    work_id: Int!
+    page: Int!
+    size: Int!
+  ): String!
+  """
+  Query Metric list
+  """
+  work_servicelist(
+    project_id: String!
+    work_type: String!
+    work_id: Int!
+  ): [Service!]!
 }

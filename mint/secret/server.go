@@ -16,10 +16,10 @@ import (
 func StartSecretServerInCluster(addr string) {
 	router := chi.NewRouter()
 
-	// get root dcap report
+	// Get root dcap report
 	cert, priv, report, _ := proof.GetRemoteReport(addr)
 
-	// get root dcap report
+	// Get root dcap report
 	router.Get("/report", func(w http.ResponseWriter, r *http.Request) {
 		resp := map[string]string{
 			"report": hex.EncodeToString(report),

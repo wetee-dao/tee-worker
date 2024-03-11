@@ -7,7 +7,6 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
-	gtype "github.com/wetee-dao/go-sdk/gen/types"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -42,7 +41,7 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 		return nil, nil
 	}
 	util.LogWithRed("===========================================WorkProofUpload TASK")
-	nameSpace := AccountToAddress(c.ContractState.User[:])
+	nameSpace := AccountToSpace(c.ContractState.User[:])
 	workId := c.ContractState.WorkId
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
@@ -89,8 +88,8 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 }
 
 // create task
-func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtype.WorkId, app *gtype.TeeTask, envs []v1.EnvVar, version uint64) error {
-	saddress := AccountToAddress(user[:])
+func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeTask, envs []v1.EnvVar, version uint64) error {
+	saddress := AccountToSpace(user[:])
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
 		return errc
