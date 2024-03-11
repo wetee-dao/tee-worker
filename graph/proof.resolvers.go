@@ -76,7 +76,7 @@ func (r *queryResolver) WorkServicelist(ctx context.Context, projectID string, w
 		return nil, gqlerror.Errorf("WorkServiceList:" + err.Error())
 	}
 
-	var services []*model.Service = make([]*model.Service, 0, len(list.Items))
+	var services []*model.Service = make([]*model.Service, 0, 10)
 	if list != nil {
 		for i := 0; i < len(list.Items); i++ {
 			item := list.Items[i]
