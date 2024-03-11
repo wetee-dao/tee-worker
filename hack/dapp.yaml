@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wetee-dapp
+  namespace: worker-addon
+spec:
+  selector:
+    matchLabels:
+      app: wetee-dapp
+  template:
+    metadata:
+      labels:
+        app: wetee-dapp
+    spec:
+      containers:
+        - image: wetee/dapp:master.20240311-19_40_41
+          name: c1
+          ports:
+            - containerPort: 80
+              name: wetee-dapp-80
+              protocol: TCP

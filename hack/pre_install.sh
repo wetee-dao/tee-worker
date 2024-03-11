@@ -6,8 +6,9 @@ while [ -h "$SOURCE"  ]; do
     [[ $SOURCE != /*  ]] && SOURCE="$DIR/$SOURCE"
 done
 DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd  )"
-cd $DIR
+cd $DIR/../
 
+# 创建 SGX daemonset
 cat <<EOF | kubectl create -f -
 apiVersion: apps/v1
 kind: DaemonSet
@@ -54,6 +55,14 @@ spec:
         name: dev
 EOF
 
+# 安装 CRD
+make install
+make manifests
+
+# 为wetee-worker赋予集群管理权限
+kubectl create clusterrolebinding wetee-admin --clusterrole=cluster-admin --user=system:serviceaccount:worker-system:worker-controller-manager
+
+# 创建 worker-addon namespace
 cat <<EOF | kubectl create -f -
 apiVersion: v1
 kind: Namespace
@@ -65,8 +74,14 @@ metadata:
     {}
 EOF
 
+# 创建 WEB_UI
+kubectl create -f ./hack/dapp.yaml
+kubectl create -f ./hack/dapp_nodeport.yaml
 
-# 为wetee-worker赋予集群管理权限
-kubectl create clusterrolebinding wetee-admin --clusterrole=cluster-admin --user=system:serviceaccount:worker-system:worker-controller-manager
+# 创建 pccs
+kubectl create -f ./hack/pccs.yaml
+kubectl create -f ./hack/pccs_headless.yaml
 
-# docker run -e APIKEY=8d375b775de84c2593e7694dedbbbe90 -p 8081:8081 --name pccs -d --restart=unless-stopped  wetee/pccs
+# 创建区块连节点
+kubectl create -f ./hack/chain.yaml
+kubectl create -f ./hack/chain_nodeport.yaml

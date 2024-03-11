@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sgx-pccs
+  namespace: worker-addon
+spec:
+  clusterIP: None
+  selector:
+    app: sgx-pccs-api
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8081
+      targetPort: 8081
