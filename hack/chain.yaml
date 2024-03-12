@@ -13,7 +13,7 @@ spec:
         app: wetee-node
     spec:
       containers:
-        - image: wetee/wetee-node:dev.2024-03-10-14_37
+        - image: wetee/wetee-node:dev.2024-03-12-09_02
           name: c1
           ports:
             - containerPort: 9944

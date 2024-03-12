@@ -9,7 +9,7 @@ DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd  )"
 cd $DIR/../
 
 # 部署主服务
-make deploy IMG=wetee/worker:2024-03-11-15_33
+make deploy IMG=wetee/worker:2024-03-12-09_09
 
 # 创建内部服务
 kubectl create -f ./hack/manager_headless.yaml
