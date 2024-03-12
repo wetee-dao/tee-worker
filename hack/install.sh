@@ -18,4 +18,4 @@ kubectl create -f ./hack/manager_headless.yaml
 kubectl create -f ./hack/manager_nodeport.yaml
 
 # 创建外部服务
-kubectl create -f ./hack/manager_for_localdev.yaml
+# kubectl create -f ./hack/manager_for_localdev.yaml

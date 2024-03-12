@@ -85,3 +85,4 @@ kubectl create -f ./hack/pccs_headless.yaml
 # 创建区块连节点
 kubectl create -f ./hack/chain.yaml
 kubectl create -f ./hack/chain_nodeport.yaml
+kubectl create -f ./hack/chain_headless.yaml
