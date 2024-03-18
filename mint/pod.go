@@ -165,7 +165,7 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 		return err
 	}
 
-	if workId.Wtype.IsAPP {
+	if workId.Wtype.IsAPP || workId.Wtype.IsGPU {
 		nameSpace := m.K8sClient.AppsV1().Deployments(space)
 
 		return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})

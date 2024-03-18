@@ -2,7 +2,6 @@ package mint
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
@@ -59,8 +58,8 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 
 // check task status，if task is running, return pod, if task not run, create pod
 func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) (*v1.Pod, error) {
-	address := hex.EncodeToString(state.ContractState.User[:])
-	nameSpace := m.K8sClient.CoreV1().Pods(address[1:])
+	address := AccountToSpace(state.ContractState.User[:])
+	nameSpace := m.K8sClient.CoreV1().Pods(address)
 	workId := state.ContractState.WorkId
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 

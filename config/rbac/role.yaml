@@ -33,6 +33,32 @@ rules:
 - apiGroups:
   - secret.wetee.app
   resources:
+  - gpus
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - gpus/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - secret.wetee.app
+  resources:
+  - gpus/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - secret.wetee.app
+  resources:
   - tasks
   verbs:
   - create
