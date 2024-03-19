@@ -2,6 +2,7 @@ package mint
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -12,17 +13,18 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 
 func (m *Minter) DoWithGpuAppState(ctx *context.Context, c ContractStateWrap, stage uint32, head types.Header) (*gtypes.RuntimeCall, error) {
-	if c.App == nil || c.WorkState == nil {
+	if c.GpuApp == nil || c.WorkState == nil {
 		return nil, errors.New("app is nil")
 	}
 
-	app := c.App
+	app := c.GpuApp
 	state := c.WorkState
 
 	_, err := m.CheckGpuAppStatus(ctx, c)
@@ -79,7 +81,7 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap
 	workId := state.ContractState.WorkId
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
-	app := state.App
+	app := state.GpuApp
 	deployment, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	version := state.Version
 	if err != nil {
@@ -107,7 +109,7 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeApp, envs []v1.EnvVar, version uint64) error {
+func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.GpuApp, envs []v1.EnvVar, version uint64) error {
 	saddress := AccountToSpace(user)
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
@@ -128,6 +130,12 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 
 	resource.NewMilliQuantity(int64(app.Cr.Mem)*1024*1024, resource.BinarySI)
 	nvidiaClass := "nvidia"
+	metaJson := map[string]string{}
+	json.Unmarshal(app.Meta, &metaJson)
+	command := []string{}
+	if c, ok := metaJson["c"]; ok {
+		command = strings.Split(c, " ")
+	}
 
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -160,7 +168,11 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 									Protocol:      "TCP",
 								},
 							},
-							Env: envs,
+							Env: []v1.EnvVar{
+								{Name: "IN_TEE", Value: string("1")},
+								{Name: "COMMANDLINE_ARGS", Value: string(" --autolaunch --no-half-vae --lowvram --share --xformers ")},
+							},
+							Command: command,
 							Resources: v1.ResourceRequirements{
 								Limits: v1.ResourceList{
 									v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
@@ -175,44 +187,70 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 									"nvidia.com/gpu":               *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent),
 								},
 							},
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      "model-volume",
+									MountPath: "/app/stable-diffusion-webui/models/Stable-diffusion",
+								},
+								{
+									Name:      "openai-volume",
+									MountPath: "/app/stable-diffusion-webui/openai",
+								},
+							},
+						},
+					},
+					Volumes: []v1.Volume{
+						{
+							Name: "model-volume",
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
+									Path: "/home/wetee/work/wetee/worker/AI/model",
+								},
+							},
+						},
+						{
+							Name: "openai-volume",
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
+									Path: "/home/wetee/work/wetee/worker/AI/openai",
+								},
+							},
 						},
 					},
 				},
 			},
 		},
 	}
-	fmt.Println(nameSpace)
-	fmt.Println(deployment)
 
-	// _, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
-	// if err != nil {
-	// 	return err
-	// }
+	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
 
-	// // 创建机密认证服务
-	// ServiceSpace := m.K8sClient.CoreV1().Services(saddress)
-	// service := v1.Service{
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name:   name + "-secret",
-	// 		Labels: map[string]string{"service": name},
-	// 	},
-	// 	Spec: v1.ServiceSpec{
-	// 		Selector: map[string]string{"app": name},
-	// 		Type:     "NodePort",
-	// 		Ports: []v1.ServicePort{
-	// 			{
-	// 				Name:       name + "-8888",
-	// 				Protocol:   "TCP",
-	// 				Port:       8888,
-	// 				TargetPort: intstr.FromInt(8888),
-	// 			},
-	// 		},
-	// 	},
-	// }
-	// _, err = ServiceSpace.Create(*ctx, &service, metav1.CreateOptions{})
-	// if err != nil {
-	// 	return err
-	// }
+	// 创建机密服务
+	ServiceSpace := m.K8sClient.CoreV1().Services(saddress)
+	service := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name + "-secret",
+			Labels: map[string]string{"service": name},
+		},
+		Spec: v1.ServiceSpec{
+			Selector: map[string]string{"gpu": name},
+			Type:     "NodePort",
+			Ports: []v1.ServicePort{
+				{
+					Name:       name + "-" + fmt.Sprint(app.Port[0]),
+					Protocol:   "TCP",
+					Port:       int32(app.Port[0]),
+					TargetPort: intstr.FromInt(int(app.Port[0])),
+				},
+			},
+		},
+	}
+	_, err = ServiceSpace.Create(*ctx, &service, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
 
 	// fmt.Println("================================================= Create", err)
 

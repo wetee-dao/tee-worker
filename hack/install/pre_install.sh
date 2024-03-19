@@ -86,3 +86,6 @@ kubectl create -f ./hack/install/pccs_headless.yaml
 kubectl create -f ./hack/install/chain.yaml
 kubectl create -f ./hack/install/chain_nodeport.yaml
 kubectl create -f ./hack/install/chain_headless.yaml
+
+kubectl create -f ./hack/install/nvidia_runtime.yaml
+kubectl create -f ./hack/install/nvidia_device_plugin.yml

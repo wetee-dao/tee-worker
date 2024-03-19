@@ -7,6 +7,7 @@ import (
 
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"github.com/wetee-dao/go-sdk/gen/weteeapp"
+	"github.com/wetee-dao/go-sdk/gen/weteegpu"
 	"github.com/wetee-dao/go-sdk/gen/weteetask"
 	"github.com/wetee-dao/go-sdk/gen/weteeworker"
 )
@@ -143,20 +144,20 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 
 			// 记录 gpu 相关参数
 			if cs.WorkId.Wtype.IsGPU {
-				tkey, err := weteetask.MakeTEETasksStorageKey(cs.User, cs.WorkId.Id)
+				tkey, err := weteegpu.MakeGPUAppsStorageKey(cs.User, cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
 
 				gpuAppKeys = append(gpuAppKeys, tkey)
 				gpuAppIds = append(gpuAppIds, cs.WorkId)
-				vkey, err := weteetask.MakeTaskVersionStorageKey(cs.WorkId.Id)
+				vkey, err := weteegpu.MakeAppVersionStorageKey(cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
 
 				gpuAppVersions = append(gpuAppVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeTask", "AppSettings", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeGpu", "AppSettings", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
