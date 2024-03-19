@@ -2,4 +2,5 @@
 resources:
 - secret_v1_app.yaml
 - secret_v1_task.yaml
+- secret_v1_gpu.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

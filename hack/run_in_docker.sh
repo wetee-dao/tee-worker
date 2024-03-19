@@ -15,9 +15,10 @@ sudo chmod 777 /opt/wetee-worker
 echo $KUBE_CONFIG_PATH
 
 rm -f  bin/manager
-cd bin && export KUBECONFIG=/etc/kube/config &&  \
-    ego-go build -o manager ../cmd/main.go
-
+docker run --device /dev/sgx/enclave --device /dev/sgx/provision \
+    -v ${PWD}:/srv wetee/ego-ubuntu:20.04 \
+    bash -c "cd /srv && ego-go build -o ./bin/manager ./cmd/main.go"
+    
 cd $DIR/../
 docker build -t wetee/worker:dev .
 
