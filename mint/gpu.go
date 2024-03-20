@@ -170,7 +170,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 							},
 							Env: []v1.EnvVar{
 								{Name: "IN_TEE", Value: string("1")},
-								{Name: "COMMANDLINE_ARGS", Value: string(" --autolaunch --no-half-vae --lowvram --share --xformers ")},
+								{Name: "COMMANDLINE_ARGS", Value: string(" --no-half-vae --lowvram --share --xformers ")},
 							},
 							Command: command,
 							Resources: v1.ResourceRequirements{
