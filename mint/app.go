@@ -154,7 +154,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 									Protocol:      "TCP",
 								},
 								{
-									Name:          string(app.Name) + "1",
+									Name:          string(app.Name) + fmt.Sprint(app.Port[0]),
 									ContainerPort: int32(app.Port[0]),
 									Protocol:      "TCP",
 								},
@@ -205,6 +205,29 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 		},
 	}
 	_, err = ServiceSpace.Create(*ctx, &service, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+
+	aservice := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name + "-" + fmt.Sprint(app.Port[0]),
+			Labels: map[string]string{"service": name},
+		},
+		Spec: v1.ServiceSpec{
+			Selector: map[string]string{"app": name},
+			Type:     "NodePort",
+			Ports: []v1.ServicePort{
+				{
+					Name:       name + "-" + fmt.Sprint(app.Port[0]) + "-nodeport",
+					Protocol:   "TCP",
+					Port:       int32(app.Port[0]),
+					TargetPort: intstr.FromInt(int(app.Port[0])),
+				},
+			},
+		},
+	}
+	_, err = ServiceSpace.Create(*ctx, &aservice, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}

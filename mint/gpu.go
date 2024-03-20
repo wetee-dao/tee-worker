@@ -231,7 +231,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	ServiceSpace := m.K8sClient.CoreV1().Services(saddress)
 	service := v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   name + "-secret",
+			Name:   name + "-" + fmt.Sprint(app.Port[0]),
 			Labels: map[string]string{"service": name},
 		},
 		Spec: v1.ServiceSpec{
@@ -239,7 +239,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 			Type:     "NodePort",
 			Ports: []v1.ServicePort{
 				{
-					Name:       name + "-" + fmt.Sprint(app.Port[0]),
+					Name:       name + "-" + fmt.Sprint(app.Port[0]) + "-nodeport",
 					Protocol:   "TCP",
 					Port:       int32(app.Port[0]),
 					TargetPort: intstr.FromInt(int(app.Port[0])),

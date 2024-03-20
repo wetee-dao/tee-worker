@@ -160,9 +160,17 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 	util.LogWithRed("StopApp: ", name)
 
 	ServiceSpace := m.K8sClient.CoreV1().Services(space)
-	err := ServiceSpace.Delete(ctx, name+"-secret", metav1.DeleteOptions{})
+	list, err := ServiceSpace.List(ctx, metav1.ListOptions{
+		LabelSelector: "service=" + name,
+	})
 	if err != nil {
 		return err
+	}
+	for _, item := range list.Items {
+		err := ServiceSpace.Delete(ctx, item.Name, metav1.DeleteOptions{})
+		if err != nil {
+			return err
+		}
 	}
 
 	if workId.Wtype.IsAPP || workId.Wtype.IsGPU {
