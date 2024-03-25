@@ -6,8 +6,10 @@ package graph
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/wetee-dao/go-sdk/gen/types"
@@ -97,6 +99,21 @@ func (r *queryResolver) WorkServicelist(ctx context.Context, projectID string, w
 	}
 
 	return services, nil
+}
+
+// AttestationReportVerify is the resolver for the attestation_report_verify field.
+func (r *queryResolver) AttestationReportVerify(ctx context.Context, report string) (bool, error) {
+	reportx := strings.TrimPrefix(report, "0x")
+	bt, err := hex.DecodeString(reportx)
+	if err != nil {
+		return false, gqlerror.Errorf("HexDecodeString:" + err.Error())
+	}
+	_, err = proof.VerifyReportProof(bt, nil, nil)
+	if err != nil {
+		return false, gqlerror.Errorf("VerifyLocalReport error:" + err.Error())
+	}
+
+	return true, nil
 }
 
 // Query returns QueryResolver implementation.

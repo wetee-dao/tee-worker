@@ -37,4 +37,9 @@ extend type Query {
     work_type: String!
     work_id: Int!
   ): [Service!]!
+
+  """
+  attestation_report_verify
+  """
+  attestation_report_verify(report: String!): Boolean!
 }

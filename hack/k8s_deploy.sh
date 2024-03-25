@@ -20,7 +20,15 @@ make install
 sudo mkdir -p /var/run/secrets/kubernetes.io/serviceaccount/
 
 # 编译程序
-make build
+# make build
+docker run --device /dev/sgx/enclave --device /dev/sgx/provision \
+    -v ${PWD}:/srv wetee/ego-ubuntu:20.04 \
+    bash -c "cd /srv && ego-go build -o ./bin/manager ./cmd/main.go \
+    && cd ./bin && mkdir -p /etc/rancher/k3s/  \
+    && echo "" > /etc/rancher/k3s/k3s.yaml \
+    && mkdir -p /opt/wetee-worker \
+    && mkdir -p /var/run/secrets/kubernetes.io/serviceaccount/ \
+    && ego sign manager"
 
 # 构建镜像
 make docker-build docker-push IMG=wetee/worker:$tag
