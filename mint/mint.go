@@ -101,6 +101,8 @@ mintStart:
 			continue
 		}
 
+		// 此处不捕获错误，因为如果初始化失败，程序可以继续运行
+		InitChainClient(DefaultChainUrl)
 		if MinterIns.ChainClient == nil {
 			fmt.Println("Chain connect is not init => ", err)
 			time.Sleep(time.Second * 10)
