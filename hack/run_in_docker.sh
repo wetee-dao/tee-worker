@@ -8,7 +8,6 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd  )"
 cd $DIR/../
 
-sudo chmod 777 /etc/rancher/k3s/k3s.yaml
 sudo mkdir /opt/wetee-worker
 sudo chmod 777 /opt/wetee-worker
 
@@ -16,7 +15,7 @@ echo $KUBE_CONFIG_PATH
 
 rm -f  bin/manager
 docker run --device /dev/sgx/enclave --device /dev/sgx/provision \
-    -v ${PWD}:/srv wetee/ego-ubuntu:20.04 \
+    -v ${PWD}:/srv wetee/ego-ubuntu:22.04 \
     bash -c "cd /srv && ego-go build -o ./bin/manager ./cmd/main.go"
     
 cd $DIR/../

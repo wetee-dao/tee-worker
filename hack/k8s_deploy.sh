@@ -22,7 +22,7 @@ sudo mkdir -p /var/run/secrets/kubernetes.io/serviceaccount/
 # 编译程序
 # make build
 docker run --device /dev/sgx/enclave --device /dev/sgx/provision \
-    -v ${PWD}:/srv wetee/ego-ubuntu:20.04 \
+    -v ${PWD}:/srv wetee/ego-ubuntu:22.04 \
     bash -c "cd /srv && ego-go build -o ./bin/manager ./cmd/main.go \
     && cd ./bin && mkdir -p /etc/rancher/k3s/  \
     && echo "" > /etc/rancher/k3s/k3s.yaml \

@@ -37,7 +37,7 @@ PutNum：协程负责将所有需要计算的数字放入intChan通道
 注意：全部放入后将intChan通道关闭，这样消费者通过for-range遍历时才不会死循环
 */
 func putNum(intChan chan int) {
-	for i := 1; i <= 100000; i++ {
+	for i := 1; i <= 10; i++ {
 		intChan <- i
 	}
 	close(intChan)
