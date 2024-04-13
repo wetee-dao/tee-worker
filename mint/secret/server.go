@@ -24,6 +24,7 @@ func StartSecretServerInCluster(addr string) {
 		resp := map[string]string{
 			"report": hex.EncodeToString(report),
 		}
+
 		bt, _ := json.Marshal(resp)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)

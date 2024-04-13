@@ -16,6 +16,8 @@ import (
 	"wetee.app/worker/store"
 )
 
+// 加载应用加密文件，加密环境变量
+// load app secret file and env
 func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	// 验证 AppID
 	appID := chi.URLParam(r, "AppID")
@@ -52,6 +54,8 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(bt)
 }
 
+// 加载应用加密文件，加密环境变量
+// load app secret file and env
 func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
 	wid, err := VerifyLibOs(appID, param)
 	if err != nil {
@@ -102,11 +106,13 @@ func VerifyLibOs(appID string, param *store.LoadParam) (*types.WorkId, error) {
 		return nil, errors.Wrap(err, "Pubkey error")
 	}
 
-	// 验证签名
+	// 解析 hex 签名
 	sig, err := hex.DecodeString(param.Signature)
 	if err != nil {
 		return nil, errors.Wrap(err, "Signature decode error")
 	}
+
+	// 验证签名
 	ok := pubkey.Verify([]byte(param.Time), sig)
 	if !ok {
 		return nil, errors.New("Signature error")

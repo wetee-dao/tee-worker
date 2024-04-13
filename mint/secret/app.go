@@ -13,6 +13,8 @@ import (
 	"wetee.app/worker/store"
 )
 
+// load app info
+// 获取应用消息
 func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 	// 验证 AppID
 	appID := chi.URLParam(r, "AppID")
@@ -47,6 +49,8 @@ func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(bt)
 }
 
+// 获取应用消息
+// get app info
 func GetAppInfo(appID string, param *store.LoadParam) (map[string]string, error) {
 	wid, err := VerifyLibOs(appID, param)
 	if err != nil {
