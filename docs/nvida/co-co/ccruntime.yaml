@@ -1,0 +1,138 @@
+apiVersion: confidentialcontainers.org/v1beta1
+kind: CcRuntime
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"confidentialcontainers.org/v1beta1","kind":"CcRuntime","metadata":{"annotations":{},"name":"ccruntime-sample"},"spec":{"ccNodeSelector":{"matchLabels":{"node.kubernetes.io/worker":""}},"config":{"cleanupCmd":["/opt/kata-artifacts/scripts/kata-deploy.sh","reset"],"environmentVariables":[{"name":"NODE_NAME","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"spec.nodeName"}}},{"name":"CONFIGURE_CC","value":"yes"}],"installCmd":["/opt/kata-artifacts/scripts/kata-deploy.sh","install"],"installDoneLabel":{"katacontainers.io/kata-runtime":"true"},"installType":"bundle","installerVolumeMounts":[{"mountPath":"/etc/crio/","name":"crio-conf"},{"mountPath":"/etc/containerd/","name":"containerd-conf"},{"mountPath":"/opt/confidential-containers/","name":"kata-artifacts"},{"mountPath":"/var/run/dbus/system_bus_socket","name":"dbus"},{"mountPath":"/run/systemd/system","name":"systemd"},{"mountPath":"/usr/local/bin/","name":"local-bin"}],"installerVolumes":[{"hostPath":{"path":"/etc/crio/","type":""},"name":"crio-conf"},{"hostPath":{"path":"/etc/containerd/","type":""},"name":"containerd-conf"},{"hostPath":{"path":"/opt/confidential-containers/","type":"DirectoryOrCreate"},"name":"kata-artifacts"},{"hostPath":{"path":"/var/run/dbus/system_bus_socket","type":""},"name":"dbus"},{"hostPath":{"path":"/run/systemd/system","type":""},"name":"systemd"},{"hostPath":{"path":"/usr/local/bin/","type":""},"name":"local-bin"}],"payloadImage":"quay.io/confidential-containers/runtime-payload:kata-containers-16d6e37196cb5c18ca5e718549f7a747658105a2","postUninstall":{"image":"quay.io/confidential-containers/container-engine-for-cc-payload:c80c3e7392c1562841e75072d227e07f98cab2bd","volumeMounts":[{"mountPath":"/opt/confidential-containers/","name":"confidential-containers-artifacts"},{"mountPath":"/etc/systemd/system/","name":"etc-systemd-system"},{"mountPath":"/var/run/dbus/system_bus_socket","name":"dbus"},{"mountPath":"/run/systemd/system","name":"systemd"}],"volumes":[{"hostPath":{"path":"/opt/confidential-containers/","type":"DirectoryOrCreate"},"name":"confidential-containers-artifacts"},{"hostPath":{"path":"/etc/systemd/system/","type":""},"name":"etc-systemd-system"},{"hostPath":{"path":"/var/run/dbus/system_bus_socket","type":""},"name":"dbus"},{"hostPath":{"path":"/run/systemd/system","type":""},"name":"systemd"}]},"preInstall":{"image":"quay.io/confidential-containers/container-engine-for-cc-payload:c80c3e7392c1562841e75072d227e07f98cab2bd","volumeMounts":[{"mountPath":"/opt/confidential-containers/","name":"confidential-containers-artifacts"},{"mountPath":"/etc/systemd/system/","name":"etc-systemd-system"},{"mountPath":"/var/run/dbus/system_bus_socket","name":"dbus"},{"mountPath":"/run/systemd/system","name":"systemd"}],"volumes":[{"hostPath":{"path":"/opt/confidential-containers/","type":"DirectoryOrCreate"},"name":"confidential-containers-artifacts"},{"hostPath":{"path":"/etc/systemd/system/","type":""},"name":"etc-systemd-system"},{"hostPath":{"path":"/var/run/dbus/system_bus_socket","type":""},"name":"dbus"},{"hostPath":{"path":"/run/systemd/system","type":""},"name":"systemd"}]},"runtimeClassNames":["kata","kata-clh","kata-clh-tdx","kata-qemu","kata-qemu-tdx","kata-qemu-sev","kata-qemu-snp"],"uninstallCmd":["/opt/kata-artifacts/scripts/kata-deploy.sh","cleanup"],"uninstallDoneLabel":{"katacontainers.io/kata-runtime":"cleanup"}},"runtimeName":"kata"}}
+  name: ccruntime-sample
+spec:
+  ccNodeSelector:
+    matchLabels:
+      nvidia.com/gpu.workload.config: "vm-passthrough"
+  config:
+    cleanupCmd:
+    - /opt/kata-artifacts/scripts/kata-deploy.sh
+    - reset
+    environmentVariables:
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: spec.nodeName
+    - name: CONFIGURE_CC
+      value: "yes"
+    installCmd:
+    - /opt/kata-artifacts/scripts/kata-deploy.sh
+    - install
+    installDoneLabel:
+      katacontainers.io/kata-runtime: "true"
+    installType: bundle
+    installerVolumeMounts:
+    - mountPath: /etc/crio/
+      name: crio-conf
+    - mountPath: /etc/containerd/
+      name: containerd-conf
+    - mountPath: /opt/confidential-containers/
+      name: kata-artifacts
+    - mountPath: /var/run/dbus/system_bus_socket
+      name: dbus
+    - mountPath: /run/systemd/system
+      name: systemd
+    - mountPath: /usr/local/bin/
+      name: local-bin
+    installerVolumes:
+    - hostPath:
+        path: /etc/crio/
+        type: ""
+      name: crio-conf
+    - hostPath:
+        path: /etc/containerd/
+        type: ""
+      name: containerd-conf
+    - hostPath:
+        path: /opt/confidential-containers/
+        type: DirectoryOrCreate
+      name: kata-artifacts
+    - hostPath:
+        path: /var/run/dbus/system_bus_socket
+        type: ""
+      name: dbus
+    - hostPath:
+        path: /run/systemd/system
+        type: ""
+      name: systemd
+    - hostPath:
+        path: /usr/local/bin/
+        type: ""
+      name: local-bin
+    payloadImage: quay.io/confidential-containers/runtime-payload:kata-containers-16d6e37196cb5c18ca5e718549f7a747658105a2
+    postUninstall:
+      image: quay.io/confidential-containers/container-engine-for-cc-payload:c80c3e7392c1562841e75072d227e07f98cab2bd
+      volumeMounts:
+      - mountPath: /opt/confidential-containers/
+        name: confidential-containers-artifacts
+      - mountPath: /etc/systemd/system/
+        name: etc-systemd-system
+      - mountPath: /var/run/dbus/system_bus_socket
+        name: dbus
+      - mountPath: /run/systemd/system
+        name: systemd
+      volumes:
+      - hostPath:
+          path: /opt/confidential-containers/
+          type: DirectoryOrCreate
+        name: confidential-containers-artifacts
+      - hostPath:
+          path: /etc/systemd/system/
+          type: ""
+        name: etc-systemd-system
+      - hostPath:
+          path: /var/run/dbus/system_bus_socket
+          type: ""
+        name: dbus
+      - hostPath:
+          path: /run/systemd/system
+          type: ""
+        name: systemd
+    preInstall:
+      image: quay.io/confidential-containers/container-engine-for-cc-payload:c80c3e7392c1562841e75072d227e07f98cab2bd
+      volumeMounts:
+      - mountPath: /opt/confidential-containers/
+        name: confidential-containers-artifacts
+      - mountPath: /etc/systemd/system/
+        name: etc-systemd-system
+      - mountPath: /var/run/dbus/system_bus_socket
+        name: dbus
+      - mountPath: /run/systemd/system
+        name: systemd
+      volumes:
+      - hostPath:
+          path: /opt/confidential-containers/
+          type: DirectoryOrCreate
+        name: confidential-containers-artifacts
+      - hostPath:
+          path: /etc/systemd/system/
+          type: ""
+        name: etc-systemd-system
+      - hostPath:
+          path: /var/run/dbus/system_bus_socket
+          type: ""
+        name: dbus
+      - hostPath:
+          path: /run/systemd/system
+          type: ""
+        name: systemd
+    runtimeClassNames:
+    - kata
+    - kata-clh
+    - kata-clh-tdx
+    - kata-qemu
+    - kata-qemu-tdx
+    - kata-qemu-sev
+    - kata-qemu-snp
+    uninstallCmd:
+    - /opt/kata-artifacts/scripts/kata-deploy.sh
+    - cleanup
+    uninstallDoneLabel:
+      katacontainers.io/kata-runtime: cleanup
+  runtimeName: kata

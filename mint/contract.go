@@ -7,6 +7,7 @@ import (
 
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"github.com/wetee-dao/go-sdk/gen/weteeapp"
+	"github.com/wetee-dao/go-sdk/gen/weteegpu"
 	"github.com/wetee-dao/go-sdk/gen/weteetask"
 	"github.com/wetee-dao/go-sdk/gen/weteeworker"
 )
@@ -19,6 +20,7 @@ type ContractStateWrap struct {
 	WorkState     *gtypes.ContractState
 	App           *gtypes.TeeApp
 	Task          *gtypes.TeeTask
+	GpuApp        *gtypes.GpuApp
 	Version       uint64
 	Settings      []*gtypes.AppSetting
 }
@@ -47,6 +49,12 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 	var taskVersions = make([]types.StorageKey, 0, len(set))
 	var taskSettingIds = make([]gtypes.WorkId, 0, len(set))
 	var taskSettings = make([]types.StorageKey, 0, len(set))
+
+	var gpuAppKeys = make([]types.StorageKey, 0, len(set))
+	var gpuAppIds = make([]gtypes.WorkId, 0, len(set))
+	var gpuAppVersions = make([]types.StorageKey, 0, len(set))
+	var gpuAppSettingIds = make([]gtypes.WorkId, 0, len(set))
+	var gpuAppSettings = make([]types.StorageKey, 0, len(set))
 
 	for _, elem := range set {
 		for _, change := range elem.Changes {
@@ -133,6 +141,38 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 					taskSettings = append(taskSettings, k)
 				}
 			}
+
+			// 记录 gpu 相关参数
+			if cs.WorkId.Wtype.IsGPU {
+				tkey, err := weteegpu.MakeGPUAppsStorageKey(cs.User, cs.WorkId.Id)
+				if err != nil {
+					continue
+				}
+
+				gpuAppKeys = append(gpuAppKeys, tkey)
+				gpuAppIds = append(gpuAppIds, cs.WorkId)
+				vkey, err := weteegpu.MakeAppVersionStorageKey(cs.WorkId.Id)
+				if err != nil {
+					continue
+				}
+
+				gpuAppVersions = append(gpuAppVersions, vkey)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeGpu", "AppSettings", cs.WorkId.Id)
+				if err != nil {
+					continue
+				}
+
+				var keys []types.StorageKey
+				keys, err = m.ChainClient.Api.RPC.State.GetKeysLatest(skey)
+				if err != nil {
+					continue
+				}
+
+				for _, k := range keys {
+					gpuAppSettingIds = append(gpuAppSettingIds, cs.WorkId)
+					gpuAppSettings = append(gpuAppSettings, k)
+				}
+			}
 		}
 	}
 
@@ -147,6 +187,12 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 	err = m.GetApps(appIds, appKeys, list, at)
 	if err != nil {
 		util.LogWithRed("GetApps", err)
+		return nil, err
+	}
+
+	err = m.GetGpuApps(gpuAppIds, gpuAppKeys, list, at)
+	if err != nil {
+		util.LogWithRed("GetGpuApps", err)
 		return nil, err
 	}
 
@@ -171,6 +217,13 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 		return nil, err
 	}
 
+	// 获取 task 的版本
+	err = m.GetVerions(gpuAppIds, gpuAppVersions, list, at)
+	if err != nil {
+		util.LogWithRed("GetVerions GPU", err)
+		return nil, err
+	}
+
 	// 获取 app 的设置
 	err = m.GetSettings(appSettingIds, appSettings, list, at)
 	if err != nil {
@@ -182,6 +235,13 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 	err = m.GetSettings(taskSettingIds, taskSettings, list, at)
 	if err != nil {
 		util.LogWithRed("GetSettings TASK", err)
+		return nil, err
+	}
+
+	// 获取 task 的设置
+	err = m.GetSettings(gpuAppSettingIds, gpuAppSettings, list, at)
+	if err != nil {
+		util.LogWithRed("GetSettings GPU", err)
 		return nil, err
 	}
 
@@ -261,6 +321,33 @@ func (m *Minter) GetTasks(workId []gtypes.WorkId, wkeys []types.StorageKey, data
 			}
 			d := data[workId]
 			d.Task = &wcs
+
+			data[workId] = d
+		}
+	}
+
+	return nil
+}
+
+// 获取 task 的状态
+// Get Task info
+func (m *Minter) GetGpuApps(workId []gtypes.WorkId, wkeys []types.StorageKey, data map[gtypes.WorkId]ContractStateWrap, at *types.Hash) error {
+	wsets, err := m.ChainClient.Api.RPC.State.QueryStorageLatest(wkeys, *at)
+	if err != nil {
+		return err
+	}
+
+	for _, elem := range wsets {
+		for _, change := range elem.Changes {
+			var key = change.StorageKey
+			var workId = workId[IndexOf(wkeys, key)]
+			var wcs gtypes.GpuApp
+			if err := codec.Decode(change.StorageData, &wcs); err != nil {
+				util.LogWithRed("codec.Decode", err)
+				continue
+			}
+			d := data[workId]
+			d.GpuApp = &wcs
 
 			data[workId] = d
 		}

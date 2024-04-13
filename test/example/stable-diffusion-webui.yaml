@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sd-webui
+  namespace: default
+  labels:
+    gpu: sd-webui
+spec:
+  restartPolicy: OnFailure
+  runtimeClassName: nvidia
+  containers:
+    - name: cuda-container
+      image: zlstringham/stable-diffusion-webui:latest
+      # args: ["bash", "/entrypoint.sh", "--share"]
+      ports:
+        - containerPort: 7860
+          name: sd-webui-7860
+          protocol: TCP
+      env:
+        - name: COMMANDLINE_ARGS
+          value: "--autolaunch --no-half-vae --lowvram --share --xformers"
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+      volumeMounts:
+        - mountPath: /app/stable-diffusion-webui/models/Stable-diffusion
+          name: model-volume
+        - mountPath: /app/stable-diffusion-webui/openai
+          name: openai-volume
+  volumes:
+    - name: model-volume
+      hostPath:
+        path: /home/wetee/work/wetee/worker/AI/model
+    - name: openai-volume
+      hostPath:
+        path: /home/wetee/work/wetee/worker/AI/openai

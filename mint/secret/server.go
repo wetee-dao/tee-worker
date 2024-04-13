@@ -24,12 +24,14 @@ func StartSecretServerInCluster(addr string) {
 		resp := map[string]string{
 			"report": hex.EncodeToString(report),
 		}
+
 		bt, _ := json.Marshal(resp)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
 		w.Write(bt)
 	})
 
+	router.Post("/appInfo/{AppID}", AppInfoHandler)
 	router.Post("/appLoader/{AppID}", LoadingHandler)
 
 	tlsCfg := tls.Config{

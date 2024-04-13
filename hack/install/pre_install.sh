@@ -6,7 +6,7 @@ while [ -h "$SOURCE"  ]; do
     [[ $SOURCE != /*  ]] && SOURCE="$DIR/$SOURCE"
 done
 DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd  )"
-cd $DIR/../
+cd $DIR/../../
 
 # 创建 SGX daemonset
 cat <<EOF | kubectl create -f -
@@ -75,14 +75,17 @@ metadata:
 EOF
 
 # 创建 WEB_UI
-kubectl create -f ./hack/dapp.yaml
-kubectl create -f ./hack/dapp_nodeport.yaml
+kubectl create -f ./hack/install/dapp.yaml
+kubectl create -f ./hack/install/dapp_nodeport.yaml
 
 # 创建 pccs
-kubectl create -f ./hack/pccs.yaml
-kubectl create -f ./hack/pccs_headless.yaml
+kubectl create -f ./hack/install/pccs.yaml
+kubectl create -f ./hack/install/pccs_headless.yaml
 
 # 创建区块连节点
-kubectl create -f ./hack/chain.yaml
-kubectl create -f ./hack/chain_nodeport.yaml
-kubectl create -f ./hack/chain_headless.yaml
+kubectl create -f ./hack/install/chain.yaml
+kubectl create -f ./hack/install/chain_nodeport.yaml
+kubectl create -f ./hack/install/chain_headless.yaml
+
+kubectl create -f ./hack/install/nvidia_runtime.yaml
+kubectl create -f ./hack/install/nvidia_device_plugin.yml

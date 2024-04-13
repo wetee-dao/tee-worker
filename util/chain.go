@@ -12,6 +12,10 @@ func GetWorkTypeStr(work types.WorkId) string {
 		return "task"
 	}
 
+	if work.Wtype.IsGPU {
+		return "gpu"
+	}
+
 	return "unknown"
 }
 
@@ -22,6 +26,9 @@ func GetWorkType(ty string) types.WorkType {
 	}
 	if ty == "task" || ty == "TASK" {
 		return types.WorkType{IsTASK: true}
+	}
+	if ty == "gpu" || ty == "GPU" {
+		return types.WorkType{IsGPU: true}
 	}
 	return types.WorkType{}
 }

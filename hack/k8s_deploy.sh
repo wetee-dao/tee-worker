@@ -22,7 +22,7 @@ sudo mkdir -p /var/run/secrets/kubernetes.io/serviceaccount/
 # 编译程序
 # make build
 docker run --device /dev/sgx/enclave --device /dev/sgx/provision \
-    -v ${PWD}:/srv wetee/ego-ubuntu:20.04 \
+    -v ${PWD}:/srv wetee/ego-ubuntu:22.04 \
     bash -c "cd /srv && ego-go build -o ./bin/manager ./cmd/main.go \
     && cd ./bin && mkdir -p /etc/rancher/k3s/  \
     && echo "" > /etc/rancher/k3s/k3s.yaml \
@@ -37,10 +37,10 @@ make docker-build docker-push IMG=wetee/worker:$tag
 make deploy IMG=wetee/worker:$tag
 
 # 创建内部服务
-kubectl create -f ./hack/manager_headless.yaml
+kubectl create -f ./hack/install/manager_headless.yaml
 
 # 创建外部服务
-kubectl create -f ./hack/manager_nodeport.yaml
+kubectl create -f ./hack/install/manager_nodeport.yaml
 
 # 创建外部服务
-kubectl create -f ./hack/manager_for_localdev.yaml
+kubectl create -f ./hack/install/manager_for_localdev.yaml

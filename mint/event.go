@@ -86,5 +86,31 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 		}
 	}
 
+	// 处理CPU应用消息
+	// Handling GPU App Messages
+	if e.IsWeteeGpu {
+		appEvent := e.AsWeteeGpuField0
+		if appEvent.IsWorkStopped {
+			workId := appEvent.AsWorkStoppedWorkId1
+
+			err = m.StopApp(workId, "")
+			util.LogWithRed("===========================================StopPod error: ", err)
+		}
+		if appEvent.IsWorkUpdated {
+			workId := appEvent.AsWorkUpdatedWorkId1
+			user := appEvent.AsWorkUpdatedUser0
+
+			util.LogWithRed("===========================================WorkUpdated: ", workId)
+			version, _ := chain.GetVersion(m.ChainClient, workId)
+			appIns := chain.GpuApp{
+				Client: m.ChainClient,
+			}
+			app, _ := appIns.GetApp(user[:], workId.Id)
+			envs, _ := m.GetEnvs(workId)
+			err = m.UpdateGpuApp(&ctx, user[:], workId, app, envs, version)
+			util.LogWithRed("===========================================CreateOrUpdatePod error: ", err)
+		}
+	}
+
 	return err
 }

@@ -95,6 +95,10 @@ extend type Mutation {
     """
     disk: Int!
     """
+    GPU drive, unit 1=1/10 gpu
+    """
+    gpu: Int!
+    """
     Mortgage amount
     """
     deposit: Int64!
