@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: wetee/worker
-  newTag: 2024-03-21-22_51
+  newTag: 2024-04-09-19_02

@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/vedhavyas/go-subkey"
 	"github.com/vedhavyas/go-subkey/sr25519"
+	"github.com/wetee-dao/go-sdk/gen/types"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 )
@@ -52,6 +53,37 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
+	wid, err := VerifyLibOs(appID, param)
+	if err != nil {
+		return nil, errors.Wrap(err, "VerifyLibOs error")
+	}
+	// 验证地址
+	address, err := store.GetSetAppSignerAddress(*wid, param.Address)
+	if err != nil || address != param.Address {
+		// return nil, errors.New("VerifyAddress error")
+	}
+
+	_, err = proof.VerifyReportProof(param.Report, nil, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "VerifyLocalReport error")
+	}
+
+	// 存入Work DCAP信息
+	err = store.SetWorkDcapReport(*wid, param.Report)
+	if err != nil {
+		return nil, errors.Wrap(err, "DCAP Report set error")
+	}
+
+	// 获取加密信息
+	s, err := store.GetSecrets(*wid)
+	if err != nil {
+		return nil, errors.Wrap(err, "Secret error")
+	}
+
+	return s, nil
+}
+
+func VerifyLibOs(appID string, param *store.LoadParam) (*types.WorkId, error) {
 	wid, err := store.UnSealAppID(appID)
 	if err != nil {
 		return nil, errors.Wrap(err, "AppID error")
@@ -80,28 +112,5 @@ func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
 		return nil, errors.New("Signature error")
 	}
 
-	// 验证地址
-	address, err := store.GetSetAppSignerAddress(wid, param.Address)
-	if err != nil || address != param.Address {
-		// return nil, errors.New("VerifyAddress error")
-	}
-
-	_, err = proof.VerifyReportProof(param.Report, nil, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "VerifyLocalReport error")
-	}
-
-	// 存入Work DCAP信息
-	err = store.SetWorkDcapReport(wid, param.Report)
-	if err != nil {
-		return nil, errors.Wrap(err, "DCAP Report set error")
-	}
-
-	// 获取加密信息
-	s, err := store.GetSecrets(wid)
-	if err != nil {
-		return nil, errors.Wrap(err, "Secret error")
-	}
-
-	return s, nil
+	return &wid, nil
 }
