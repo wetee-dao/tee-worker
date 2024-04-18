@@ -70,6 +70,9 @@ func InitCluster(mgr manager.Manager) error {
 }
 
 func InitChainClient(url string) error {
+	if MinterIns.ChainClient != nil {
+		return nil
+	}
 	client, err := chain.ClientInit(url, true)
 	if err != nil {
 		return err

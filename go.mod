@@ -27,9 +27,10 @@ require (
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/nutsdb/nutsdb v1.0.3
 	github.com/pkg/errors v0.9.1
-	github.com/rs/cors v1.8.2
 	golang.org/x/crypto v0.14.0
 )
+
+require github.com/rs/cors v1.8.2 // indirect
 
 require (
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
@@ -49,6 +50,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.20 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/go-chi/cors v1.2.1
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/zapr v1.2.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
