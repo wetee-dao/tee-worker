@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sgx-pccs-dev
+  namespace: worker-addon
+spec:
+  type: NodePort
+  selector:
+    app: sgx-pccs-api
+  ports:
+    - name: http
+      protocol: TCP
+      nodePort: 30003
+      port: 8081
+      targetPort: 8081
