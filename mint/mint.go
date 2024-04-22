@@ -228,7 +228,6 @@ mintStart:
 				call, err := m.DoWithAppState(&ctx, c, stage, head)
 				if err != nil {
 					util.LogWithRed("DoWithAppState", err)
-					continue
 				}
 				if call != nil {
 					proofs = append(proofs, *call)
@@ -239,7 +238,6 @@ mintStart:
 				call, err := m.DoWithTaskState(&ctx, c, stage, head)
 				if err != nil {
 					util.LogWithRed("DoWithTaskState", err)
-					continue
 				}
 				if call != nil {
 					proofs = append(proofs, *call)
@@ -248,7 +246,6 @@ mintStart:
 				call, err := m.DoWithGpuAppState(&ctx, c, stage, head)
 				if err != nil {
 					util.LogWithRed("DoWithGpuAppState", err)
-					continue
 				}
 				if call != nil {
 					proofs = append(proofs, *call)

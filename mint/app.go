@@ -237,6 +237,8 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 	return err
 }
 
+// update app service
+// 更新APP
 func (m *Minter) UpdateApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeApp, envs []v1.EnvVar, version uint64) error {
 	saddress := AccountToSpace(user)
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)

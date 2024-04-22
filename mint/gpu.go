@@ -49,7 +49,7 @@ func (m *Minter) DoWithGpuAppState(ctx *context.Context, c ContractStateWrap, st
 	// Get pod information
 	clientset := m.K8sClient
 	pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: "app=" + name,
+		LabelSelector: "gpu=" + name,
 	})
 	if err != nil {
 		util.LogWithRed("getPod", err)
