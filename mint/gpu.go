@@ -163,7 +163,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 								// 	Protocol:      "TCP",
 								// },
 								{
-									Name:          string(app.Name) + "1",
+									Name:          name + "-" + "1",
 									ContainerPort: int32(app.Port[0]),
 									Protocol:      "TCP",
 								},

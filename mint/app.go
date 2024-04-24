@@ -154,7 +154,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 									Protocol:      "TCP",
 								},
 								{
-									Name:          string(app.Name) + fmt.Sprint(app.Port[0]),
+									Name:          name + "-" + fmt.Sprint(app.Port[0]),
 									ContainerPort: int32(app.Port[0]),
 									Protocol:      "TCP",
 								},

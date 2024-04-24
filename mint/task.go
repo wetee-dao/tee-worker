@@ -133,7 +133,7 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.Wor
 					Image: string(app.Image),
 					Ports: []v1.ContainerPort{
 						{
-							Name:          string(app.Name) + "0",
+							Name:          name + "-" + "0",
 							ContainerPort: int32(app.Port[0]),
 							Protocol:      "TCP",
 						},
