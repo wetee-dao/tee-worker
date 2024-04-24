@@ -186,7 +186,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		IsId:       true,
 		AsIdField0: minter.AsID,
 	}
-	c := balances.MakeTransferCall(minterWrap, types.NewUCompact(bal))
+	c := balances.MakeTransferKeepAliveCall(minterWrap, types.NewUCompact(bal))
 	err := client.SignAndSubmit(&signature.TestKeyringPairAlice, c, false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain call error:" + err.Error())

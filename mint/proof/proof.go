@@ -55,7 +55,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 		}
 	}
 
-	crProof := gtypes.Cr{
+	crProof := gtypes.ComCr{
 		Cpu:  cr[0],
 		Mem:  cr[1],
 		Disk: 0,

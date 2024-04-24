@@ -16,7 +16,7 @@ spec:
         app: wetee-node
     spec:
       containers:
-        - image: wetee/wetee-node:dev.2024-04-17-09_47
+        - image: wetee/wetee-node:dev.2024-04-24-12_44
           command:
             - /bin/sh
             - "-c"
