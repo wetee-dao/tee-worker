@@ -22,7 +22,7 @@ type ContractStateWrap struct {
 	Task          *gtypes.TeeTask
 	GpuApp        *gtypes.GpuApp
 	Version       uint64
-	Settings      []*gtypes.AppSetting
+	Settings      []*gtypes.Env
 }
 
 // 获取合约状态
@@ -394,7 +394,7 @@ func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, d
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
 			var workId = workId[IndexOf(wkeys, key)]
-			var wcs gtypes.AppSetting
+			var wcs gtypes.Env
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
 				util.LogWithRed("codec.Decode", err)
 				continue
@@ -408,7 +408,7 @@ func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, d
 	return nil
 }
 
-func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*gtypes.AppSetting, error) {
+func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*gtypes.Env, error) {
 	var pallet, method string
 	if workId.Wtype.IsAPP {
 		pallet = "WeteeApp"
@@ -421,13 +421,13 @@ func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*g
 	sets, err := m.ChainClient.QueryDoubleMapAll(pallet, method, workId.Id, at)
 	if err != nil {
 		util.LogWithRed("QueryDoubleMapAll", err)
-		return []*gtypes.AppSetting{}, err
+		return []*gtypes.Env{}, err
 	}
 
-	settings := make([]*gtypes.AppSetting, 0, len(sets))
+	settings := make([]*gtypes.Env, 0, len(sets))
 	for _, elem := range sets {
 		for _, change := range elem.Changes {
-			var wcs gtypes.AppSetting
+			var wcs gtypes.Env
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
 				util.LogWithRed("codec.Decode", err)
 				continue

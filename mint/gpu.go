@@ -13,7 +13,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
@@ -128,7 +127,6 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 		return err
 	}
 
-	resource.NewMilliQuantity(int64(app.Cr.Mem)*1024*1024, resource.BinarySI)
 	nvidiaClass := "nvidia"
 	metaJson := map[string]string{}
 	json.Unmarshal(app.Meta, &metaJson)
@@ -156,18 +154,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 						{
 							Name:  "c1",
 							Image: string(app.Image),
-							Ports: []v1.ContainerPort{
-								// {
-								// 	Name:          "port0",
-								// 	ContainerPort: int32(8888),
-								// 	Protocol:      "TCP",
-								// },
-								{
-									Name:          name + "-" + "1",
-									ContainerPort: int32(app.Port[0]),
-									Protocol:      "TCP",
-								},
-							},
+							Ports: GetContainerPortFormService(name, app.Port),
 							Env: []v1.EnvVar{
 								{Name: "IN_TEE", Value: string("1")},
 								{Name: "COMMANDLINE_ARGS", Value: string(" --no-half-vae --lowvram --share --xformers ")},
@@ -228,31 +215,25 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	}
 
 	// 创建机密服务
-	ServiceSpace := m.K8sClient.CoreV1().Services(saddress)
-	service := v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   name + "-" + fmt.Sprint(app.Port[0]),
-			Labels: map[string]string{"service": name},
-		},
-		Spec: v1.ServiceSpec{
-			Selector: map[string]string{"gpu": name},
-			Type:     "NodePort",
-			Ports: []v1.ServicePort{
-				{
-					Name:       name + "-" + fmt.Sprint(app.Port[0]) + "-nodeport",
-					Protocol:   "TCP",
-					Port:       int32(app.Port[0]),
-					TargetPort: intstr.FromInt(int(app.Port[0])),
-				},
+	sports := GetServicePortFormService(name, app.Port)
+	if len(sports) > 0 {
+		ServiceSpace := m.K8sClient.CoreV1().Services(saddress)
+		service := v1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   name + "-expose",
+				Labels: map[string]string{"service": name},
 			},
-		},
+			Spec: v1.ServiceSpec{
+				Selector: map[string]string{"gpu": name},
+				Type:     "NodePort",
+				Ports:    GetServicePortFormService(name, app.Port),
+			},
+		}
+		_, err = ServiceSpace.Create(*ctx, &service, metav1.CreateOptions{})
+		if err != nil {
+			return err
+		}
 	}
-	_, err = ServiceSpace.Create(*ctx, &service, metav1.CreateOptions{})
-	if err != nil {
-		return err
-	}
-
-	// fmt.Println("================================================= Create", err)
 
 	return err
 }
@@ -270,7 +251,7 @@ func (m *Minter) UpdateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 		}
 		existing.Spec.Template.Spec.Containers[0].Env = envs
 		existing.Spec.Template.Spec.Containers[0].Image = string(app.Image)
-		existing.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
+		// existing.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
 		_, err = nameSpace.Update(*ctx, existing, metav1.UpdateOptions{})
 		fmt.Println("================================================= Update", err)
 	}

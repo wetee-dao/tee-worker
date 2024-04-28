@@ -15,6 +15,7 @@ import (
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
@@ -110,8 +111,12 @@ func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 	}
 
 	for _, setting := range settings {
+		// TODO add file
+		if setting.K.IsFile {
+			continue
+		}
 		envs = append(envs, corev1.EnvVar{
-			Name:  string(setting.K),
+			Name:  string(setting.K.AsEnvField0),
 			Value: string(setting.V),
 		})
 	}
@@ -120,7 +125,7 @@ func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 }
 
 // 获取配置文件
-func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.AppSetting) ([]corev1.EnvVar, error) {
+func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Env) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
 	wid, err := store.SealAppID(workId)
 	fmt.Println(wid)
@@ -134,13 +139,88 @@ func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Ap
 	}
 
 	for _, setting := range settings {
+		// TODO add file
+		if setting.K.IsFile {
+			continue
+		}
 		envs = append(envs, corev1.EnvVar{
-			Name:  string(setting.K),
+			Name:  string(setting.K.AsEnvField0),
 			Value: string(setting.V),
 		})
 	}
 
 	return envs, nil
+}
+
+// Get Container Port From Service
+// 获取容器服务端口
+func GetContainerPortFormService(name string, services []gtypes.Service) []corev1.ContainerPort {
+	ports := []corev1.ContainerPort{}
+	for _, ser := range services {
+		protocol := corev1.ProtocolTCP
+		port := ser.AsTcpField0
+		if ser.IsProjectUdp {
+			protocol = corev1.ProtocolUDP
+			port = ser.AsProjectUdpField0
+		} else if ser.IsProjectTcp {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsProjectTcpField0
+		} else if ser.IsTcp {
+			protocol = corev1.ProtocolSCTP
+			port = ser.AsTcpField0
+		} else if ser.IsUdp {
+			protocol = corev1.ProtocolUDP
+			port = ser.AsUdpField0
+		}
+		ports = append(ports, corev1.ContainerPort{
+			Name:          name + "-" + fmt.Sprint(port),
+			ContainerPort: int32(port),
+			Protocol:      protocol,
+		})
+	}
+	return ports
+}
+
+// Get Service Port From Service
+// 获取对外服务端口
+func GetServicePortFormService(name string, services []gtypes.Service) []corev1.ServicePort {
+	ports := []corev1.ServicePort{}
+	for _, ser := range services {
+		protocol := corev1.ProtocolTCP
+		port := ser.AsTcpField0
+		if ser.IsProjectUdp {
+			protocol = corev1.ProtocolUDP
+			port = ser.AsProjectUdpField0
+		} else if ser.IsProjectTcp {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsProjectTcpField0
+		} else if ser.IsTcp {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsTcpField0
+		} else if ser.IsUdp {
+			protocol = corev1.ProtocolUDP
+			port = ser.AsUdpField0
+		}
+
+		// if ser.IsProjectTcp || ser.IsProjectUdp {
+		// 	ports = append(ports, corev1.ServicePort{
+		// 		Name:       fmt.Sprint(port),
+		// 		Port:       int32(port),
+		// 		TargetPort: intstr.FromInt(int(port)),
+		// 		Protocol:   protocol,
+		// 	})
+		// }
+
+		if ser.IsTcp || ser.IsUdp {
+			ports = append(ports, corev1.ServicePort{
+				Name:       name + "-" + fmt.Sprint(port) + "-nodeport",
+				Port:       int32(port),
+				TargetPort: intstr.FromInt(int(port)),
+				Protocol:   protocol,
+			})
+		}
+	}
+	return ports
 }
 
 // StopApp
