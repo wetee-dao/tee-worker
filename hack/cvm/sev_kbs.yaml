@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sev-kbs
+  namespace: worker-addon
+spec:
+  selector:
+    matchLabels:
+      app: sev-kbs-api
+  template:
+    metadata:
+      labels:
+        app: sev-kbs-api
+    spec:
+      containers:
+        - image: wetee/sev-kbs:dev.2024-04-29-20_16
+          name: c1
+          env:
+            - name: KBS_DB_TYPE
+              value: sqlite
+            - name: KBS_DB_HOST
+              value: d
+            - name: KBS_DB_USER
+              value: d
+            - name: KBS_DB_PW
+              value: d
+            - name: KBS_DB
+              value: /sev.db
+          ports:
+            - containerPort: 44444
+              name: wetee-pccs-44444
+              protocol: TCP

@@ -1,14 +1,26 @@
 ```bash
 sudo modprobe br_netfilter
 run as root $ echo 1 > /proc/sys/net/ipv4/ip_forward
-sudo kubeadm init --apiserver-advertise-address=192.168.111.109 --pod-network-cidr=10.244.0.0/16
+
+containerd config default | sudo tee /etc/containerd/config.toml
+按照这个页面调整 https://blog.csdn.net/roadtohacker/article/details/134654399
+
+sudo kubeadm config images pull --image-repository registry.aliyuncs.com/google_containers
+sudo ctr -n k8s.io images pull -k registry.aliyuncs.com/google_containers/pause:3.8
+sudo ctr -n k8s.io images tag registry.aliyuncs.com/google_containers/pause:3.8 registry.k8s.io/pause:3.8
+
+sudo ctr -n k8s.io images pull -k docker.io/wetee/kube-rbac-proxy:v0.14.1
+sudo ctr -n k8s.io images tag docker.io/wetee/kube-rbac-proxy:v0.14.1 gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
+
+sudo kubeadm init --apiserver-advertise-address=192.168.111.121 --pod-network-cidr=10.244.0.0/16  --image-repository registry.aliyuncs.com/google_containers
+
 
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 
-kubectl label node wetee node-role.kubernetes.io/worker=m
+kubectl label node wetee node.kubernetes.io/worker=
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 kubectl apply -f ./co-co/canal.yaml
 
