@@ -28,5 +28,5 @@ spec:
               value: /sev.db
           ports:
             - containerPort: 44444
-              name: wetee-pccs-44444
+              name: p-44444
               protocol: TCP
