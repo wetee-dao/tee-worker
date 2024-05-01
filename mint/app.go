@@ -18,6 +18,8 @@ import (
 	"wetee.app/worker/util"
 )
 
+// DoWithAppState
+// 获取app状态
 func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage uint32, head types.Header) (*gtypes.RuntimeCall, error) {
 	if c.App == nil || c.WorkState == nil {
 		return nil, errors.New("app is nil")
@@ -155,14 +157,14 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 							Env:   envs,
 							Resources: v1.ResourceRequirements{
 								Limits: v1.ResourceList{
-									v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-									"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(10), resource.DecimalExponent),
+									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+									// "alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(10), resource.DecimalExponent),
 								},
 								Requests: v1.ResourceList{
-									v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-									"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(10), resource.DecimalExponent),
+									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+									// "alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(10), resource.DecimalExponent),
 								},
 							},
 						},
@@ -171,6 +173,8 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 			},
 		},
 	}
+
+	m.DeploymentTEEWrap(&deployment, &app.TeeVersion)
 
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
 	if err != nil {

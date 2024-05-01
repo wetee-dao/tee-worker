@@ -13,7 +13,7 @@ spec:
         app: wetee-dapp
     spec:
       containers:
-        - image: wetee/dapp:master.20240428-23_28_45
+        - image: wetee/dapp:master.20240501-07_45_30
           name: c1
           ports:
             - containerPort: 80

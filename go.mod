@@ -8,7 +8,7 @@ require (
 	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
-	github.com/wetee-dao/go-sdk v0.1.1-0.20240428114525-80f3e4922db3
+	github.com/wetee-dao/go-sdk v0.1.1-0.20240501034659-56956c6286a5
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4

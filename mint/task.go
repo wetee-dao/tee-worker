@@ -135,10 +135,14 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.Wor
 					Env:   envs,
 					Resources: v1.ResourceRequirements{
 						Limits: v1.ResourceList{
-							"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
+							v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+							v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+							// "alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 						},
 						Requests: v1.ResourceList{
-							"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
+							v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+							v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+							// "alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 						},
 					},
 				},
@@ -146,6 +150,8 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.Wor
 			RestartPolicy: v1.RestartPolicyNever,
 		},
 	}
+
+	m.PodTEEWrap(pod, &app.TeeVersion)
 
 	_, err = nameSpace.Create(*ctx, pod, metav1.CreateOptions{})
 	fmt.Println("================================================= Create", err)

@@ -36,7 +36,7 @@
     ],
     "files": [
         {
-            "source": "/etc/rancher/k3s/k3s.yaml",
+            "source": "/opt/kube/config",
             "target": "/etc/kube/config"
         }
     ]

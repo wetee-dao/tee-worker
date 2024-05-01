@@ -104,3 +104,5 @@ spec:
             path: /mnt/wetee-worker
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
+      nodeSelector:
+        TEE: "SGX"

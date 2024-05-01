@@ -26,6 +26,8 @@ spec:
       labels:
         k8s-app: sgx-device-plugin
     spec:
+      nodeSelector:
+        TEE: "SGX"
       containers:
       - image: registry.cn-hangzhou.aliyuncs.com/acs/sgx-device-plugin:v1.1.0-bb1f5f9-aliyun
         imagePullPolicy: IfNotPresent

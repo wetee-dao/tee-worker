@@ -19,8 +19,7 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-
-kubectl label node wetee node.kubernetes.io/worker=
+kubectl label node sev1 node.kubernetes.io/worker=
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 kubectl apply -f ./co-co/canal.yaml
 

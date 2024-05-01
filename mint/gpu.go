@@ -150,6 +150,9 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 				},
 				Spec: v1.PodSpec{
 					RuntimeClassName: &nvidiaClass,
+					NodeSelector: map[string]string{
+						"TEE": "SVM-SEV",
+					},
 					Containers: []v1.Container{
 						{
 							Name:  "c1",
@@ -162,16 +165,14 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 							Command: command,
 							Resources: v1.ResourceRequirements{
 								Limits: v1.ResourceList{
-									v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-									"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
-									"nvidia.com/gpu":               *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent),
+									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+									"nvidia.com/gpu":  *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent),
 								},
 								Requests: v1.ResourceList{
-									v1.ResourceCPU:                 resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									v1.ResourceMemory:              resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-									"alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
-									"nvidia.com/gpu":               *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent),
+									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
+									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
+									"nvidia.com/gpu":  *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent),
 								},
 							},
 							VolumeMounts: []v1.VolumeMount{
