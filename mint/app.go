@@ -174,6 +174,11 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 		},
 	}
 
+	err = m.DeploymentPVCWrap(ctx, saddress, name, &deployment, app.Cr.Disk)
+	if err != nil {
+		return err
+	}
+
 	m.DeploymentTEEWrap(&deployment, &app.TeeVersion)
 
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})

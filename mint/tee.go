@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+// 为 Deployment 节点添加机密设置
 func (m *Minter) DeploymentTEEWrap(deployment *appsv1.Deployment, version *gtypes.TEEVersion) {
 	if version.IsSGX {
 		deployment.Spec.Template.Spec.Containers[0].Resources.Limits["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)
@@ -24,6 +25,7 @@ func (m *Minter) DeploymentTEEWrap(deployment *appsv1.Deployment, version *gtype
 	}
 }
 
+// 为 Pod 节点添加机密设置
 func (m *Minter) PodTEEWrap(pod *v1.Pod, version *gtypes.TEEVersion) {
 	if version.IsSGX {
 		pod.Spec.Containers[0].Resources.Limits["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)

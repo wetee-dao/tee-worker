@@ -49,7 +49,7 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 		fmt.Printf("failed to read log line: %v", err)
 	}
 
-	fmt.Println("================================================logs: ", logs)
+	// fmt.Println("================================================logs: ", logs)
 	var use map[string][]int64 = map[string][]int64{}
 
 	// 获取Pod的内存使用情况
