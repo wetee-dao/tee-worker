@@ -151,7 +151,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 				Spec: v1.PodSpec{
 					RuntimeClassName: &nvidiaClass,
 					NodeSelector: map[string]string{
-						"TEE": "SVM-SEV",
+						"TEE": "CVM-SEV",
 					},
 					Containers: []v1.Container{
 						{

@@ -12,9 +12,9 @@ func (m *Minter) DeploymentTEEWrap(deployment *appsv1.Deployment, version *gtype
 	if version.IsSGX {
 		deployment.Spec.Template.Spec.Containers[0].Resources.Limits["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)
 		deployment.Spec.Template.Spec.Containers[0].Resources.Requests["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)
-	} else if version.IsSVM {
+	} else if version.IsCVM {
 		// TODO add TDX
-		deployment.Spec.Template.Spec.NodeSelector = map[string]string{"TEE": "SVM-SEV"}
+		deployment.Spec.Template.Spec.NodeSelector = map[string]string{"TEE": "CVM-SEV"}
 		deployment.Spec.Template.ObjectMeta.Annotations = map[string]string{
 			"io.containerd.cri.runtime-handler":                "kata-qemu-sev",
 			"io.katacontainers.config.pre_attestation.enabled": "true",
@@ -30,8 +30,8 @@ func (m *Minter) PodTEEWrap(pod *v1.Pod, version *gtypes.TEEVersion) {
 	if version.IsSGX {
 		pod.Spec.Containers[0].Resources.Limits["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)
 		pod.Spec.Containers[0].Resources.Requests["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)
-	} else if version.IsSVM {
+	} else if version.IsCVM {
 		// TODO add TDX
-		pod.Spec.NodeSelector = map[string]string{"TEE": "SVM-SEV"}
+		pod.Spec.NodeSelector = map[string]string{"TEE": "CVM-SEV"}
 	}
 }
