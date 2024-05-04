@@ -9,6 +9,9 @@ sudo kubeadm config images pull --image-repository registry.aliyuncs.com/google_
 sudo ctr -n k8s.io images pull -k registry.aliyuncs.com/google_containers/pause:3.8
 sudo ctr -n k8s.io images tag registry.aliyuncs.com/google_containers/pause:3.8 registry.k8s.io/pause:3.8
 
+sudo ctr -n k8s.io images pull -k registry.aliyuncs.com/google_containers/metrics-server:v0.7.1
+sudo ctr -n k8s.io images tag registry.aliyuncs.com/google_containers/metrics-server:v0.7.1 registry.k8s.io/metrics-server:v0.7.1
+
 sudo ctr -n k8s.io images pull -k docker.io/wetee/kube-rbac-proxy:v0.14.1
 sudo ctr -n k8s.io images tag docker.io/wetee/kube-rbac-proxy:v0.14.1 gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
 

@@ -94,41 +94,19 @@ func HexStringToSpace(address string) string {
 // Get Envs from Work
 // 获取环境变量
 func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
-	// 用于应用联系控制面板的凭证
-	wid, err := store.SealAppID(workId)
-	if err != nil {
-		return []corev1.EnvVar{}, err
-	}
-
-	envs := []corev1.EnvVar{
-		{Name: "APPID", Value: wid},
-		{Name: "IN_TEE", Value: string("1")},
-	}
 
 	settings, err := m.GetSettingsFromWork(workId, nil)
 	if err != nil {
-		return envs, errors.Wrap(err, "GetSettingsFromWork error")
+		return []corev1.EnvVar{}, errors.Wrap(err, "GetSettingsFromWork error")
 	}
 
-	for _, setting := range settings {
-		// TODO add file
-		if setting.K.IsFile {
-			continue
-		}
-		envs = append(envs, corev1.EnvVar{
-			Name:  string(setting.K.AsEnvField0),
-			Value: string(setting.V),
-		})
-	}
-
-	return envs, nil
+	return m.GetEnvsFromSettings(workId, settings)
 }
 
 // 获取配置文件
 func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Env) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
 	wid, err := store.SealAppID(workId)
-	fmt.Println(wid)
 	if err != nil {
 		return []corev1.EnvVar{}, err
 	}

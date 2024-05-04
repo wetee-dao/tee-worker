@@ -3,6 +3,7 @@ package mint
 import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
+	"github.com/pkg/errors"
 	"wetee.app/worker/util"
 
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
@@ -22,7 +23,7 @@ type ContractStateWrap struct {
 	Task          *gtypes.TeeTask
 	GpuApp        *gtypes.GpuApp
 	Version       uint64
-	Settings      []*gtypes.Env
+	Envs          []*gtypes.Env
 }
 
 // 获取合约状态
@@ -93,7 +94,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				}
 
 				appVersions = append(appVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeApp", "AppSettings", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeApp", "Envs", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -125,7 +126,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				}
 
 				taskVersions = append(taskVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeTask", "AppSettings", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeTask", "Envs", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -157,7 +158,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				}
 
 				gpuAppVersions = append(gpuAppVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeGpu", "AppSettings", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeGpu", "Envs", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -400,7 +401,7 @@ func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, d
 				continue
 			}
 			d := data[workId]
-			d.Settings = append(d.Settings, &wcs)
+			d.Envs = append(d.Envs, &wcs)
 			data[workId] = d
 		}
 	}
@@ -412,10 +413,15 @@ func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*g
 	var pallet, method string
 	if workId.Wtype.IsAPP {
 		pallet = "WeteeApp"
-		method = "AppSettings"
+		method = "Envs"
 	} else if workId.Wtype.IsTASK {
 		pallet = "WeteeTask"
-		method = "AppSettings"
+		method = "Envs"
+	} else if workId.Wtype.IsGPU {
+		pallet = "WeteeGpu"
+		method = "Envs"
+	} else {
+		return []*gtypes.Env{}, errors.New("work type error")
 	}
 
 	sets, err := m.ChainClient.QueryDoubleMapAll(pallet, method, workId.Id, at)

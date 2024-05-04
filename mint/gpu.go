@@ -89,7 +89,7 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap
 		}
 
 		// 重新创建
-		envs, err := m.GetEnvsFromSettings(workId, state.Settings)
+		envs, err := m.GetEnvsFromSettings(workId, state.Envs)
 		if err != nil {
 			return nil, err
 		}

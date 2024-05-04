@@ -69,7 +69,7 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 	pod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if err.Error() == "pods \""+name+"\" not found" {
-			envs, err := m.GetEnvsFromSettings(workId, state.Settings)
+			envs, err := m.GetEnvsFromSettings(workId, state.Envs)
 			if err != nil {
 				return nil, err
 			}
