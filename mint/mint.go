@@ -27,6 +27,7 @@ type Minter struct {
 	K8sClient     *kubernetes.Clientset
 	MetricsClient *versioned.Clientset
 	ChainClient   *chain.ChainClient
+	HostDomain    string
 }
 
 var (
@@ -57,6 +58,7 @@ func InitCluster(mgr manager.Manager) error {
 		K8sClient:     clientset,
 		MetricsClient: metricsClient,
 		ChainClient:   nil,
+		HostDomain:    "xiaobai.asyou.me",
 	}
 
 	// 获取签名账户

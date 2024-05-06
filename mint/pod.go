@@ -2,9 +2,12 @@ package mint
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/base32"
 	"encoding/hex"
+	"html/template"
+	"math/rand"
 	"strings"
 
 	"fmt"
@@ -14,6 +17,7 @@ import (
 	chain "github.com/wetee-dao/go-sdk"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/store"
@@ -78,10 +82,7 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 // Account To Hex Address
 // 将用户公钥转换为hex地址
 func AccountToSpace(user []byte) string {
-	// address := hex.EncodeToString(user[:])
 	address := base32.HexEncoding.EncodeToString(user[:])
-	// address := base64.StdEncoding(user[:])
-	// saddress := address[1:] //去掉前面的 0x54c
 	return strings.ReplaceAll(strings.ToLower(address), "=", "")
 }
 
@@ -130,75 +131,29 @@ func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.En
 	return envs, nil
 }
 
-// Get Container Port From Service
-// 获取容器服务端口
-func GetContainerPortFormService(name string, services []gtypes.Service) []corev1.ContainerPort {
-	ports := []corev1.ContainerPort{}
-	for _, ser := range services {
-		protocol := corev1.ProtocolTCP
-		port := ser.AsTcpField0
-		if ser.IsProjectUdp {
-			protocol = corev1.ProtocolUDP
-			port = ser.AsProjectUdpField0
-		} else if ser.IsProjectTcp {
-			protocol = corev1.ProtocolTCP
-			port = ser.AsProjectTcpField0
-		} else if ser.IsTcp {
-			protocol = corev1.ProtocolSCTP
-			port = ser.AsTcpField0
-		} else if ser.IsUdp {
-			protocol = corev1.ProtocolUDP
-			port = ser.AsUdpField0
-		}
-		ports = append(ports, corev1.ContainerPort{
-			Name:          name + "-" + fmt.Sprint(port),
-			ContainerPort: int32(port),
-			Protocol:      protocol,
-		})
-	}
-	return ports
-}
-
-// Get Service Port From Service
-// 获取对外服务端口
-func GetServicePortFormService(name string, services []gtypes.Service) []corev1.ServicePort {
-	ports := []corev1.ServicePort{}
-	for _, ser := range services {
-		protocol := corev1.ProtocolTCP
-		port := ser.AsTcpField0
-		if ser.IsProjectUdp {
-			protocol = corev1.ProtocolUDP
-			port = ser.AsProjectUdpField0
-		} else if ser.IsProjectTcp {
-			protocol = corev1.ProtocolTCP
-			port = ser.AsProjectTcpField0
-		} else if ser.IsTcp {
-			protocol = corev1.ProtocolTCP
-			port = ser.AsTcpField0
-		} else if ser.IsUdp {
-			protocol = corev1.ProtocolUDP
-			port = ser.AsUdpField0
-		}
-
-		// if ser.IsProjectTcp || ser.IsProjectUdp {
-		// 	ports = append(ports, corev1.ServicePort{
-		// 		Name:       fmt.Sprint(port),
-		// 		Port:       int32(port),
-		// 		TargetPort: intstr.FromInt(int(port)),
-		// 		Protocol:   protocol,
-		// 	})
-		// }
-
-		if ser.IsTcp || ser.IsUdp {
-			ports = append(ports, corev1.ServicePort{
-				Name:       name + "-" + fmt.Sprint(port) + "-nodeport",
-				Port:       int32(port),
-				TargetPort: intstr.FromInt(int(port)),
-				Protocol:   protocol,
-			})
+// WrapNodeService
+// 包装环境变量
+func (m *Minter) WrapEnvs(envs []corev1.EnvVar, ser *v1.Service) error {
+	mdata := make(map[string]string)
+	mdata["cluster_domain"] = m.HostDomain
+	for i, port := range ser.Spec.Ports {
+		if port.NodePort != 0 {
+			mdata["ser_"+fmt.Sprint(i)+"_nodeport"] = fmt.Sprint(port.NodePort)
 		}
 	}
-	return ports
+
+	for i, env := range envs {
+		if strings.Contains(env.Value, "{{.") {
+			v, err := renderTemplate(env.Value, mdata)
+			if err != nil {
+				return err
+			}
+
+			envs[i].Value = v
+		}
+	}
+
+	return nil
 }
 
 // StopApp
@@ -239,4 +194,145 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 
 	nameSpace := m.K8sClient.CoreV1().Pods(space)
 	return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+// Get Container Port From Service
+// 获取容器服务端口
+func GetContainerPortFormService(name string, services []gtypes.Service) []corev1.ContainerPort {
+	ports := []corev1.ContainerPort{}
+	for _, ser := range services {
+		protocol := corev1.ProtocolTCP
+		port := ser.AsTcpField0
+		if ser.IsProjectUdp {
+			protocol = corev1.ProtocolUDP
+			port = ser.AsProjectUdpField0
+		} else if ser.IsProjectTcp {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsProjectTcpField0
+		} else if ser.IsTcp {
+			protocol = corev1.ProtocolSCTP
+			port = ser.AsTcpField0
+		} else if ser.IsUdp {
+			protocol = corev1.ProtocolUDP
+			port = ser.AsUdpField0
+		}
+		ports = append(ports, corev1.ContainerPort{
+			Name:          name + "-" + fmt.Sprint(port),
+			ContainerPort: int32(port),
+			Protocol:      protocol,
+		})
+	}
+	return ports
+}
+
+// Get Service Port From Service
+// 获取对外服务端口
+func (m *Minter) GetServicePortFormService(name string, services []gtypes.Service) []corev1.ServicePort {
+	ports := []corev1.ServicePort{}
+	for i, ser := range services {
+		protocol := corev1.ProtocolTCP
+		port := ser.AsTcpField0
+		if ser.IsProjectUdp {
+			protocol = corev1.ProtocolUDP
+			port = ser.AsProjectUdpField0
+		} else if ser.IsProjectTcp {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsProjectTcpField0
+		} else if ser.IsTcp {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsTcpField0
+		} else if ser.IsUdp {
+			protocol = corev1.ProtocolUDP
+			port = ser.AsUdpField0
+		}
+
+		// if ser.IsProjectTcp || ser.IsProjectUdp {
+		// 	ports = append(ports, corev1.ServicePort{
+		// 		Name:       fmt.Sprint(port),
+		// 		Port:       int32(port),
+		// 		TargetPort: intstr.FromInt(int(port)),
+		// 		Protocol:   protocol,
+		// 	})
+		// }
+
+		if ser.IsTcp || ser.IsUdp {
+			if port != 0 {
+				ports = append(ports, corev1.ServicePort{
+					Name:       name + "-" + fmt.Sprint(port) + "-nodeport",
+					Port:       int32(port),
+					TargetPort: intstr.FromInt(int(port)),
+					Protocol:   protocol,
+				})
+			} else {
+				nodePort := m.randNodeport()
+				if ser.IsTcp {
+					services[i].AsTcpField0 = nodePort
+				}
+				if ser.IsUdp {
+					services[i].AsUdpField0 = nodePort
+				}
+				ports = append(ports, corev1.ServicePort{
+					Name:       name + "-" + fmt.Sprint(nodePort) + "-nodeport",
+					Port:       int32(nodePort),
+					TargetPort: intstr.FromInt(int(nodePort)),
+					NodePort:   int32(nodePort),
+					Protocol:   protocol,
+				})
+			}
+		}
+	}
+	return ports
+}
+
+func (m *Minter) randNodeport() uint16 {
+	// 查询当前已分配的NodePort端口列表
+	usedPorts := []int32{}
+	services, err := m.K8sClient.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for _, svc := range services.Items {
+		for _, port := range svc.Spec.Ports {
+			if port.NodePort != 0 {
+				usedPorts = append(usedPorts, port.NodePort)
+			}
+		}
+	}
+
+	var port uint16 = 0
+	// 生成一个随机的NodePort端口
+	for {
+		randomPort := int32(rand.Intn(2767) + 30000)
+		if !contains(usedPorts, randomPort) {
+			port = uint16(randomPort)
+			break
+		}
+	}
+
+	return port
+}
+
+func contains(s []int32, e int32) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+func renderTemplate(templateString string, data map[string]string) (string, error) {
+	tmpl, err := template.New("myTemplate").Parse(templateString)
+	if err != nil {
+		return "", err
+	}
+
+	var result bytes.Buffer
+	err = tmpl.Execute(&result, data)
+	if err != nil {
+		return "", err
+	}
+
+	return result.String(), nil
 }

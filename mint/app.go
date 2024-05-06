@@ -129,6 +129,38 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 		return err
 	}
 
+	// 创建机密认证服务
+	serviceSpace := m.K8sClient.CoreV1().Services(saddress)
+	sports := m.GetServicePortFormService(name, app.Port)
+	sports = append(sports, v1.ServicePort{
+		Name:       name + "-8888",
+		Protocol:   "TCP",
+		Port:       8888,
+		TargetPort: intstr.FromInt(8888),
+	})
+	aservice := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name + "-expose",
+			Labels: map[string]string{"service": name},
+		},
+		Spec: v1.ServiceSpec{
+			Selector: map[string]string{"app": name},
+			Type:     "NodePort",
+			Ports:    sports,
+		},
+	}
+	ser, err := serviceSpace.Create(*ctx, &aservice, metav1.CreateOptions{})
+	fmt.Println("================================================= Create service", err)
+	if err != nil {
+		return err
+	}
+
+	err = m.WrapEnvs(envs, ser)
+	fmt.Println("================================================= Create WrapEnvs", err)
+	if err != nil {
+		return err
+	}
+
 	ports := GetContainerPortFormService(name, app.Port)
 	ports = append(ports, v1.ContainerPort{
 		Name:          "port0",
@@ -159,12 +191,10 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 								Limits: v1.ResourceList{
 									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
 									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-									// "alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(10), resource.DecimalExponent),
 								},
 								Requests: v1.ResourceList{
 									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
 									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-									// "alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(10), resource.DecimalExponent),
 								},
 							},
 						},
@@ -174,45 +204,20 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 		},
 	}
 
+	// 初始化磁盘
 	err = m.DeploymentPVCWrap(ctx, saddress, name, &deployment, app.Cr.Disk)
 	if err != nil {
 		return err
 	}
 
+	// 初始化TEE
 	m.DeploymentTEEWrap(&deployment, &app.TeeVersion)
 
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
+	fmt.Println("================================================= Create pod", err)
 	if err != nil {
 		return err
 	}
-
-	// 创建机密认证服务
-	serviceSpace := m.K8sClient.CoreV1().Services(saddress)
-	sports := GetServicePortFormService(name, app.Port)
-	sports = append(sports, v1.ServicePort{
-		Name:       name + "-8888",
-		Protocol:   "TCP",
-		Port:       8888,
-		TargetPort: intstr.FromInt(8888),
-	})
-
-	aservice := v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   name + "-expose",
-			Labels: map[string]string{"service": name},
-		},
-		Spec: v1.ServiceSpec{
-			Selector: map[string]string{"app": name},
-			Type:     "NodePort",
-			Ports:    sports,
-		},
-	}
-	_, err = serviceSpace.Create(*ctx, &aservice, metav1.CreateOptions{})
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("================================================= Create", err)
 
 	return err
 }

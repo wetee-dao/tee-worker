@@ -216,7 +216,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	}
 
 	// 创建机密服务
-	sports := GetServicePortFormService(name, app.Port)
+	sports := m.GetServicePortFormService(name, app.Port)
 	if len(sports) > 0 {
 		ServiceSpace := m.K8sClient.CoreV1().Services(saddress)
 		service := v1.Service{
@@ -227,7 +227,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 			Spec: v1.ServiceSpec{
 				Selector: map[string]string{"gpu": name},
 				Type:     "NodePort",
-				Ports:    GetServicePortFormService(name, app.Port),
+				Ports:    sports,
 			},
 		}
 		_, err = ServiceSpace.Create(*ctx, &service, metav1.CreateOptions{})
