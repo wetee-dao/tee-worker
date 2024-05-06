@@ -23,7 +23,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			cid := startEvent.AsWorkRuningClusterId2
 			if cid == clusterId {
 				version, _ := chain.GetVersion(m.ChainClient, workId)
-				envs, err := m.GetEnvs(workId)
+				envs, err := m.BuildEnvs(workId)
 				if err != nil {
 					return err
 				}
@@ -67,7 +67,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 				Client: m.ChainClient,
 			}
 			app, _ := appIns.GetApp(user[:], workId.Id)
-			envs, _ := m.GetEnvs(workId)
+			envs, _ := m.BuildEnvs(workId)
 			err = m.UpdateApp(&ctx, user[:], workId, app, envs, version)
 			util.LogWithRed("===========================================CreateOrUpdatePod error: ", err)
 		}
@@ -106,7 +106,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 				Client: m.ChainClient,
 			}
 			app, _ := appIns.GetApp(user[:], workId.Id)
-			envs, _ := m.GetEnvs(workId)
+			envs, _ := m.BuildEnvs(workId)
 			err = m.UpdateGpuApp(&ctx, user[:], workId, app, envs, version)
 			util.LogWithRed("===========================================CreateOrUpdatePod error: ", err)
 		}

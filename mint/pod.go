@@ -94,18 +94,18 @@ func HexStringToSpace(address string) string {
 
 // Get Envs from Work
 // 获取环境变量
-func (m *Minter) GetEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
+func (m *Minter) BuildEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 
 	settings, err := m.GetSettingsFromWork(workId, nil)
 	if err != nil {
 		return []corev1.EnvVar{}, errors.Wrap(err, "GetSettingsFromWork error")
 	}
 
-	return m.GetEnvsFromSettings(workId, settings)
+	return m.BuildEnvsFromSettings(workId, settings)
 }
 
 // 获取配置文件
-func (m *Minter) GetEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Env) ([]corev1.EnvVar, error) {
+func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Env) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
 	wid, err := store.SealAppID(workId)
 	if err != nil {
@@ -156,6 +156,22 @@ func (m *Minter) WrapEnvs(envs []corev1.EnvVar, ser *v1.Service) error {
 	return nil
 }
 
+func (m *Minter) BuildCommand(cmd *gtypes.Command) []string {
+	if cmd.IsNONE {
+		return []string{}
+	}
+	if cmd.IsBASH {
+		return []string{"bash", "-c", string(cmd.AsBASHField0)}
+	}
+	if cmd.IsSH {
+		return []string{"/bin/sh", "-c", string(cmd.AsSHField0)}
+	}
+	if cmd.IsZSH {
+		return []string{"/bin/zsh", "-c", string(cmd.AsZSHField0)}
+	}
+	return []string{}
+}
+
 // StopApp
 // 停止应用
 func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
@@ -198,7 +214,7 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 
 // Get Container Port From Service
 // 获取容器服务端口
-func GetContainerPortFormService(name string, services []gtypes.Service) []corev1.ContainerPort {
+func BuildContainerPortFormService(name string, services []gtypes.Service) []corev1.ContainerPort {
 	ports := []corev1.ContainerPort{}
 	for _, ser := range services {
 		protocol := corev1.ProtocolTCP
@@ -227,7 +243,7 @@ func GetContainerPortFormService(name string, services []gtypes.Service) []corev
 
 // Get Service Port From Service
 // 获取对外服务端口
-func (m *Minter) GetServicePortFormService(name string, services []gtypes.Service) []corev1.ServicePort {
+func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Service) []corev1.ServicePort {
 	ports := []corev1.ServicePort{}
 	for i, ser := range services {
 		protocol := corev1.ProtocolTCP

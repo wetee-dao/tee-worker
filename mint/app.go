@@ -91,7 +91,7 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 		}
 
 		// 重新创建
-		envs, err := m.GetEnvsFromSettings(workId, state.Envs)
+		envs, err := m.BuildEnvsFromSettings(workId, state.Envs)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +131,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 
 	// 创建机密认证服务
 	serviceSpace := m.K8sClient.CoreV1().Services(saddress)
-	sports := m.GetServicePortFormService(name, app.Port)
+	sports := m.BuildServicePortFormService(name, app.Port)
 	sports = append(sports, v1.ServicePort{
 		Name:       name + "-8888",
 		Protocol:   "TCP",
@@ -161,7 +161,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 		return err
 	}
 
-	ports := GetContainerPortFormService(name, app.Port)
+	ports := BuildContainerPortFormService(name, app.Port)
 	ports = append(ports, v1.ContainerPort{
 		Name:          "port0",
 		ContainerPort: int32(8888),
@@ -183,10 +183,11 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
-							Name:  "c1",
-							Image: string(app.Image),
-							Ports: ports,
-							Env:   envs,
+							Name:    "c1",
+							Image:   string(app.Image),
+							Ports:   ports,
+							Env:     envs,
+							Command: m.BuildCommand(&app.Command),
 							Resources: v1.ResourceRequirements{
 								Limits: v1.ResourceList{
 									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),

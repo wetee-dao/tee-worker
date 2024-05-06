@@ -2,7 +2,6 @@ package mint
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -13,6 +12,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
@@ -89,7 +89,7 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap
 		}
 
 		// 重新创建
-		envs, err := m.GetEnvsFromSettings(workId, state.Envs)
+		envs, err := m.BuildEnvsFromSettings(workId, state.Envs)
 		if err != nil {
 			return nil, err
 		}
@@ -128,12 +128,44 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	}
 
 	nvidiaClass := "nvidia"
-	metaJson := map[string]string{}
-	json.Unmarshal(app.Meta, &metaJson)
-	command := []string{}
-	if c, ok := metaJson["c"]; ok {
-		command = strings.Split(c, " ")
+	// 创建机密认证服务
+	serviceSpace := m.K8sClient.CoreV1().Services(saddress)
+	sports := m.BuildServicePortFormService(name, app.Port)
+	sports = append(sports, v1.ServicePort{
+		Name:       name + "-8888",
+		Protocol:   "TCP",
+		Port:       8888,
+		TargetPort: intstr.FromInt(8888),
+	})
+	aservice := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name + "-expose",
+			Labels: map[string]string{"service": name},
+		},
+		Spec: v1.ServiceSpec{
+			Selector: map[string]string{"app": name},
+			Type:     "NodePort",
+			Ports:    sports,
+		},
 	}
+	ser, err := serviceSpace.Create(*ctx, &aservice, metav1.CreateOptions{})
+	fmt.Println("================================================= Create service", err)
+	if err != nil {
+		return err
+	}
+
+	err = m.WrapEnvs(envs, ser)
+	fmt.Println("================================================= Create WrapEnvs", err)
+	if err != nil {
+		return err
+	}
+
+	ports := BuildContainerPortFormService(name, app.Port)
+	ports = append(ports, v1.ContainerPort{
+		Name:          "port0",
+		ContainerPort: int32(8888),
+		Protocol:      "TCP",
+	})
 
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -155,14 +187,11 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 					},
 					Containers: []v1.Container{
 						{
-							Name:  "c1",
-							Image: string(app.Image),
-							Ports: GetContainerPortFormService(name, app.Port),
-							Env: []v1.EnvVar{
-								{Name: "IN_TEE", Value: string("1")},
-								{Name: "COMMANDLINE_ARGS", Value: string(" --no-half-vae --lowvram --share --xformers ")},
-							},
-							Command: command,
+							Name:    "c1",
+							Image:   string(app.Image),
+							Ports:   ports,
+							Env:     envs,
+							Command: m.BuildCommand(&app.Command),
 							Resources: v1.ResourceRequirements{
 								Limits: v1.ResourceList{
 									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
@@ -192,7 +221,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 							Name: "model-volume",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
-									Path: "/home/wetee/work/wetee/worker/AI/model",
+									Path: "/home/wetee/sd/AI/model",
 								},
 							},
 						},
@@ -200,7 +229,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 							Name: "openai-volume",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
-									Path: "/home/wetee/work/wetee/worker/AI/openai",
+									Path: "/home/wetee/sd/AI/model",
 								},
 							},
 						},
@@ -213,27 +242,6 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
 	if err != nil {
 		return err
-	}
-
-	// 创建机密服务
-	sports := m.GetServicePortFormService(name, app.Port)
-	if len(sports) > 0 {
-		ServiceSpace := m.K8sClient.CoreV1().Services(saddress)
-		service := v1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   name + "-expose",
-				Labels: map[string]string{"service": name},
-			},
-			Spec: v1.ServiceSpec{
-				Selector: map[string]string{"gpu": name},
-				Type:     "NodePort",
-				Ports:    sports,
-			},
-		}
-		_, err = ServiceSpace.Create(*ctx, &service, metav1.CreateOptions{})
-		if err != nil {
-			return err
-		}
 	}
 
 	return err

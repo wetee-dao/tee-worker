@@ -69,7 +69,7 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 	pod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if err.Error() == "pods \""+name+"\" not found" {
-			envs, err := m.GetEnvsFromSettings(workId, state.Envs)
+			envs, err := m.BuildEnvsFromSettings(workId, state.Envs)
 			if err != nil {
 				return nil, err
 			}
@@ -131,7 +131,7 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.Wor
 				{
 					Name:  "c1",
 					Image: string(app.Image),
-					Ports: GetContainerPortFormService(name, app.Port),
+					Ports: BuildContainerPortFormService(name, app.Port),
 					Env:   envs,
 					Resources: v1.ResourceRequirements{
 						Limits: v1.ResourceList{
