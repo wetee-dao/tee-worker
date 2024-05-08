@@ -3,36 +3,49 @@ sudo modprobe br_netfilter
 run as root $ echo 1 > /proc/sys/net/ipv4/ip_forward
 
 containerd config default | sudo tee /etc/containerd/config.toml
-按照这个页面调整 https://blog.csdn.net/roadtohacker/article/details/134654399
+如果容器不断重启，按照这个页面调整 https://blog.csdn.net/roadtohacker/article/details/134654399
 
+# init images
 sudo kubeadm config images pull --image-repository registry.aliyuncs.com/google_containers
+
+# pause
 sudo ctr -n k8s.io images pull -k registry.aliyuncs.com/google_containers/pause:3.8
 sudo ctr -n k8s.io images tag registry.aliyuncs.com/google_containers/pause:3.8 registry.k8s.io/pause:3.8
 
+# metrics
 sudo ctr -n k8s.io images pull -k registry.aliyuncs.com/google_containers/metrics-server:v0.7.1
 sudo ctr -n k8s.io images tag registry.aliyuncs.com/google_containers/metrics-server:v0.7.1 registry.k8s.io/metrics-server:v0.7.1
 
+# kube-rbac-proxy:v0.14.1 错误
 sudo ctr -n k8s.io images pull -k docker.io/wetee/kube-rbac-proxy:v0.14.1
 sudo ctr -n k8s.io images tag docker.io/wetee/kube-rbac-proxy:v0.14.1 gcr.io/kubebuilder/kube-rbac-proxy:v0.14.1
 
+# init
 sudo kubeadm init --apiserver-advertise-address=192.168.111.121 --pod-network-cidr=10.244.0.0/16  --image-repository registry.aliyuncs.com/google_containers
 
-
+# 命令环境设置
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 kubectl label node sev1 node.kubernetes.io/worker=
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+# 网络插件
 kubectl apply -f ./co-co/canal.yaml
 
+# 监控
+wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+vim ./components.yaml ===> registry.k8s.io/metrics-server:v0.7.1 to registry.aliyuncs.com/google_containers/metrics-server:v0.7.1
+kubectl apply -f components.yaml
+
+# 显卡部分
 export VERSION=v0.7.0
 kubectl label node wetee nvidia.com/gpu.workload.config=vm-passthrough
 kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=${VERSION}"
 # kubectl apply --dry-run=client -o yaml \
 #     -k "github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=${VERSION}" > ./co-co/ccruntime.yaml
 kubectl apply -f ./co-co/ccruntime.yaml
-
 
 helm repo add nvidia https://helm.ngc.nvidia.com/nvidia \
    && helm repo update

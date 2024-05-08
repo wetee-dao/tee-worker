@@ -55,8 +55,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		ClusterMortgage   func(childComplexity int, cpu int, mem int, disk int, gpu int, deposit int64) int
-		ClusterRegister   func(childComplexity int, name string, ip string, port int, level int) int
+		ClusterMortgage   func(childComplexity int, cpu int, mem int, cvmCPU int, cvmMem int, disk int, gpu int, deposit int64) int
+		ClusterRegister   func(childComplexity int, name string, ip string, domain string, port int, level int) int
 		ClusterStop       func(childComplexity int) int
 		ClusterUnmortgage func(childComplexity int, id int64) int
 		ClusterWithdrawal func(childComplexity int, id int64, ty model.WorkType, val int64) int
@@ -108,8 +108,8 @@ type MutationResolver interface {
 	StartSgxPccs(ctx context.Context, imageVersion string, apiKey string) (bool, error)
 	LoginAsRoot(ctx context.Context, input model.LoginContent, signature string) (string, error)
 	Login(ctx context.Context, input model.LoginContent, signature string) (string, error)
-	ClusterRegister(ctx context.Context, name string, ip string, port int, level int) (string, error)
-	ClusterMortgage(ctx context.Context, cpu int, mem int, disk int, gpu int, deposit int64) (string, error)
+	ClusterRegister(ctx context.Context, name string, ip string, domain string, port int, level int) (string, error)
+	ClusterMortgage(ctx context.Context, cpu int, mem int, cvmCPU int, cvmMem int, disk int, gpu int, deposit int64) (string, error)
 	ClusterUnmortgage(ctx context.Context, id int64) (string, error)
 	ClusterWithdrawal(ctx context.Context, id int64, ty model.WorkType, val int64) (string, error)
 	ClusterStop(ctx context.Context) (string, error)
@@ -174,7 +174,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ClusterMortgage(childComplexity, args["cpu"].(int), args["mem"].(int), args["disk"].(int), args["gpu"].(int), args["deposit"].(int64)), true
+		return e.complexity.Mutation.ClusterMortgage(childComplexity, args["cpu"].(int), args["mem"].(int), args["cvm_cpu"].(int), args["cvm_mem"].(int), args["disk"].(int), args["gpu"].(int), args["deposit"].(int64)), true
 
 	case "Mutation.cluster_register":
 		if e.complexity.Mutation.ClusterRegister == nil {
@@ -186,7 +186,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ClusterRegister(childComplexity, args["name"].(string), args["ip"].(string), args["port"].(int), args["level"].(int)), true
+		return e.complexity.Mutation.ClusterRegister(childComplexity, args["name"].(string), args["ip"].(string), args["domain"].(string), args["port"].(int), args["level"].(int)), true
 
 	case "Mutation.cluster_stop":
 		if e.complexity.Mutation.ClusterStop == nil {
@@ -601,32 +601,50 @@ func (ec *executionContext) field_Mutation_cluster_mortgage_args(ctx context.Con
 	}
 	args["mem"] = arg1
 	var arg2 int
-	if tmp, ok := rawArgs["disk"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disk"))
+	if tmp, ok := rawArgs["cvm_cpu"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cvm_cpu"))
 		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["disk"] = arg2
+	args["cvm_cpu"] = arg2
 	var arg3 int
-	if tmp, ok := rawArgs["gpu"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gpu"))
+	if tmp, ok := rawArgs["cvm_mem"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cvm_mem"))
 		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["gpu"] = arg3
-	var arg4 int64
-	if tmp, ok := rawArgs["deposit"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deposit"))
-		arg4, err = ec.unmarshalNInt642int64(ctx, tmp)
+	args["cvm_mem"] = arg3
+	var arg4 int
+	if tmp, ok := rawArgs["disk"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disk"))
+		arg4, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["deposit"] = arg4
+	args["disk"] = arg4
+	var arg5 int
+	if tmp, ok := rawArgs["gpu"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gpu"))
+		arg5, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gpu"] = arg5
+	var arg6 int64
+	if tmp, ok := rawArgs["deposit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deposit"))
+		arg6, err = ec.unmarshalNInt642int64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deposit"] = arg6
 	return args, nil
 }
 
@@ -651,24 +669,33 @@ func (ec *executionContext) field_Mutation_cluster_register_args(ctx context.Con
 		}
 	}
 	args["ip"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["port"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+	var arg2 string
+	if tmp, ok := rawArgs["domain"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["port"] = arg2
+	args["domain"] = arg2
 	var arg3 int
-	if tmp, ok := rawArgs["level"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("level"))
+	if tmp, ok := rawArgs["port"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
 		arg3, err = ec.unmarshalNInt2int(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["level"] = arg3
+	args["port"] = arg3
+	var arg4 int
+	if tmp, ok := rawArgs["level"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("level"))
+		arg4, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["level"] = arg4
 	return args, nil
 }
 
@@ -1495,7 +1522,7 @@ func (ec *executionContext) _Mutation_cluster_register(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterRegister(rctx, fc.Args["name"].(string), fc.Args["ip"].(string), fc.Args["port"].(int), fc.Args["level"].(int))
+			return ec.resolvers.Mutation().ClusterRegister(rctx, fc.Args["name"].(string), fc.Args["ip"].(string), fc.Args["domain"].(string), fc.Args["port"].(int), fc.Args["level"].(int))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
@@ -1574,7 +1601,7 @@ func (ec *executionContext) _Mutation_cluster_mortgage(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterMortgage(rctx, fc.Args["cpu"].(int), fc.Args["mem"].(int), fc.Args["disk"].(int), fc.Args["gpu"].(int), fc.Args["deposit"].(int64))
+			return ec.resolvers.Mutation().ClusterMortgage(rctx, fc.Args["cpu"].(int), fc.Args["mem"].(int), fc.Args["cvm_cpu"].(int), fc.Args["cvm_mem"].(int), fc.Args["disk"].(int), fc.Args["gpu"].(int), fc.Args["deposit"].(int64))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")

@@ -111,7 +111,7 @@ func main() {
 	}
 
 	// 初始化数据库
-	err = store.DBInit("/opt/wetee-worker/db")
+	err = store.DBInit(util.WORK_DIR + "/db")
 	if err != nil {
 		setupLog.Error(err, "unable to start database")
 		os.Exit(1)

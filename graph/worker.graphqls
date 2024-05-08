@@ -68,6 +68,10 @@ extend type Mutation {
     """
     ip: String!
     """
+    cluster ip
+    """
+    domain: String!
+    """
     cluster port
     """
     port: Int!
@@ -90,6 +94,14 @@ extend type Mutation {
     Memory, unit 1=100MB
     """
     mem: Int!
+    """
+    CPU, unit 1=1/100 core
+    """
+    cvm_cpu: Int!
+    """
+    Memory, unit 1=100MB
+    """
+    cvm_mem: Int!
     """
     Hard drive, unit 1=1GB
     """

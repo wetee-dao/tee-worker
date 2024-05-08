@@ -27,7 +27,7 @@ import (
 )
 
 // ClusterRegister is the resolver for the cluster_register field.
-func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip string, port int, level int) (string, error) {
+func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip string, domain string, port int, level int) (string, error) {
 	if mint.MinterIns.ChainClient == nil {
 		return "", gqlerror.Errorf("Invalid chain client")
 	}
@@ -53,7 +53,21 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 		iparr = append(iparr, uint8(i))
 	}
 
-	err := worker.ClusterRegister(name, iparr, uint32(port), uint8(level), false)
+	// iparr
+	err := worker.ClusterRegister(name, []gtypes.Ip{
+		{
+			Ipv4: gtypes.OptionTUint32{
+				IsNone: true,
+			},
+			Ipv6: gtypes.OptionTU128{
+				IsNone: true,
+			},
+			Domain: gtypes.OptionTByteSlice{
+				IsSome:       true,
+				AsSomeField0: []byte(domain),
+			},
+		},
+	}, uint32(port), uint8(level), false)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -61,7 +75,7 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 }
 
 // ClusterMortgage is the resolver for the cluster_mortgage field.
-func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int, disk int, gpu int, deposit int64) (string, error) {
+func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int, cvmCPU int, cvmMem int, disk int, gpu int, deposit int64) (string, error) {
 	if mint.MinterIns.ChainClient == nil {
 		return "", gqlerror.Errorf("Invalid chain client")
 	}
@@ -78,7 +92,7 @@ func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
-	err = worker.ClusterMortgage(id, uint32(cpu), uint32(mem), uint32(disk), uint32(gpu), uint64(deposit), false)
+	err = worker.ClusterMortgage(id, uint32(cpu), uint32(mem), uint32(cvmCPU), uint32(cvmMem), uint32(disk), uint32(gpu), uint64(deposit), false)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -193,7 +207,20 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 	}
 	time.Sleep(7 * time.Second)
 
-	err = worker.ClusterRegister("baiL", []uint8{127, 0, 0, 1}, uint32(30000), uint8(1), false)
+	err = worker.ClusterRegister("baiL", []gtypes.Ip{
+		{
+			Ipv4: gtypes.OptionTUint32{
+				IsNone: true,
+			},
+			Ipv6: gtypes.OptionTU128{
+				IsNone: true,
+			},
+			Domain: gtypes.OptionTByteSlice{
+				IsSome:       true,
+				AsSomeField0: []byte("xiaobai.asyou.me"),
+			},
+		},
+	}, uint32(30000), uint8(1), false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain ClusterRegister error:" + err.Error())
 	}
@@ -212,7 +239,8 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		return false, gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
 
-	err = worker.ClusterMortgage(id, uint32(1000000), uint32(100000000), uint32(1000000), uint32(10), uint64(1000000000000), false)
+	err = worker.ClusterMortgage(
+		id, uint32(10000), uint32(10000), uint32(1000000), uint32(10000), uint32(1000000), uint32(10), uint64(1000000000000), false)
 	if err != nil {
 		return false, gqlerror.Errorf("Chain ClusterMortgage error:" + err.Error())
 	}

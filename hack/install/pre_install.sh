@@ -76,16 +76,13 @@ metadata:
     {}
 EOF
 
-# 创建 WEB_UI
-kubectl create -f ./hack/install/dapp.yaml
-kubectl create -f ./hack/install/dapp_nodeport.yaml
-
 # 创建 pccs
 kubectl create -f ./hack/install/pccs.yaml
 kubectl create -f ./hack/install/pccs_headless.yaml
 
 # 创建区块连节点
 kubectl create -f ./hack/install/chain.yaml
+sudo cp ./hack/install/chain_proxy/* /mnt/ssl-proxy/
 kubectl create -f ./hack/install/chain_nodeport.yaml
 kubectl create -f ./hack/install/chain_headless.yaml
 

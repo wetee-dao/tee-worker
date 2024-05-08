@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/cors"
 
 	"wetee.app/worker/graph"
+	"wetee.app/worker/util"
 )
 
 const defaultPort = "8880"
@@ -43,6 +44,12 @@ func StartServer() {
 	}))
 	router.Handle("/gql", srv)
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	http.ListenAndServe(":"+defaultPort, router)
+	if util.IsFileExists(util.WORK_DIR+"/ser.pem") && util.IsFileExists(util.WORK_DIR+"/ser.key") {
+		log.Printf("connect to https://localhost:%s/ for GraphQL playground", port)
+		// http.ListenAndServe(":"+defaultPort, router)
+		http.ListenAndServeTLS(":"+port, util.WORK_DIR+"/ser.pem", util.WORK_DIR+"/ser.key", router)
+	} else {
+		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+		http.ListenAndServe(":"+defaultPort, router)
+	}
 }
