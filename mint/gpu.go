@@ -221,7 +221,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 							Name: "model-volume",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
-									Path: "/home/wetee/sd/AI/model",
+									Path: "/home/wetee/AI/SD/model",
 								},
 							},
 						},
@@ -229,7 +229,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 							Name: "openai-volume",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
-									Path: "/home/wetee/sd/AI/model",
+									Path: "/home/wetee/AI/SD/openai",
 								},
 							},
 						},
