@@ -95,7 +95,6 @@ func HexStringToSpace(address string) string {
 // Get Envs from Work
 // 获取环境变量
 func (m *Minter) BuildEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
-
 	settings, err := m.GetSettingsFromWork(workId, nil)
 	if err != nil {
 		return []corev1.EnvVar{}, errors.Wrap(err, "GetSettingsFromWork error")
@@ -133,9 +132,10 @@ func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.
 
 // WrapNodeService
 // 包装环境变量
-func (m *Minter) WrapEnvs(envs []corev1.EnvVar, ser *v1.Service) error {
+func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, ser *v1.Service) error {
 	mdata := make(map[string]string)
 	mdata["cluster_domain"] = m.HostDomain
+	mdata["project_domain"] = nameSpace + ".svc.cluster.local"
 	for i, port := range ser.Spec.Ports {
 		if port.NodePort != 0 {
 			mdata["ser_"+fmt.Sprint(i)+"_nodeport"] = fmt.Sprint(port.NodePort)
@@ -243,11 +243,14 @@ func BuildContainerPortFormService(name string, services []gtypes.Service) []cor
 
 // Get Service Port From Service
 // 获取对外服务端口
-func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Service) []corev1.ServicePort {
-	ports := []corev1.ServicePort{}
+func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Service) ([]corev1.ServicePort, []corev1.ServicePort) {
+	nodePorts := []corev1.ServicePort{}
+	headlessPorts := []corev1.ServicePort{}
 	for i, ser := range services {
-		protocol := corev1.ProtocolTCP
-		port := ser.AsTcpField0
+		var protocol corev1.Protocol
+		var port uint16
+
+		// 获取服务端口
 		if ser.IsProjectUdp {
 			protocol = corev1.ProtocolUDP
 			port = ser.AsProjectUdpField0
@@ -262,18 +265,26 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 			port = ser.AsUdpField0
 		}
 
-		// if ser.IsProjectTcp || ser.IsProjectUdp {
-		// 	ports = append(ports, corev1.ServicePort{
-		// 		Name:       fmt.Sprint(port),
-		// 		Port:       int32(port),
-		// 		TargetPort: intstr.FromInt(int(port)),
-		// 		Protocol:   protocol,
-		// 	})
+		// var nodePort uint16 = 0
+		// if port == 0 {
+		// 	nodePort = m.randNodeport()
+		// 	if ser.IsTcp {
+		// 		services[i].AsTcpField0 = nodePort
+		// 	}
+		// 	if ser.IsUdp {
+		// 		services[i].AsUdpField0 = nodePort
+		// 	}
+		// 	if ser.IsProjectTcp {
+		// 		services[i].AsProjectTcpField0 = nodePort
+		// 	}
+		// 	if ser.IsProjectUdp {
+		// 		services[i].AsProjectUdpField0 = nodePort
+		// 	}
 		// }
 
 		if ser.IsTcp || ser.IsUdp {
 			if port != 0 {
-				ports = append(ports, corev1.ServicePort{
+				nodePorts = append(nodePorts, corev1.ServicePort{
 					Name:       name + "-" + fmt.Sprint(port) + "-nodeport",
 					Port:       int32(port),
 					TargetPort: intstr.FromInt(int(port)),
@@ -287,7 +298,7 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 				if ser.IsUdp {
 					services[i].AsUdpField0 = nodePort
 				}
-				ports = append(ports, corev1.ServicePort{
+				nodePorts = append(nodePorts, corev1.ServicePort{
 					Name:       name + "-" + fmt.Sprint(nodePort) + "-nodeport",
 					Port:       int32(nodePort),
 					TargetPort: intstr.FromInt(int(nodePort)),
@@ -295,9 +306,16 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 					Protocol:   protocol,
 				})
 			}
+		} else {
+			headlessPorts = append(headlessPorts, corev1.ServicePort{
+				Name:       name + "-" + fmt.Sprint(port) + "-headless",
+				Port:       int32(port),
+				TargetPort: intstr.FromInt(int(port)),
+				Protocol:   protocol,
+			})
 		}
 	}
-	return ports
+	return nodePorts, headlessPorts
 }
 
 func (m *Minter) randNodeport() uint16 {

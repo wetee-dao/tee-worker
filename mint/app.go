@@ -131,8 +131,10 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 
 	// 创建机密认证服务
 	serviceSpace := m.K8sClient.CoreV1().Services(saddress)
-	sports := m.BuildServicePortFormService(name, app.Port)
-	sports = append(sports, v1.ServicePort{
+	nodeports, projectPorts := m.BuildServicePortFormService(name, app.Port)
+
+	// 创建对外端口
+	sports := append(nodeports, v1.ServicePort{
 		Name:       name + "-8888",
 		Protocol:   "TCP",
 		Port:       8888,
@@ -155,7 +157,25 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 		return err
 	}
 
-	err = m.WrapEnvs(envs, ser)
+	// 创建项目内端口
+	pservice := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name,
+			Labels: map[string]string{"service": name},
+		},
+		Spec: v1.ServiceSpec{
+			Selector:  map[string]string{"app": name},
+			ClusterIP: "None",
+			Ports:     projectPorts,
+		},
+	}
+	_, err = serviceSpace.Create(*ctx, &pservice, metav1.CreateOptions{})
+	fmt.Println("================================================= Create project service", err)
+	if err != nil {
+		return err
+	}
+
+	err = m.WrapEnvs(envs, saddress, name, ser)
 	fmt.Println("================================================= Create WrapEnvs", err)
 	if err != nil {
 		return err

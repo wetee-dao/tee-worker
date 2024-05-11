@@ -40,6 +40,13 @@ vim ./components.yaml ===> registry.k8s.io/metrics-server:v0.7.1 to registry.ali
 kubectl apply -f components.yaml
 
 # 显卡部分
+nvidia-device-plugin启动错误
+ -  nvidia-container-cli: initialization error: nvml error: driver not loade
+    ```
+    # 验证具体的错误
+    nvidia-container-cli -k -d /dev/tty info
+    ```
+
 export VERSION=v0.7.0
 kubectl label node wetee nvidia.com/gpu.workload.config=vm-passthrough
 kubectl apply -k "github.com/confidential-containers/operator/config/release?ref=${VERSION}"

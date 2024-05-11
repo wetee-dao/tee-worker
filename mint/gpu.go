@@ -2,6 +2,7 @@ package mint
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -130,8 +131,8 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	nvidiaClass := "nvidia"
 	// 创建机密认证服务
 	serviceSpace := m.K8sClient.CoreV1().Services(saddress)
-	sports := m.BuildServicePortFormService(name, app.Port)
-	sports = append(sports, v1.ServicePort{
+	nodeports, projectPorts := m.BuildServicePortFormService(name, app.Port)
+	sports := append(nodeports, v1.ServicePort{
 		Name:       name + "-8888",
 		Protocol:   "TCP",
 		Port:       8888,
@@ -143,7 +144,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 			Labels: map[string]string{"service": name},
 		},
 		Spec: v1.ServiceSpec{
-			Selector: map[string]string{"app": name},
+			Selector: map[string]string{"gpu": name},
 			Type:     "NodePort",
 			Ports:    sports,
 		},
@@ -154,7 +155,25 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 		return err
 	}
 
-	err = m.WrapEnvs(envs, ser)
+	// 创建项目内端口
+	pservice := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name,
+			Labels: map[string]string{"service": name},
+		},
+		Spec: v1.ServiceSpec{
+			Selector:  map[string]string{"app": name},
+			ClusterIP: "None",
+			Ports:     projectPorts,
+		},
+	}
+	_, err = serviceSpace.Create(*ctx, &pservice, metav1.CreateOptions{})
+	fmt.Println("================================================= Create project service", err)
+	if err != nil {
+		return err
+	}
+
+	err = m.WrapEnvs(envs, saddress, name, ser)
 	fmt.Println("================================================= Create WrapEnvs", err)
 	if err != nil {
 		return err
@@ -208,10 +227,12 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 								{
 									Name:      "model-volume",
 									MountPath: "/app/stable-diffusion-webui/models/Stable-diffusion",
+									ReadOnly:  true,
 								},
 								{
 									Name:      "openai-volume",
 									MountPath: "/app/stable-diffusion-webui/openai",
+									ReadOnly:  true,
 								},
 							},
 						},
@@ -238,6 +259,9 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 			},
 		},
 	}
+
+	// 添加模型
+	m.WrapAiModel(app, &deployment)
 
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
 	if err != nil {
@@ -266,4 +290,38 @@ func (m *Minter) UpdateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	}
 
 	return err
+}
+
+func (m *Minter) WrapAiModel(app *gtypes.GpuApp, deployment *appsv1.Deployment) {
+	meta := map[string]string{}
+	json.Unmarshal([]byte(app.Meta), &meta)
+	if meta["ai-model"] == "sd" {
+		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[0].VolumeMounts, v1.VolumeMount{
+			Name:      "model-volume",
+			MountPath: "/app/stable-diffusion-webui/models/Stable-diffusion",
+			ReadOnly:  true,
+		},
+			v1.VolumeMount{
+				Name:      "openai-volume",
+				MountPath: "/app/stable-diffusion-webui/openai",
+				ReadOnly:  true,
+			})
+
+		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, v1.Volume{
+			Name: "model-volume",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/home/wetee/AI/SD/model",
+				},
+			},
+		},
+			v1.Volume{
+				Name: "openai-volume",
+				VolumeSource: v1.VolumeSource{
+					HostPath: &v1.HostPathVolumeSource{
+						Path: "/home/wetee/AI/SD/openai",
+					},
+				},
+			})
+	}
 }
