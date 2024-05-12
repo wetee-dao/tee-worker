@@ -265,23 +265,6 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 			port = ser.AsUdpField0
 		}
 
-		// var nodePort uint16 = 0
-		// if port == 0 {
-		// 	nodePort = m.randNodeport()
-		// 	if ser.IsTcp {
-		// 		services[i].AsTcpField0 = nodePort
-		// 	}
-		// 	if ser.IsUdp {
-		// 		services[i].AsUdpField0 = nodePort
-		// 	}
-		// 	if ser.IsProjectTcp {
-		// 		services[i].AsProjectTcpField0 = nodePort
-		// 	}
-		// 	if ser.IsProjectUdp {
-		// 		services[i].AsProjectUdpField0 = nodePort
-		// 	}
-		// }
-
 		if ser.IsTcp || ser.IsUdp {
 			if port != 0 {
 				nodePorts = append(nodePorts, corev1.ServicePort{
