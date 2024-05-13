@@ -10,9 +10,7 @@ import (
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
@@ -129,64 +127,11 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 		return err
 	}
 
-	// 创建机密认证服务
-	serviceSpace := m.K8sClient.CoreV1().Services(saddress)
-	nodeports, projectPorts := m.BuildServicePortFormService(name, app.Port)
-
-	// 创建对外端口
-	sports := append(nodeports, v1.ServicePort{
-		Name:       name + "-8888",
-		Protocol:   "TCP",
-		Port:       8888,
-		TargetPort: intstr.FromInt(8888),
-	})
-	aservice := v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   name + "-expose",
-			Labels: map[string]string{"service": name},
-		},
-		Spec: v1.ServiceSpec{
-			Selector: map[string]string{"app": name},
-			Type:     "NodePort",
-			Ports:    sports,
-		},
-	}
-	ser, err := serviceSpace.Create(*ctx, &aservice, metav1.CreateOptions{})
-	fmt.Println("================================================= Create service", err)
+	pContainers, err := m.buildPodContainer(ctx, saddress, name, app, envs)
 	if err != nil {
 		return err
 	}
 
-	// 创建项目内端口
-	pservice := v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   name,
-			Labels: map[string]string{"service": name},
-		},
-		Spec: v1.ServiceSpec{
-			Selector:  map[string]string{"app": name},
-			ClusterIP: "None",
-			Ports:     projectPorts,
-		},
-	}
-	_, err = serviceSpace.Create(*ctx, &pservice, metav1.CreateOptions{})
-	fmt.Println("================================================= Create project service", err)
-	if err != nil {
-		return err
-	}
-
-	err = m.WrapEnvs(envs, saddress, name, ser)
-	fmt.Println("================================================= Create WrapEnvs", err)
-	if err != nil {
-		return err
-	}
-
-	ports := BuildContainerPortFormService(name, app.Port)
-	ports = append(ports, v1.ContainerPort{
-		Name:          "port0",
-		ContainerPort: int32(8888),
-		Protocol:      "TCP",
-	})
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
@@ -200,27 +145,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{"app": name},
 				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						{
-							Name:    "c1",
-							Image:   string(app.Image),
-							Ports:   ports,
-							Env:     envs,
-							Command: m.BuildCommand(&app.Command),
-							Resources: v1.ResourceRequirements{
-								Limits: v1.ResourceList{
-									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-								},
-								Requests: v1.ResourceList{
-									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-								},
-							},
-						},
-					},
-				},
+				Spec: v1.PodSpec{Containers: pContainers},
 			},
 		},
 	}

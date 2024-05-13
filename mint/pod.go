@@ -18,6 +18,7 @@ import (
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/store"
@@ -352,4 +353,111 @@ func renderTemplate(templateString string, data map[string]string) (string, erro
 	}
 
 	return result.String(), nil
+}
+
+func (m *Minter) buildPodContainer(
+	ctx *context.Context,
+	nameSpace, name string,
+	app *gtypes.TeeApp,
+	envs []v1.EnvVar,
+) ([]v1.Container, error) {
+	main := gtypes.Container{
+		Image:   app.Image,
+		Command: app.Command,
+		Port:    app.Port,
+		Cr:      app.Cr,
+	}
+	cs := append([]gtypes.Container{main}, app.SideContainer...)
+	podContainers := make([]v1.Container, 0, len(cs))
+
+	// 创建机密认证服务
+	serviceSpace := m.K8sClient.CoreV1().Services(nameSpace)
+	nodeports, projectPorts := []corev1.ServicePort{}, []corev1.ServicePort{}
+	for i, container := range cs {
+		cnodeports, cprojectPorts := m.BuildServicePortFormService(name, container.Port)
+
+		// 创建对外端口
+		if i == 0 {
+			nodeports = append(nodeports, v1.ServicePort{
+				Name:       name + "-8888",
+				Protocol:   "TCP",
+				Port:       8888,
+				TargetPort: intstr.FromInt(8888),
+			})
+		}
+		nodeports = append(nodeports, cnodeports...)
+		projectPorts = append(projectPorts, cprojectPorts...)
+	}
+
+	// 创建对外服务
+	aservice := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name + "-expose",
+			Labels: map[string]string{"service": name},
+		},
+		Spec: v1.ServiceSpec{
+			Selector: map[string]string{"app": name},
+			Type:     "NodePort",
+			Ports:    nodeports,
+		},
+	}
+
+	ser, err := serviceSpace.Create(*ctx, &aservice, metav1.CreateOptions{})
+	fmt.Println("================================================= Create service", err)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建项目内端口
+	pservice := v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   name,
+			Labels: map[string]string{"service": name},
+		},
+		Spec: v1.ServiceSpec{
+			Selector:  map[string]string{"app": name},
+			ClusterIP: "None",
+			Ports:     projectPorts,
+		},
+	}
+	_, err = serviceSpace.Create(*ctx, &pservice, metav1.CreateOptions{})
+	fmt.Println("================================================= Create project service", err)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, container := range cs {
+		err = m.WrapEnvs(envs, nameSpace, name, ser)
+		fmt.Println("================================================= Create WrapEnvs", err)
+		if err != nil {
+			return nil, err
+		}
+
+		ports := BuildContainerPortFormService(name, container.Port)
+		ports = append(ports, v1.ContainerPort{
+			Name:          "port0",
+			ContainerPort: int32(8888),
+			Protocol:      "TCP",
+		})
+
+		podContainers = append(podContainers, v1.Container{
+			Name:    "c1",
+			Image:   string(container.Image),
+			Ports:   ports,
+			Env:     envs,
+			Command: m.BuildCommand(&container.Command),
+			Resources: v1.ResourceRequirements{
+				Limits: v1.ResourceList{
+					v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cr.Cpu) + "m"),
+					v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Cr.Mem) + "M"),
+				},
+				Requests: v1.ResourceList{
+					v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cr.Cpu) + "m"),
+					v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Cr.Mem) + "M"),
+				},
+			},
+		})
+	}
+
+	return podContainers, nil
 }

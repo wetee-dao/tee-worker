@@ -5,7 +5,7 @@ import "github.com/wetee-dao/go-sdk/gen/types"
 // work type to string
 func GetWorkTypeStr(work types.WorkId) string {
 	if work.Wtype.IsAPP {
-		return "a"
+		return "s"
 	}
 
 	if work.Wtype.IsTASK {
@@ -21,7 +21,7 @@ func GetWorkTypeStr(work types.WorkId) string {
 
 // string to work type
 func GetWorkType(ty string) types.WorkType {
-	if ty == "app" || ty == "APP" || ty == "a" {
+	if ty == "app" || ty == "APP" || ty == "s" {
 		return types.WorkType{IsAPP: true}
 	}
 	if ty == "task" || ty == "TASK" || ty == "t" {
