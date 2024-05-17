@@ -370,24 +370,25 @@ func (m *Minter) buildPodContainer(
 	cs := append([]gtypes.Container{main}, app.SideContainer...)
 	podContainers := make([]v1.Container, 0, len(cs))
 
-	// 创建机密认证服务
 	serviceSpace := m.K8sClient.CoreV1().Services(nameSpace)
 	nodeports, projectPorts := []corev1.ServicePort{}, []corev1.ServicePort{}
-	for i, container := range cs {
+
+	// 计算所有的服务端口
+	for _, container := range cs {
 		cnodeports, cprojectPorts := m.BuildServicePortFormService(name, container.Port)
 
 		// 创建对外端口
-		if i == 0 {
-			nodeports = append(nodeports, v1.ServicePort{
-				Name:       name + "-8888",
-				Protocol:   "TCP",
-				Port:       8888,
-				TargetPort: intstr.FromInt(8888),
-			})
-		}
 		nodeports = append(nodeports, cnodeports...)
 		projectPorts = append(projectPorts, cprojectPorts...)
 	}
+
+	// 添加机密认证服务
+	nodeports = append(nodeports, v1.ServicePort{
+		Name:       name + "-8888",
+		Protocol:   "TCP",
+		Port:       8888,
+		TargetPort: intstr.FromInt(8888),
+	})
 
 	// 创建对外服务
 	aservice := v1.Service{
@@ -426,22 +427,24 @@ func (m *Minter) buildPodContainer(
 		return nil, err
 	}
 
-	for _, container := range cs {
-		err = m.WrapEnvs(envs, nameSpace, name, ser)
-		fmt.Println("================================================= Create WrapEnvs", err)
-		if err != nil {
-			return nil, err
+	err = m.WrapEnvs(envs, nameSpace, name, ser)
+	fmt.Println("================================================= Create WrapEnvs", err)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, container := range cs {
+		ports := BuildContainerPortFormService(name, container.Port)
+		if i == 0 {
+			ports = append(ports, v1.ContainerPort{
+				Name:          "port0",
+				ContainerPort: int32(8888),
+				Protocol:      "TCP",
+			})
 		}
 
-		ports := BuildContainerPortFormService(name, container.Port)
-		ports = append(ports, v1.ContainerPort{
-			Name:          "port0",
-			ContainerPort: int32(8888),
-			Protocol:      "TCP",
-		})
-
 		podContainers = append(podContainers, v1.Container{
-			Name:    "c1",
+			Name:    "c" + fmt.Sprint(i),
 			Image:   string(container.Image),
 			Ports:   ports,
 			Env:     envs,
