@@ -137,6 +137,7 @@ func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, ser *v1.
 	mdata := make(map[string]string)
 	mdata["cluster_domain"] = m.HostDomain
 	mdata["project_domain"] = nameSpace + ".svc.cluster.local"
+	mdata["gen_ssl"] = strings.Join(util.GetSslRoot(), "|")
 	for i, port := range ser.Spec.Ports {
 		if port.NodePort != 0 {
 			mdata["ser_"+fmt.Sprint(i)+"_nodeport"] = fmt.Sprint(port.NodePort)
