@@ -89,11 +89,11 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 		}
 
 		// 重新创建
-		envs, err := m.BuildEnvsFromSettings(workId, state.Envs)
-		if err != nil {
-			return nil, err
-		}
-		err = m.CreateApp(ctx, state.ContractState.User[:], workId, app, envs, version)
+		// envs, err := m.BuildEnvsFromSettings(workId, state.Envs)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		err = m.CreateApp(ctx, state.ContractState.User[:], workId, app, state.Envs, version)
 		if err != nil {
 			return nil, err
 		}
@@ -108,7 +108,7 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeApp, envs []v1.EnvVar, version uint64) error {
+func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeApp, envs []*gtypes.Env, version uint64) error {
 	saddress := AccountToSpace(user)
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
@@ -127,7 +127,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 		return err
 	}
 
-	pContainers, err := m.buildPodContainer(ctx, saddress, name, app, envs)
+	pContainers, err := m.buildPodContainer(ctx, workId, saddress, name, app, envs)
 	if err != nil {
 		return err
 	}

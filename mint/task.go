@@ -69,11 +69,7 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 	pod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if err.Error() == "pods \""+name+"\" not found" {
-			envs, err := m.BuildEnvsFromSettings(workId, state.Envs)
-			if err != nil {
-				return nil, err
-			}
-			err = m.CreateTask(ctx, state.ContractState.User[:], workId, app, envs, version)
+			err = m.CreateTask(ctx, state.ContractState.User[:], workId, app, state.Envs, version)
 			if err != nil {
 				return nil, err
 			}
@@ -87,7 +83,7 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 }
 
 // create task
-func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeTask, envs []v1.EnvVar, version uint64) error {
+func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeTask, envs []*gtypes.Env, version uint64) error {
 	saddress := AccountToSpace(user[:])
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
@@ -120,6 +116,11 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.Wor
 		return err
 	}
 
+	cenvs, err := m.BuildEnvsFromSettings(workId, envs)
+	if err != nil {
+		return err
+	}
+
 	pod := &v1.Pod{
 		TypeMeta: metav1.TypeMeta{Kind: "Task", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -132,7 +133,7 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.Wor
 					Name:  "c1",
 					Image: string(app.Image),
 					Ports: BuildContainerPortFormService(name, app.Port),
-					Env:   envs,
+					Env:   cenvs,
 					Resources: v1.ResourceRequirements{
 						Limits: v1.ResourceList{
 							v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),

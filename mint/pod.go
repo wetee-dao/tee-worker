@@ -133,12 +133,12 @@ func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.
 
 // WrapNodeService
 // 包装环境变量
-func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, ser *v1.Service) error {
+func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, nodeSers *v1.Service) error {
 	mdata := make(map[string]string)
 	mdata["cluster_domain"] = m.HostDomain
 	mdata["project_domain"] = nameSpace + ".svc.cluster.local"
 	mdata["gen_ssl"] = strings.Join(util.GetSslRoot(), "|")
-	for i, port := range ser.Spec.Ports {
+	for i, port := range nodeSers.Spec.Ports {
 		if port.NodePort != 0 {
 			mdata["ser_"+fmt.Sprint(i)+"_nodeport"] = fmt.Sprint(port.NodePort)
 		}
@@ -358,9 +358,10 @@ func renderTemplate(templateString string, data map[string]string) (string, erro
 
 func (m *Minter) buildPodContainer(
 	ctx *context.Context,
+	workId gtypes.WorkId,
 	nameSpace, name string,
 	app *gtypes.TeeApp,
-	envs []v1.EnvVar,
+	envs []*gtypes.Env,
 ) ([]v1.Container, error) {
 	main := gtypes.Container{
 		Image:   app.Image,
@@ -404,7 +405,7 @@ func (m *Minter) buildPodContainer(
 		},
 	}
 
-	ser, err := serviceSpace.Create(*ctx, &aservice, metav1.CreateOptions{})
+	nodeSers, err := serviceSpace.Create(*ctx, &aservice, metav1.CreateOptions{})
 	fmt.Println("================================================= Create service", err)
 	if err != nil {
 		return nil, err
@@ -428,12 +429,7 @@ func (m *Minter) buildPodContainer(
 		return nil, err
 	}
 
-	err = m.WrapEnvs(envs, nameSpace, name, ser)
-	fmt.Println("================================================= Create WrapEnvs", err)
-	if err != nil {
-		return nil, err
-	}
-
+	// 构建容器
 	for i, container := range cs {
 		ports := BuildContainerPortFormService(name, container.Port)
 		if i == 0 {
@@ -444,11 +440,22 @@ func (m *Minter) buildPodContainer(
 			})
 		}
 
+		cnevs, err := m.BuildEnvsFromSettings(workId, FilterEnvs(envs, uint16(i)))
+		if err != nil {
+			return nil, err
+		}
+
+		err = m.WrapEnvs(cnevs, nameSpace, name, nodeSers)
+		fmt.Println("================================================= Create WrapEnvs", err)
+		if err != nil {
+			return nil, err
+		}
+
 		podContainers = append(podContainers, v1.Container{
 			Name:    "c" + fmt.Sprint(i),
 			Image:   string(container.Image),
 			Ports:   ports,
-			Env:     envs,
+			Env:     cnevs,
 			Command: m.BuildCommand(&container.Command),
 			Resources: v1.ResourceRequirements{
 				Limits: v1.ResourceList{
@@ -464,4 +471,14 @@ func (m *Minter) buildPodContainer(
 	}
 
 	return podContainers, nil
+}
+
+func FilterEnvs(envs []*gtypes.Env, index uint16) []*gtypes.Env {
+	var fenvs []*gtypes.Env
+	for i, env := range envs {
+		if env.Index == index {
+			fenvs = append(fenvs, envs[i])
+		}
+	}
+	return fenvs
 }
