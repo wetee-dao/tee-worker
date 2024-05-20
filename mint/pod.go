@@ -25,12 +25,19 @@ import (
 	"wetee.app/worker/util"
 )
 
+// 获取容器的资源信息和日志
 func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace, name string, stage uint64) ([]string, map[string][]int64, error) {
 	podLogOpts := &corev1.PodLogOptions{
 		SinceTime: &metav1.Time{
 			Time: time.Now().Add(-6 * time.Second * time.Duration(stage)),
 		},
 	}
+
+	// 如果是不是TASK类型，则获取c0容器的日志
+	if !wid.Wtype.IsTASK {
+		podLogOpts.Container = "c0"
+	}
+
 	clientset := m.K8sClient
 	metricsClient := m.MetricsClient
 
@@ -43,8 +50,8 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 	}
 	defer podLogs.Close()
 
-	// Read the logs line by line
 	// 读取到的logs是 []string
+	// Read the logs line by line
 	logs := []string{}
 	scanner := bufio.NewScanner(podLogs)
 	for scanner.Scan() {
@@ -87,6 +94,8 @@ func AccountToSpace(user []byte) string {
 	return strings.ReplaceAll(strings.ToLower(address), "=", "")
 }
 
+// Hex Address To Account
+// 将hex地址转换为用户公钥
 func HexStringToSpace(address string) string {
 	address = strings.ReplaceAll(address, "0x", "")
 	user, _ := hex.DecodeString(address)
@@ -104,6 +113,7 @@ func (m *Minter) BuildEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 	return m.BuildEnvsFromSettings(workId, settings)
 }
 
+// Build Envs
 // 获取配置文件
 func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Env) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
@@ -158,6 +168,8 @@ func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, nodeSers
 	return nil
 }
 
+// BuildCommand
+// 构建启动命令
 func (m *Minter) BuildCommand(cmd *gtypes.Command) []string {
 	if cmd.IsNONE {
 		return []string{}
@@ -270,7 +282,7 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 		if ser.IsTcp || ser.IsUdp {
 			if port != 0 {
 				nodePorts = append(nodePorts, corev1.ServicePort{
-					Name:       name + "-" + fmt.Sprint(port) + "-nodeport",
+					Name:       name + "-" + fmt.Sprint(i) + "-" + fmt.Sprint(port) + "-nodeport",
 					Port:       int32(port),
 					TargetPort: intstr.FromInt(int(port)),
 					Protocol:   protocol,
@@ -284,7 +296,7 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 					services[i].AsUdpField0 = nodePort
 				}
 				nodePorts = append(nodePorts, corev1.ServicePort{
-					Name:       name + "-" + fmt.Sprint(nodePort) + "-nodeport",
+					Name:       name + "-" + fmt.Sprint(i) + "-" + fmt.Sprint(nodePort) + "-nodeport",
 					Port:       int32(nodePort),
 					TargetPort: intstr.FromInt(int(nodePort)),
 					NodePort:   int32(nodePort),
@@ -293,7 +305,7 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 			}
 		} else {
 			headlessPorts = append(headlessPorts, corev1.ServicePort{
-				Name:       name + "-" + fmt.Sprint(port) + "-headless",
+				Name:       name + "-" + fmt.Sprint(i) + "-" + fmt.Sprint(port) + "-headless",
 				Port:       int32(port),
 				TargetPort: intstr.FromInt(int(port)),
 				Protocol:   protocol,
@@ -303,6 +315,7 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 	return nodePorts, headlessPorts
 }
 
+// 随机生成NodePort端口
 func (m *Minter) randNodeport() uint16 {
 	// 查询当前已分配的NodePort端口列表
 	usedPorts := []int32{}
@@ -330,15 +343,6 @@ func (m *Minter) randNodeport() uint16 {
 	}
 
 	return port
-}
-
-func contains(s []int32, e int32) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
 }
 
 func renderTemplate(templateString string, data map[string]string) (string, error) {
@@ -369,6 +373,8 @@ func (m *Minter) buildPodContainer(
 		Port:    app.Port,
 		Cr:      app.Cr,
 	}
+
+	// 添加主容器
 	cs := append([]gtypes.Container{main}, app.SideContainer...)
 	podContainers := make([]v1.Container, 0, len(cs))
 
@@ -440,7 +446,7 @@ func (m *Minter) buildPodContainer(
 			})
 		}
 
-		cnevs, err := m.BuildEnvsFromSettings(workId, FilterEnvs(envs, uint16(i)))
+		cnevs, err := m.BuildEnvsFromSettings(workId, filterEnvs(envs, uint16(i)))
 		if err != nil {
 			return nil, err
 		}
@@ -473,7 +479,7 @@ func (m *Minter) buildPodContainer(
 	return podContainers, nil
 }
 
-func FilterEnvs(envs []*gtypes.Env, index uint16) []*gtypes.Env {
+func filterEnvs(envs []*gtypes.Env, index uint16) []*gtypes.Env {
 	var fenvs []*gtypes.Env
 	for i, env := range envs {
 		if env.Index == index {
@@ -481,4 +487,13 @@ func FilterEnvs(envs []*gtypes.Env, index uint16) []*gtypes.Env {
 		}
 	}
 	return fenvs
+}
+
+func contains(s []int32, e int32) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

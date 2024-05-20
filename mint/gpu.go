@@ -35,7 +35,7 @@ func (m *Minter) DoWithGpuAppState(ctx *context.Context, c ContractStateWrap, st
 
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
-	if uint64(app.Status) != 1 || uint64(head.Number)-state.BlockNumber < uint64(stage) {
+	if app.Status == 0 || app.Status == 2 || (app.Status == 3 && uint64(head.Number)-state.BlockNumber < uint64(stage)) {
 		return nil, nil
 	}
 

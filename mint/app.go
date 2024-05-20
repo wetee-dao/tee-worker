@@ -34,7 +34,8 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
-	if uint64(app.Status) != 1 || uint64(head.Number)-state.BlockNumber < uint64(stage) {
+	// App状态 0: created, 1: deploying, 2: stop, 3: deoloyed
+	if app.Status == 0 || app.Status == 2 || (app.Status == 3 && uint64(head.Number)-state.BlockNumber < uint64(stage)) {
 		return nil, nil
 	}
 
