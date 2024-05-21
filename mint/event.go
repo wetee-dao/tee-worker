@@ -40,6 +40,13 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 					app, _ := appIns.GetApp(user[:], workId.Id)
 					err = m.CreateApp(&ctx, user[:], workId, app, settings, version)
 					util.LogWithRed("===========================================CreateOrUpdateApp error: ", err)
+				} else if workId.Wtype.IsGPU {
+					gpuIns := chain.GpuApp{
+						Client: m.ChainClient,
+					}
+					gpu, _ := gpuIns.GetApp(user[:], workId.Id)
+					err = m.CreateGpuApp(&ctx, user[:], workId, gpu, settings, version)
+					util.LogWithRed("===========================================CreateOrUpdateGpuApp error: ", err)
 				} else {
 					taskIns := chain.Task{
 						Client: m.ChainClient,

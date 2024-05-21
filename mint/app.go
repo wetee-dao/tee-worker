@@ -90,10 +90,6 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 		}
 
 		// 重新创建
-		// envs, err := m.BuildEnvsFromSettings(workId, state.Envs)
-		// if err != nil {
-		// 	return nil, err
-		// }
 		err = m.CreateApp(ctx, state.ContractState.User[:], workId, app, state.Envs, version)
 		if err != nil {
 			return nil, err
@@ -128,7 +124,16 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 		return err
 	}
 
-	pContainers, err := m.buildPodContainer(ctx, workId, saddress, name, app, envs)
+	// 构建容器
+	main := gtypes.Container{
+		Image:   app.Image,
+		Command: app.Command,
+		Port:    app.Port,
+		Cr:      app.Cr,
+	}
+	cs := append([]gtypes.Container{main}, app.SideContainer...)
+
+	pContainers, err := m.buildPodContainer(ctx, workId, saddress, name, cs, envs)
 	if err != nil {
 		return err
 	}

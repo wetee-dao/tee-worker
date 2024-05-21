@@ -364,18 +364,16 @@ func (m *Minter) buildPodContainer(
 	ctx *context.Context,
 	workId gtypes.WorkId,
 	nameSpace, name string,
-	app *gtypes.TeeApp,
+	cs []gtypes.Container,
 	envs []*gtypes.Env,
 ) ([]v1.Container, error) {
-	main := gtypes.Container{
-		Image:   app.Image,
-		Command: app.Command,
-		Port:    app.Port,
-		Cr:      app.Cr,
+	ty := ""
+	if workId.Wtype.IsAPP {
+		ty = "app"
+	} else if workId.Wtype.IsGPU {
+		ty = "gpu"
 	}
 
-	// 添加主容器
-	cs := append([]gtypes.Container{main}, app.SideContainer...)
 	podContainers := make([]v1.Container, 0, len(cs))
 
 	serviceSpace := m.K8sClient.CoreV1().Services(nameSpace)
@@ -405,7 +403,7 @@ func (m *Minter) buildPodContainer(
 			Labels: map[string]string{"service": name},
 		},
 		Spec: v1.ServiceSpec{
-			Selector: map[string]string{"app": name},
+			Selector: map[string]string{ty: name},
 			Type:     "NodePort",
 			Ports:    nodeports,
 		},
@@ -424,7 +422,7 @@ func (m *Minter) buildPodContainer(
 			Labels: map[string]string{"service": name},
 		},
 		Spec: v1.ServiceSpec{
-			Selector:  map[string]string{"app": name},
+			Selector:  map[string]string{ty: name},
 			ClusterIP: "None",
 			Ports:     projectPorts,
 		},

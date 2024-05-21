@@ -13,7 +13,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
@@ -90,11 +89,7 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap
 		}
 
 		// 重新创建
-		envs, err := m.BuildEnvsFromSettings(workId, state.Envs)
-		if err != nil {
-			return nil, err
-		}
-		err = m.CreateGpuApp(ctx, state.ContractState.User[:], workId, app, envs, version)
+		err = m.CreateGpuApp(ctx, state.ContractState.User[:], workId, app, state.Envs, version)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +104,7 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.GpuApp, envs []v1.EnvVar, version uint64) error {
+func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.GpuApp, envs []*gtypes.Env, version uint64) error {
 	saddress := AccountToSpace(user)
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
@@ -129,62 +124,23 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	}
 
 	nvidiaClass := "nvidia"
-	// 创建机密认证服务
-	serviceSpace := m.K8sClient.CoreV1().Services(saddress)
-	nodeports, projectPorts := m.BuildServicePortFormService(name, app.Port)
-	sports := append(nodeports, v1.ServicePort{
-		Name:       name + "-8888",
-		Protocol:   "TCP",
-		Port:       8888,
-		TargetPort: intstr.FromInt(8888),
-	})
-	aservice := v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   name + "-expose",
-			Labels: map[string]string{"service": name},
-		},
-		Spec: v1.ServiceSpec{
-			Selector: map[string]string{"gpu": name},
-			Type:     "NodePort",
-			Ports:    sports,
-		},
+
+	// 构建容器
+	main := gtypes.Container{
+		Image:   app.Image,
+		Command: app.Command,
+		Port:    app.Port,
+		Cr:      app.Cr,
 	}
-	ser, err := serviceSpace.Create(*ctx, &aservice, metav1.CreateOptions{})
-	fmt.Println("================================================= Create service", err)
+	cs := append([]gtypes.Container{main}, app.SideContainer...)
+
+	pContainers, err := m.buildPodContainer(ctx, workId, saddress, name, cs, envs)
 	if err != nil {
 		return err
 	}
 
-	// 创建项目内端口
-	pservice := v1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   name,
-			Labels: map[string]string{"service": name},
-		},
-		Spec: v1.ServiceSpec{
-			Selector:  map[string]string{"app": name},
-			ClusterIP: "None",
-			Ports:     projectPorts,
-		},
-	}
-	_, err = serviceSpace.Create(*ctx, &pservice, metav1.CreateOptions{})
-	fmt.Println("================================================= Create project service", err)
-	if err != nil {
-		return err
-	}
-
-	err = m.WrapEnvs(envs, saddress, name, ser)
-	fmt.Println("================================================= Create WrapEnvs", err)
-	if err != nil {
-		return err
-	}
-
-	ports := BuildContainerPortFormService(name, app.Port)
-	ports = append(ports, v1.ContainerPort{
-		Name:          "port0",
-		ContainerPort: int32(8888),
-		Protocol:      "TCP",
-	})
+	pContainers[0].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent)
+	pContainers[0].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent)
 
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -201,59 +157,9 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 				},
 				Spec: v1.PodSpec{
 					RuntimeClassName: &nvidiaClass,
+					Containers:       pContainers,
 					NodeSelector: map[string]string{
 						"TEE": "CVM-SEV",
-					},
-					Containers: []v1.Container{
-						{
-							Name:    "c1",
-							Image:   string(app.Image),
-							Ports:   ports,
-							Env:     envs,
-							Command: m.BuildCommand(&app.Command),
-							Resources: v1.ResourceRequirements{
-								Limits: v1.ResourceList{
-									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-									"nvidia.com/gpu":  *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent),
-								},
-								Requests: v1.ResourceList{
-									v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
-									v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-									"nvidia.com/gpu":  *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent),
-								},
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      "model-volume",
-									MountPath: "/app/stable-diffusion-webui/models/Stable-diffusion",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "openai-volume",
-									MountPath: "/app/stable-diffusion-webui/openai",
-									ReadOnly:  true,
-								},
-							},
-						},
-					},
-					Volumes: []v1.Volume{
-						{
-							Name: "model-volume",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/home/wetee/AI/SD/model",
-								},
-							},
-						},
-						{
-							Name: "openai-volume",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/home/wetee/AI/SD/openai",
-								},
-							},
-						},
 					},
 				},
 			},
@@ -300,12 +206,11 @@ func (m *Minter) WrapAiModel(app *gtypes.GpuApp, deployment *appsv1.Deployment) 
 			Name:      "model-volume",
 			MountPath: "/app/stable-diffusion-webui/models/Stable-diffusion",
 			ReadOnly:  true,
-		},
-			v1.VolumeMount{
-				Name:      "openai-volume",
-				MountPath: "/app/stable-diffusion-webui/openai",
-				ReadOnly:  true,
-			})
+		}, v1.VolumeMount{
+			Name:      "openai-volume",
+			MountPath: "/app/stable-diffusion-webui/openai",
+			ReadOnly:  true,
+		})
 
 		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, v1.Volume{
 			Name: "model-volume",
@@ -314,14 +219,13 @@ func (m *Minter) WrapAiModel(app *gtypes.GpuApp, deployment *appsv1.Deployment) 
 					Path: "/home/wetee/AI/SD/model",
 				},
 			},
-		},
-			v1.Volume{
-				Name: "openai-volume",
-				VolumeSource: v1.VolumeSource{
-					HostPath: &v1.HostPathVolumeSource{
-						Path: "/home/wetee/AI/SD/openai",
-					},
+		}, v1.Volume{
+			Name: "openai-volume",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/home/wetee/AI/SD/openai",
 				},
-			})
+			},
+		})
 	}
 }
