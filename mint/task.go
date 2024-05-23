@@ -110,7 +110,6 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.Wor
 		}
 		existingPod.ObjectMeta.Annotations = map[string]string{"version": fmt.Sprint(version)}
 		existingPod.Spec.Containers[0].Image = string(app.Image)
-		// existingPod.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
 		_, err = nameSpace.Update(*ctx, existingPod, metav1.UpdateOptions{})
 		fmt.Println("================================================= Update", err)
 		return err
@@ -138,12 +137,10 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.Wor
 						Limits: v1.ResourceList{
 							v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
 							v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-							// "alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 						},
 						Requests: v1.ResourceList{
 							v1.ResourceCPU:    resource.MustParse(fmt.Sprint(app.Cr.Cpu) + "m"),
 							v1.ResourceMemory: resource.MustParse(fmt.Sprint(app.Cr.Mem) + "M"),
-							// "alibabacloud.com/sgx_epc_MiB": *resource.NewQuantity(int64(20), resource.DecimalExponent),
 						},
 					},
 				},

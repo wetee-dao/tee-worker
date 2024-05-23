@@ -123,8 +123,6 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 		return err
 	}
 
-	nvidiaClass := "nvidia"
-
 	// 构建容器
 	main := gtypes.Container{
 		Image:   app.Image,
@@ -134,14 +132,17 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	}
 	cs := append([]gtypes.Container{main}, app.SideContainer...)
 
+	// 构建容器端口
 	pContainers, err := m.buildPodContainer(ctx, workId, saddress, name, cs, envs)
 	if err != nil {
 		return err
 	}
 
+	// 添加gpu资源
 	pContainers[0].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent)
 	pContainers[0].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent)
 
+	nvidiaClass := "nvidia"
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
@@ -224,6 +225,21 @@ func (m *Minter) WrapAiModel(app *gtypes.GpuApp, deployment *appsv1.Deployment) 
 			VolumeSource: v1.VolumeSource{
 				HostPath: &v1.HostPathVolumeSource{
 					Path: "/home/wetee/AI/SD/openai",
+				},
+			},
+		})
+	} else if meta["ai-model"] == "ollama" {
+		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[0].VolumeMounts, v1.VolumeMount{
+			Name:      "ollama-volume",
+			MountPath: "/root/.ollama",
+			ReadOnly:  false,
+		})
+
+		deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, v1.Volume{
+			Name: "ollama-volume",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/home/wetee/AI/ollama",
 				},
 			},
 		})
