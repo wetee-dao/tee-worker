@@ -91,7 +91,8 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 // 将用户公钥转换为hex地址
 func AccountToSpace(user []byte) string {
 	address := base32.HexEncoding.EncodeToString(user[:])
-	return strings.ReplaceAll(strings.ToLower(address), "=", "")
+	address = strings.ReplaceAll(strings.ToLower(address), "=", "")
+	return strings.TrimRight(address, "000000000000000000")
 }
 
 // Hex Address To Account
