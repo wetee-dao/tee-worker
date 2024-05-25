@@ -391,10 +391,10 @@ func (m *Minter) buildPodContainer(
 
 	// 添加机密认证服务
 	nodeports = append(nodeports, v1.ServicePort{
-		Name:       name + "-8888",
+		Name:       name + "-65535",
 		Protocol:   "TCP",
-		Port:       8888,
-		TargetPort: intstr.FromInt(8888),
+		Port:       65535,
+		TargetPort: intstr.FromInt(65535),
 	})
 
 	// 创建对外服务
@@ -440,7 +440,7 @@ func (m *Minter) buildPodContainer(
 		if i == 0 {
 			ports = append(ports, v1.ContainerPort{
 				Name:          "port0",
-				ContainerPort: int32(8888),
+				ContainerPort: int32(65535),
 				Protocol:      "TCP",
 			})
 		}

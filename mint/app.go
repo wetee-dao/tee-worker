@@ -157,7 +157,7 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 	}
 
 	// 初始化磁盘
-	err = m.DeploymentPVCWrap(ctx, saddress, name, &deployment, app.Cr.Disk)
+	err = m.DeploymentPVCWrap(ctx, saddress, name, cs, &deployment)
 	if err != nil {
 		return err
 	}
