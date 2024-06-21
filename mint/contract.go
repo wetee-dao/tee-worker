@@ -29,7 +29,7 @@ type ContractStateWrap struct {
 // 获取合约状态
 // Get Cluster Contracts
 func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtypes.WorkId]ContractStateWrap, error) {
-	var pallet, method = "WeteeWorker", "ClusterContracts"
+	var pallet, method = "WeTEEWorker", "ClusterContracts"
 	set, err := m.ChainClient.QueryDoubleMapAll(pallet, method, clusterID, at)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				}
 
 				appVersions = append(appVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeApp", "Envs", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeTEEApp", "Envs", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -126,7 +126,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				}
 
 				taskVersions = append(taskVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeTask", "Envs", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeTEETask", "Envs", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -158,7 +158,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				}
 
 				gpuAppVersions = append(gpuAppVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeteeGpu", "Envs", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeTEEGpu", "Envs", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -412,13 +412,13 @@ func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, d
 func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*gtypes.Env, error) {
 	var pallet, method string
 	if workId.Wtype.IsAPP {
-		pallet = "WeteeApp"
+		pallet = "WeTEEApp"
 		method = "Envs"
 	} else if workId.Wtype.IsTASK {
-		pallet = "WeteeTask"
+		pallet = "WeTEETask"
 		method = "Envs"
 	} else if workId.Wtype.IsGPU {
-		pallet = "WeteeGpu"
+		pallet = "WeTEEGpu"
 		method = "Envs"
 	} else {
 		return []*gtypes.Env{}, errors.New("work type error")
