@@ -34,7 +34,7 @@ func (m *Minter) DoWithGpuAppState(ctx *context.Context, c ContractStateWrap, st
 
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
-	if app.Status == 0 || app.Status == 2 || (app.Status == 3 && uint64(head.Number)-state.BlockNumber < uint64(stage)) {
+	if app.Status == 0 || app.Status == 2 || (app.Status == 3 && uint64(head.Number)-uint64(state.BlockNumber) < uint64(stage)) {
 		return nil, nil
 	}
 
@@ -63,13 +63,13 @@ func (m *Minter) DoWithGpuAppState(ctx *context.Context, c ContractStateWrap, st
 
 	// 获取log和硬件资源使用量
 	// Get log and hardware resource usage
-	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-state.BlockNumber)
+	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-uint64(state.BlockNumber))
 	// 如果获取log和硬件资源使用量失败就不提交相关数据
 	if err != nil {
 		util.LogWithRed("getMetricInfo", err)
 	}
 
-	return proof.MakeWorkProof(workId, logs, crs, state.BlockNumber)
+	return proof.MakeWorkProof(workId, logs, crs, uint64(state.BlockNumber))
 }
 
 // checkAppStatus check app status

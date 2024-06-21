@@ -46,14 +46,14 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 
 	// 获取log和硬件资源使用量
 	// Obtain the log and hardware resource usage
-	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, name, uint64(head.Number)-state.BlockNumber)
+	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, name, uint64(head.Number)-uint64(state.BlockNumber))
 	if err != nil {
 		util.LogWithRed("getMetricInfo", err)
 		return nil, err
 	}
 
 	m.StopApp(c.ContractState.WorkId, "")
-	return proof.MakeWorkProof(workId, logs, crs, state.BlockNumber)
+	return proof.MakeWorkProof(workId, logs, crs, uint64(state.BlockNumber))
 }
 
 // check task status，if task is running, return pod, if task not run, create pod

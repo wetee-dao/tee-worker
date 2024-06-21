@@ -4,5 +4,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: wetee/worker
-  newTag: 2024-05-28-07_52
+  newName: registry.cn-hangzhou.aliyuncs.com/wetee_dao/worker
+  newTag: 2024-06-21-14_17

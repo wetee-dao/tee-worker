@@ -16,21 +16,32 @@ spec:
         app: wetee-node
     spec:
       containers:
-        - image: wetee/wetee-node:dev.2024-04-24-12_44
+        - image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/wetee-node:dev.2024-06-20-11_42
+          name: c1
+          volumeMounts:
+            - name: wetee-chain
+              mountPath: /chain-data
+        - name: c2
           command:
             - /bin/sh
             - "-c"
-            - "/usr/local/bin/wetee-node --dev -d /tmp/chain --rpc-external --rpc-methods=unsafe --unsafe-rpc-external --rpc-cors=all"
-          name: c1
+            - 'nginx -g "daemon off;" -c  /mnt/ssl-proxy/nginx.conf'
+          image: anolis-registry.cn-zhangjiakou.cr.aliyuncs.com/openanolis/nginx:1.14.1-8.6
           ports:
-            - containerPort: 9944
-              name: wetee-node-9944
+            - containerPort: 443
+              name: wetee-node-443
               protocol: TCP
           volumeMounts:
-            - name: wetee-chain
-              mountPath: /tmp/chain
+            - name: wetee-proxy
+              mountPath: /mnt/ssl-proxy
       volumes:
         - name: wetee-chain
           hostPath:
             type: DirectoryOrCreate
-            path: /mnt/chain
+            path: /home/wetee/Soft/chain_db
+        - name: wetee-proxy
+          hostPath:
+            type: DirectoryOrCreate
+            path: /mnt/ssl-proxy
+      nodeSelector:
+        TEE: "SGX"
