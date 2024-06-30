@@ -8,16 +8,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"math/big"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
-	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	chain "github.com/wetee-dao/go-sdk"
-	"github.com/wetee-dao/go-sdk/gen/balances"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/mint"
@@ -44,6 +39,7 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 	if len(ipstrs) != 4 {
 		return "", gqlerror.Errorf("Ip address format error")
 	}
+
 	iparr := []uint8{}
 	for _, ipstr := range ipstrs {
 		i, err := strconv.Atoi(ipstr)
@@ -68,6 +64,7 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 			},
 		},
 	}, uint32(port), uint8(level), false)
+
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -173,79 +170,6 @@ func (r *mutationResolver) ClusterStop(ctx context.Context) (string, error) {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
 	return "ok", nil
-}
-
-// StartForTest is the resolver for the start_for_test field.
-func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
-	if mint.MinterIns.ChainClient == nil {
-		return false, gqlerror.Errorf("Invalid chain client")
-	}
-	client := mint.MinterIns.ChainClient
-	if client == nil {
-		return false, gqlerror.Errorf("Cant connect to chain")
-	}
-	worker := &chain.Worker{
-		Client: client,
-		Signer: mint.Signer,
-	}
-
-	// 1 unit of transfer
-	bal, ok := new(big.Int).SetString("50000000000000000", 10)
-	if !ok {
-		panic(fmt.Errorf("failed to convert balance"))
-	}
-
-	minter, _ := types.NewMultiAddressFromAccountID(mint.Signer.PublicKey)
-	minterWrap := gtypes.MultiAddress{
-		IsId:       true,
-		AsIdField0: minter.AsID,
-	}
-	c := balances.MakeTransferKeepAliveCall(minterWrap, types.NewUCompact(bal))
-	err := client.SignAndSubmit(&signature.TestKeyringPairAlice, c, false)
-	if err != nil {
-		return false, gqlerror.Errorf("Chain call error:" + err.Error())
-	}
-	time.Sleep(20 * time.Second)
-
-	err = worker.ClusterRegister("baiL", []gtypes.Ip{
-		{
-			Ipv4: gtypes.OptionTUint32{
-				IsNone: true,
-			},
-			Ipv6: gtypes.OptionTU128{
-				IsNone: true,
-			},
-			Domain: gtypes.OptionTByteSlice{
-				IsSome:       true,
-				AsSomeField0: []byte("xiaobai.asyou.me"),
-			},
-		},
-	}, uint32(30000), uint8(1), false)
-	if err != nil {
-		return false, gqlerror.Errorf("Chain ClusterRegister error:" + err.Error())
-	}
-
-	time.Sleep(20 * time.Second)
-
-	clusterId, err := worker.Getk8sClusterAccounts(mint.Signer.PublicKey)
-	if err != nil {
-		return false, gqlerror.Errorf("Getk8sClusterAccounts:" + err.Error())
-	}
-	fmt.Println("ClusterId => ", clusterId)
-	store.SetClusterId(clusterId)
-
-	id, err := store.GetClusterId()
-	if err != nil {
-		return false, gqlerror.Errorf("Cant get cluster id:" + err.Error())
-	}
-
-	err = worker.ClusterMortgage(
-		id, uint32(10000), uint32(10000), uint32(1000000), uint32(10000), uint32(1000000), uint32(10), uint64(1000000000000), false)
-	if err != nil {
-		return false, gqlerror.Errorf("Chain ClusterMortgage error:" + err.Error())
-	}
-
-	return true, nil
 }
 
 // WorkerInfo is the resolver for the workerInfo field.

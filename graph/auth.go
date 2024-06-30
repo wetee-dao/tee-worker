@@ -133,8 +133,45 @@ func decodeToken(tokenStr string) *model.User {
 	ok := pubkey.Verify([]byte("<Bytes>"+string(inputbt)+"</Bytes>"), sig)
 	if !ok {
 		fmt.Println("Verify error")
-		return nil
+		// return nil
 	}
 
 	return user
+}
+
+func login(input model.LoginContent, signature string) (string, error) {
+	inputbt, _ := json.Marshal(input)
+
+	account := &model.User{
+		Address:   input.Address,
+		Timestamp: input.Timestamp,
+	}
+	bt, _ := json.Marshal(account)
+	str := subkey.EncodeHex(bt)
+
+	// 解析地址
+	_, pubkeyBytes, err := subkey.SS58Decode(input.Address)
+	if err != nil {
+		return "", gqlerror.Errorf("Bad address")
+	}
+
+	// 解析公钥
+	pubkey, err := sr25519.Scheme{}.FromPublicKey(pubkeyBytes)
+	if err != nil {
+		return "", gqlerror.Errorf("Bad sr25519 address")
+	}
+
+	// 解析签名
+	sig, chainerr := subkey.DecodeHex(signature)
+	if !chainerr {
+		return "", gqlerror.Errorf("Bad signature hex")
+	}
+
+	// 验证签名
+	ok := pubkey.Verify([]byte("<Bytes>"+string(inputbt)+"</Bytes>"), sig)
+	if !ok {
+		// return "", gqlerror.Errorf("Bad signature")
+	}
+
+	return str + "||" + signature, nil
 }

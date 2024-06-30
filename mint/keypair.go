@@ -7,8 +7,6 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/edgelesssys/ego/enclave"
-	"github.com/vedhavyas/go-subkey/v2"
-	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
@@ -40,15 +38,10 @@ func GetMintKey() (*signature.KeyringPair, error) {
 	store.SetMintId(mss[:])
 
 	uri := hex.EncodeToString(mss[:])
-	scheme := sr25519.Scheme{}
-	kr, err := subkey.DeriveKeyPair(scheme, uri)
+	kr, err := signature.KeyringPairFromSecret(uri, 42)
 	if err != nil {
 		return nil, err
 	}
 
-	return &signature.KeyringPair{
-		URI:       uri,
-		Address:   kr.SS58Address(42),
-		PublicKey: kr.Public(),
-	}, nil
+	return &kr, nil
 }

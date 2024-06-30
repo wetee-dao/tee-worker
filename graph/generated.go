@@ -63,7 +63,6 @@ type ComplexityRoot struct {
 		LinkWetee         func(childComplexity int, url string) int
 		Login             func(childComplexity int, input model.LoginContent, signature string) int
 		LoginAsRoot       func(childComplexity int, input model.LoginContent, signature string) int
-		StartForTest      func(childComplexity int) int
 		StartLocalWetee   func(childComplexity int, imageVersion string) int
 		StartSgxPccs      func(childComplexity int, imageVersion string, apiKey string) int
 	}
@@ -113,7 +112,6 @@ type MutationResolver interface {
 	ClusterUnmortgage(ctx context.Context, id int64) (string, error)
 	ClusterWithdrawal(ctx context.Context, id int64, ty model.WorkType, val int64) (string, error)
 	ClusterStop(ctx context.Context) (string, error)
-	StartForTest(ctx context.Context) (bool, error)
 }
 type QueryResolver interface {
 	WorkLoglist(ctx context.Context, workType string, workID int, page int, size int) (string, error)
@@ -254,13 +252,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.LoginAsRoot(childComplexity, args["input"].(model.LoginContent), args["signature"].(string)), true
-
-	case "Mutation.start_for_test":
-		if e.complexity.Mutation.StartForTest == nil {
-			break
-		}
-
-		return e.complexity.Mutation.StartForTest(childComplexity), true
 
 	case "Mutation.start_local_wetee":
 		if e.complexity.Mutation.StartLocalWetee == nil {
@@ -1886,50 +1877,6 @@ func (ec *executionContext) fieldContext_Mutation_cluster_stop(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_start_for_test(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_start_for_test(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().StartForTest(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_start_for_test(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4905,13 +4852,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "cluster_stop":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_cluster_stop(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "start_for_test":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_start_for_test(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

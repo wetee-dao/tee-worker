@@ -6,11 +6,7 @@ package graph
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
-	subkey "github.com/vedhavyas/go-subkey/v2"
-	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/store"
@@ -18,65 +14,23 @@ import (
 
 // LoginAsRoot is the resolver for the login_as_root field.
 func (r *mutationResolver) LoginAsRoot(ctx context.Context, input model.LoginContent, signature string) (string, error) {
-	panic(fmt.Errorf("not implemented: LoginAsRoot - login_as_root"))
+	rootUser, _ := store.GetRootUser()
+	if rootUser == "" {
+		// 设置根用户
+		err := store.SetRootUser(input.Address)
+		if err != nil {
+			return "", gqlerror.Errorf("Set root user error: " + err.Error())
+		}
+	} else {
+		if rootUser != input.Address {
+			return "", gqlerror.Errorf("Root user already exists")
+		}
+	}
+
+	return login(input, signature)
 }
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, input model.LoginContent, signature string) (string, error) {
 	return login(input, signature)
-}
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *mutationResolver) LoginAndBindRoot(ctx context.Context, input model.LoginContent, signature string) (string, error) {
-	rootUser, _ := store.GetRootUser()
-	if rootUser != "" && rootUser != input.Address {
-		return "", gqlerror.Errorf("Root user already exists")
-	}
-	return login(input, signature)
-}
-func login(input model.LoginContent, signature string) (string, error) {
-	inputbt, _ := json.Marshal(input)
-
-	account := &model.User{
-		Address:   input.Address,
-		Timestamp: input.Timestamp,
-	}
-	bt, _ := json.Marshal(account)
-	str := subkey.EncodeHex(bt)
-
-	// 解析地址
-	_, pubkeyBytes, err := subkey.SS58Decode(input.Address)
-	if err != nil {
-		return "", gqlerror.Errorf("Bad address")
-	}
-
-	// 解析公钥
-	pubkey, err := sr25519.Scheme{}.FromPublicKey(pubkeyBytes)
-	if err != nil {
-		return "", gqlerror.Errorf("Bad sr25519 address")
-	}
-
-	// 解析签名
-	sig, chainerr := subkey.DecodeHex(signature)
-	if !chainerr {
-		return "", gqlerror.Errorf("Bad signature hex")
-	}
-
-	// 验证签名
-	ok := pubkey.Verify([]byte("<Bytes>"+string(inputbt)+"</Bytes>"), sig)
-	if !ok {
-		return "", gqlerror.Errorf("Bad signature")
-	}
-
-	// 设置根用户
-	err = store.SetRootUser(input.Address)
-	if err != nil {
-		return "", gqlerror.Errorf("Set root user error: " + err.Error())
-	}
-	return str + "||" + signature, nil
 }
