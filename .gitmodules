@@ -1,0 +1,3 @@
+[submodule "ext/go-sdk"]
+	path = ext/go-sdk
+	url = https://github.com/wetee-dao/go-sdk

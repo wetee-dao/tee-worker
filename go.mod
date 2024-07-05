@@ -8,7 +8,7 @@ require (
 	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.10
-	github.com/wetee-dao/go-sdk v0.1.1-0.20240629135856-283be1ca8d59
+	github.com/wetee-dao/go-sdk v1.0.0
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4
@@ -129,3 +129,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/wetee-dao/go-sdk v1.0.0 => ./ext/go-client
