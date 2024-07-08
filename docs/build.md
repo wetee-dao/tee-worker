@@ -24,8 +24,8 @@ wget -qO- https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | 
 echo "deb [signed-by=/etc/apt/keyrings/intel-sgx-keyring.asc arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/intel-sgx.list
 sudo apt update
 
-EGO_DEB=ego_1.4.1_amd64_ubuntu-$(lsb_release -rs).deb
-wget https://github.com/edgelesssys/ego/releases/download/v1.4.1/$EGO_DEB
+EGO_DEB=ego_1.5.3_amd64_ubuntu-$(lsb_release -rs).deb
+wget https://github.com/edgelesssys/ego/releases/download/v1.5.3/$EGO_DEB
 sudo apt install ./$EGO_DEB build-essential libssl-dev
 
 sudo mkdir /opt/wetee-worker
