@@ -28,8 +28,4 @@ Dockerfile.cross
 *.swo
 *~
 mint/chain/gen/wetee-meta.json
-<<<<<<< HEAD
 AI/
-=======
-AI/
->>>>>>> co-co
