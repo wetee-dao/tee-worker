@@ -3,7 +3,7 @@ package mint
 import (
 	"testing"
 
-	"github.com/vedhavyas/go-subkey"
+	"github.com/vedhavyas/go-subkey/v2"
 )
 
 func TestAccountToSpace(t *testing.T) {

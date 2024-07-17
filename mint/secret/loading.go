@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
-	"github.com/vedhavyas/go-subkey"
-	"github.com/vedhavyas/go-subkey/sr25519"
+	"github.com/vedhavyas/go-subkey/v2"
+	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"github.com/wetee-dao/go-sdk/gen/types"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
