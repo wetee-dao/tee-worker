@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
 
 	"github.com/edgelesssys/ego/enclave"
@@ -17,6 +18,12 @@ func main() {
 		fmt.Println("GetKey error", err)
 	}
 	fmt.Println("GetKey", k)
-	fmt.Println("xxxx")
+
+	hash := sha256.Sum256([]byte("hello world"))
+	reportBytes, err := enclave.GetRemoteReport(hash[:])
+
+	report, err := enclave.VerifyRemoteReport(reportBytes)
+	fmt.Println(report.UniqueID)
+	fmt.Println(report.ProductID)
 	// k, _, err = enclave.
 }
