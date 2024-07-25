@@ -64,6 +64,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				util.LogWithRed("codec.Decode", err)
 				continue
 			}
+
 			list[cs.WorkId] = ContractStateWrap{
 				BlockHash:     elem.Block.Hex(),
 				ContractState: &cs,

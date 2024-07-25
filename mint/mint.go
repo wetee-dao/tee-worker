@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	chain "github.com/wetee-dao/go-sdk"
+	"github.com/wetee-dao/go-sdk/core"
 	"github.com/wetee-dao/go-sdk/gen/system"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"wetee.app/worker/mint/proof"
@@ -33,7 +33,7 @@ type Minter struct {
 var (
 	MinterIns       *Minter
 	lock            sync.Mutex
-	Signer          *signature.KeyringPair
+	Signer          *core.Signer
 	DefaultChainUrl string = "ws://wetee-node.worker-addon.svc.cluster.local:9944"
 )
 

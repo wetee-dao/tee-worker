@@ -5,15 +5,15 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	"github.com/edgelesssys/ego/enclave"
+	"github.com/wetee-dao/go-sdk/core"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 
 // 获取挖矿密钥
 // GetKey get mint key
-func GetMintKey() (*signature.KeyringPair, error) {
+func GetMintKey() (*core.Signer, error) {
 	key, err := store.GetMintId()
 
 	var mss [32]byte
@@ -38,7 +38,7 @@ func GetMintKey() (*signature.KeyringPair, error) {
 	store.SetMintId(mss[:])
 
 	uri := hex.EncodeToString(mss[:])
-	kr, err := signature.KeyringPairFromSecret(uri, 42)
+	kr, err := core.Sr25519PairFromSecret(uri, 42)
 	if err != nil {
 		return nil, err
 	}

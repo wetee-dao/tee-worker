@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/centrifuge/go-substrate-rpc-client/v4/signature"
 	chain "github.com/wetee-dao/go-sdk"
 
+	"github.com/wetee-dao/go-sdk/core"
 	gtypes "github.com/wetee-dao/go-sdk/gen/types"
 	"github.com/wetee-dao/go-sdk/gen/utility"
 	"github.com/wetee-dao/go-sdk/gen/weteeworker"
@@ -106,7 +106,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 	return &runtimeCall, nil
 }
 
-func SubmitWorkProof(client *chain.ChainClient, signer *signature.KeyringPair, proof []gtypes.RuntimeCall) error {
+func SubmitWorkProof(client *chain.ChainClient, signer *core.Signer, proof []gtypes.RuntimeCall) error {
 	call := utility.MakeBatchCall(proof)
 	return client.SignAndSubmit(signer, call, false)
 }
