@@ -14,8 +14,9 @@ import (
 
 	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/core"
-	"github.com/wetee-dao/go-sdk/gen/system"
-	gtypes "github.com/wetee-dao/go-sdk/gen/types"
+	"github.com/wetee-dao/go-sdk/module"
+	"github.com/wetee-dao/go-sdk/pallet/system"
+	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
@@ -93,7 +94,7 @@ func (m *Minter) StartMint() {
 	// 挖矿开始
 mintStart:
 
-	var worker chain.Worker
+	var worker module.Worker
 
 	// 等待集群开启
 	// Waiting for cluster start
@@ -116,7 +117,7 @@ mintStart:
 
 		// 初始化worker对象
 		// Initialize the worker object
-		worker = chain.Worker{
+		worker = module.Worker{
 			Client: m.ChainClient,
 			Signer: Signer,
 		}

@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	chain "github.com/wetee-dao/go-sdk"
-	gtypes "github.com/wetee-dao/go-sdk/gen/types"
+	"github.com/wetee-dao/go-sdk/module"
+	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -193,7 +193,7 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 	ctx := context.Background()
 
 	if space == "" {
-		user, err := chain.GetAccount(m.ChainClient, workId)
+		user, err := module.GetAccount(m.ChainClient, workId)
 		if err != nil {
 			return err
 		}

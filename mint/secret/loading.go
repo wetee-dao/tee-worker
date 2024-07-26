@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
-	"github.com/wetee-dao/go-sdk/gen/types"
+	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/store"
 )

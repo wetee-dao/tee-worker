@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"github.com/wetee-dao/go-sdk/gen/types"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/wetee-dao/go-sdk/pallet/types"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"

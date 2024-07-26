@@ -3,7 +3,7 @@ package store
 import (
 	"fmt"
 
-	"github.com/wetee-dao/go-sdk/gen/types"
+	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/util"
 )
 

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/nutsdb/nutsdb"
-	"github.com/wetee-dao/go-sdk/gen/types"
+	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/util"
 )
 

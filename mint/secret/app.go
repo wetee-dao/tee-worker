@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
-	chain "github.com/wetee-dao/go-sdk"
+	"github.com/wetee-dao/go-sdk/module"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/store"
 )
@@ -57,7 +57,7 @@ func GetAppInfo(appID string, param *store.LoadParam) (map[string]string, error)
 		return nil, errors.Wrap(err, "VerifyLibOs error")
 	}
 
-	user, err := chain.GetAccount(mint.MinterIns.ChainClient, *wid)
+	user, err := module.GetAccount(mint.MinterIns.ChainClient, *wid)
 	if err != nil {
 		return nil, err
 	}

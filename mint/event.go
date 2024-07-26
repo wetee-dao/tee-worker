@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	chain "github.com/wetee-dao/go-sdk"
-	"github.com/wetee-dao/go-sdk/gen/types"
+	"github.com/wetee-dao/go-sdk/module"
+	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/util"
 )
 
@@ -23,7 +23,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			user := startEvent.AsWorkRuningUser0
 			cid := startEvent.AsWorkRuningClusterId2
 			if cid == clusterId {
-				version, _ := chain.GetVersion(m.ChainClient, workId)
+				version, _ := module.GetVersion(m.ChainClient, workId)
 				// envs, err := m.BuildEnvs(workId)
 				// if err != nil {
 				// 	return err
@@ -34,21 +34,21 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 				}
 
 				if workId.Wtype.IsAPP {
-					appIns := chain.App{
+					appIns := module.App{
 						Client: m.ChainClient,
 					}
 					app, _ := appIns.GetApp(user[:], workId.Id)
 					err = m.CreateApp(&ctx, user[:], workId, app, settings, version)
 					util.LogWithRed("===========================================CreateOrUpdateApp error: ", err)
 				} else if workId.Wtype.IsGPU {
-					gpuIns := chain.GpuApp{
+					gpuIns := module.GpuApp{
 						Client: m.ChainClient,
 					}
 					gpu, _ := gpuIns.GetApp(user[:], workId.Id)
 					err = m.CreateGpuApp(&ctx, user[:], workId, gpu, settings, version)
 					util.LogWithRed("===========================================CreateOrUpdateGpuApp error: ", err)
 				} else {
-					taskIns := chain.Task{
+					taskIns := module.Task{
 						Client: m.ChainClient,
 					}
 					task, _ := taskIns.GetTask(user[:], workId.Id)
@@ -74,8 +74,8 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			user := appEvent.AsWorkUpdatedUser0
 
 			util.LogWithRed("===========================================WorkUpdated: ", workId)
-			version, _ := chain.GetVersion(m.ChainClient, workId)
-			appIns := chain.App{
+			version, _ := module.GetVersion(m.ChainClient, workId)
+			appIns := module.App{
 				Client: m.ChainClient,
 			}
 			app, _ := appIns.GetApp(user[:], workId.Id)
@@ -113,8 +113,8 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			user := appEvent.AsWorkUpdatedUser0
 
 			util.LogWithRed("===========================================WorkUpdated: ", workId)
-			version, _ := chain.GetVersion(m.ChainClient, workId)
-			appIns := chain.GpuApp{
+			version, _ := module.GetVersion(m.ChainClient, workId)
+			appIns := module.GpuApp{
 				Client: m.ChainClient,
 			}
 			app, _ := appIns.GetApp(user[:], workId.Id)

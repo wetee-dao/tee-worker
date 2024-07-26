@@ -1,6 +1,6 @@
 package util
 
-import "github.com/wetee-dao/go-sdk/gen/types"
+import "github.com/wetee-dao/go-sdk/pallet/types"
 
 // work type to string
 func GetWorkTypeStr(work types.WorkId) string {

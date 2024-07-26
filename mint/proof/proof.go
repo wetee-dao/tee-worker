@@ -7,9 +7,9 @@ import (
 	chain "github.com/wetee-dao/go-sdk"
 
 	"github.com/wetee-dao/go-sdk/core"
-	gtypes "github.com/wetee-dao/go-sdk/gen/types"
-	"github.com/wetee-dao/go-sdk/gen/utility"
-	"github.com/wetee-dao/go-sdk/gen/weteeworker"
+	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
+	"github.com/wetee-dao/go-sdk/pallet/utility"
+	"github.com/wetee-dao/go-sdk/pallet/weteeworker"
 	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )

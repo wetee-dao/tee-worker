@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	chain "github.com/wetee-dao/go-sdk"
-	gtypes "github.com/wetee-dao/go-sdk/gen/types"
+	"github.com/wetee-dao/go-sdk/module"
+	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"
@@ -30,7 +30,7 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
-	worker := &chain.Worker{
+	worker := &module.Worker{
 		Client: client,
 		Signer: mint.Signer,
 	}
@@ -80,7 +80,7 @@ func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
-	worker := &chain.Worker{
+	worker := &module.Worker{
 		Client: client,
 		Signer: mint.Signer,
 	}
@@ -105,7 +105,7 @@ func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, id int64) (str
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
-	worker := &chain.Worker{
+	worker := &module.Worker{
 		Client: client,
 		Signer: mint.Signer,
 	}
@@ -131,7 +131,7 @@ func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, id int64, ty m
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
-	worker := &chain.Worker{
+	worker := &module.Worker{
 		Client: client,
 		Signer: mint.Signer,
 	}
@@ -155,7 +155,7 @@ func (r *mutationResolver) ClusterStop(ctx context.Context) (string, error) {
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
-	worker := &chain.Worker{
+	worker := &module.Worker{
 		Client: client,
 		Signer: mint.Signer,
 	}
@@ -202,7 +202,7 @@ func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
 	if client == nil {
 		return nil, gqlerror.Errorf("Cant connect to chain")
 	}
-	worker := &chain.Worker{
+	worker := &module.Worker{
 		Client: client,
 		Signer: mint.Signer,
 	}
