@@ -18,7 +18,7 @@ func IsFileExists(filename string) bool {
 func readFileBase4(filename string) string {
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		LogWithRed("read file error", err)
+		LogError("read file error", err)
 		return ""
 	}
 	return base64.StdEncoding.EncodeToString(data)

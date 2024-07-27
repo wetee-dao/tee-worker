@@ -21,7 +21,7 @@ func GetMintKey() (*core.Signer, error) {
 		// 前16位
 		k, _, err := enclave.GetProductSealKey()
 		if err != nil {
-			util.LogWithRed("GetKey error", err)
+			util.LogError("GetKey error", err)
 			return nil, err
 		}
 		copy(mss[:], k)

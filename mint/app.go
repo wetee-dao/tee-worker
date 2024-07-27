@@ -28,7 +28,7 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 
 	_, err := m.CheckAppStatus(ctx, c)
 	if err != nil {
-		util.LogWithRed("checkPodStatus", err)
+		util.LogError("checkPodStatus", err)
 		return nil, err
 	}
 
@@ -39,7 +39,7 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 		return nil, nil
 	}
 
-	util.LogWithRed("=========================================== WorkProofUpload APP")
+	util.LogError("=========================================== WorkProofUpload APP")
 
 	workId := c.ContractState.WorkId
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
@@ -52,12 +52,12 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 		LabelSelector: "app=" + name,
 	})
 	if err != nil {
-		util.LogWithRed("getPod", err)
+		util.LogError("getPod", err)
 		return nil, err
 	}
 
 	if len(pods.Items) == 0 {
-		util.LogWithRed("pods is empty")
+		util.LogError("pods is empty")
 		return nil, errors.New("pods is empty")
 	}
 	fmt.Println("pods: ", pods.Items[0].Name)
@@ -67,7 +67,7 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-uint64(state.BlockNumber))
 	// 如果获取log和硬件资源使用量失败就不提交相关数据
 	if err != nil {
-		util.LogWithRed("getMetricInfo", err)
+		util.LogError("getMetricInfo", err)
 	}
 
 	return proof.MakeWorkProof(workId, logs, crs, uint64(state.BlockNumber))

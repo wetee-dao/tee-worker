@@ -80,10 +80,10 @@ func main() {
 
 	var conf *rest.Config = nil
 	if len(os.Getenv("KUBERNETES_SERVICE_HOST")) == 0 {
-		util.LogWithRed("Loading", "Load from env")
+		util.LogError("Loading", "Load from env")
 		conf = loadConfig("")
 	} else {
-		util.LogWithRed("Loading", "Load from config")
+		util.LogError("Loading", "Load from config")
 		conf = ctrl.GetConfigOrDie()
 	}
 
@@ -172,7 +172,7 @@ func main() {
 // load config from env or from file
 func loadConfig(context string) *rest.Config {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	util.LogWithRed("LoadingRules", loadingRules)
+	util.LogError("LoadingRules", loadingRules)
 	conf, err := loadConfigWithContext("", loadingRules, context)
 	if err != nil {
 		fmt.Println(err, " **** unable to get kubeconfig")

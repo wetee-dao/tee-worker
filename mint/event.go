@@ -39,21 +39,21 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 					}
 					app, _ := appIns.GetApp(user[:], workId.Id)
 					err = m.CreateApp(&ctx, user[:], workId, app, settings, version)
-					util.LogWithRed("===========================================CreateOrUpdateApp error: ", err)
+					util.LogError("===========================================CreateOrUpdateApp error: ", err)
 				} else if workId.Wtype.IsGPU {
 					gpuIns := module.GpuApp{
 						Client: m.ChainClient,
 					}
 					gpu, _ := gpuIns.GetApp(user[:], workId.Id)
 					err = m.CreateGpuApp(&ctx, user[:], workId, gpu, settings, version)
-					util.LogWithRed("===========================================CreateOrUpdateGpuApp error: ", err)
+					util.LogError("===========================================CreateOrUpdateGpuApp error: ", err)
 				} else {
 					taskIns := module.Task{
 						Client: m.ChainClient,
 					}
 					task, _ := taskIns.GetTask(user[:], workId.Id)
 					err = m.CreateTask(&ctx, user[:], workId, task, settings, version)
-					util.LogWithRed("===========================================CreateOrUpdateTask error: ", err)
+					util.LogError("===========================================CreateOrUpdateTask error: ", err)
 				}
 			}
 		}
@@ -67,13 +67,13 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			workId := appEvent.AsWorkStoppedWorkId1
 
 			err = m.StopApp(workId, "")
-			util.LogWithRed("===========================================StopPod error: ", err)
+			util.LogError("===========================================StopPod error: ", err)
 		}
 		if appEvent.IsWorkUpdated {
 			workId := appEvent.AsWorkUpdatedWorkId1
 			user := appEvent.AsWorkUpdatedUser0
 
-			util.LogWithRed("===========================================WorkUpdated: ", workId)
+			util.LogError("===========================================WorkUpdated: ", workId)
 			version, _ := module.GetVersion(m.ChainClient, workId)
 			appIns := module.App{
 				Client: m.ChainClient,
@@ -81,7 +81,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			app, _ := appIns.GetApp(user[:], workId.Id)
 			envs, _ := m.BuildEnvs(workId)
 			err = m.UpdateApp(&ctx, user[:], workId, app, envs, version)
-			util.LogWithRed("===========================================CreateOrUpdatePod error: ", err)
+			util.LogError("===========================================CreateOrUpdatePod error: ", err)
 		}
 	}
 
@@ -94,7 +94,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			}, Id: taskID}
 
 			err = m.StopApp(workId, "")
-			util.LogWithRed("===========================================StopTask error: ", err)
+			util.LogError("===========================================StopTask error: ", err)
 		}
 	}
 
@@ -106,13 +106,13 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			workId := appEvent.AsWorkStoppedWorkId1
 
 			err = m.StopApp(workId, "")
-			util.LogWithRed("===========================================StopPod error: ", err)
+			util.LogError("===========================================StopPod error: ", err)
 		}
 		if appEvent.IsWorkUpdated {
 			workId := appEvent.AsWorkUpdatedWorkId1
 			user := appEvent.AsWorkUpdatedUser0
 
-			util.LogWithRed("===========================================WorkUpdated: ", workId)
+			util.LogError("===========================================WorkUpdated: ", workId)
 			version, _ := module.GetVersion(m.ChainClient, workId)
 			appIns := module.GpuApp{
 				Client: m.ChainClient,
@@ -120,7 +120,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			app, _ := appIns.GetApp(user[:], workId.Id)
 			envs, _ := m.BuildEnvs(workId)
 			err = m.UpdateGpuApp(&ctx, user[:], workId, app, envs, version)
-			util.LogWithRed("===========================================CreateOrUpdatePod error: ", err)
+			util.LogError("===========================================CreateOrUpdatePod error: ", err)
 		}
 	}
 

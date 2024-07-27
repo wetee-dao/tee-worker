@@ -17,6 +17,6 @@ func main() {
 }
 
 func start() error {
-	util.LogWithRed("mesh-proxy %s", version)
+	util.LogError("mesh-proxy %s", version)
 	return nil
 }

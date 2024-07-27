@@ -5,6 +5,6 @@ import (
 	"time"
 )
 
-func TestLogWithRed(t *testing.T) {
-	LogWithRed("testLog" + time.Now().String())
+func TestLogError(t *testing.T) {
+	LogError("testLog" + time.Now().String())
 }

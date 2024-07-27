@@ -201,7 +201,7 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 	}
 
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-	util.LogWithRed("StopApp: ", name)
+	util.LogError("StopApp: ", name)
 
 	ServiceSpace := m.K8sClient.CoreV1().Services(space)
 	list, err := ServiceSpace.List(ctx, metav1.ListOptions{

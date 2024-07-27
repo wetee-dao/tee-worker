@@ -30,7 +30,7 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 
 	pod, err := m.CheckTaskStatus(ctx, c)
 	if err != nil {
-		util.LogWithRed("checkTaskStatus", err)
+		util.LogError("checkTaskStatus", err)
 		return nil, err
 	}
 
@@ -39,7 +39,7 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 	if pod.Status.Phase != v1.PodSucceeded && pod.Status.Phase != v1.PodFailed {
 		return nil, nil
 	}
-	util.LogWithRed("===========================================WorkProofUpload TASK")
+	util.LogError("===========================================WorkProofUpload TASK")
 	nameSpace := AccountToSpace(c.ContractState.User[:])
 	workId := c.ContractState.WorkId
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
@@ -48,7 +48,7 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 	// Obtain the log and hardware resource usage
 	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, name, uint64(head.Number)-uint64(state.BlockNumber))
 	if err != nil {
-		util.LogWithRed("getMetricInfo", err)
+		util.LogError("getMetricInfo", err)
 		return nil, err
 	}
 

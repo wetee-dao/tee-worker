@@ -154,7 +154,7 @@ mintStart:
 	// Subscribe to block events
 	sub, err := chainAPI.RPC.Chain.SubscribeNewHeads()
 	if err != nil {
-		util.LogWithRed("SubscribeNewHeads", err)
+		util.LogError("SubscribeNewHeads", err)
 		// 失败后等待10秒重新尝试
 		// Wait 10 seconds to try again
 		time.Sleep(time.Second * 10)
@@ -164,14 +164,14 @@ mintStart:
 
 	for {
 		head := <-sub.Chan()
-		util.LogWithRed("Chain is at block: #", fmt.Sprint(head.Number))
+		util.LogError("Chain is at block: #", fmt.Sprint(head.Number))
 		blockHash, _ := chainAPI.RPC.Chain.GetBlockHash(uint64(head.Number))
 
 		// 读取/处理新的区块信息
 		// Read/process new block information
 		events, err := system.GetEvents(chainAPI.RPC.State, blockHash)
 		if err != nil {
-			util.LogWithRed("GetEventsLatest", err)
+			util.LogError("GetEventsLatest", err)
 			continue
 		}
 
@@ -180,7 +180,7 @@ mintStart:
 		for _, event := range events {
 			err := m.DoWithEvent(event, clusterId)
 			if err != nil {
-				util.LogWithRed("DoWithEvent", err)
+				util.LogError("DoWithEvent", err)
 				continue
 			}
 		}
@@ -189,7 +189,7 @@ mintStart:
 		// Get contract list
 		cs, err := m.GetClusterContracts(clusterId, &blockHash)
 		if err != nil {
-			util.LogWithRed("GetClusterContracts", err)
+			util.LogError("GetClusterContracts", err)
 			continue
 		}
 
@@ -199,13 +199,13 @@ mintStart:
 			name := util.GetWorkTypeStr(wid) + "-" + fmt.Sprint(wid.Id)
 			err := m.StopApp(wid, d.NameSpace)
 			if err != nil && !strings.Contains(err.Error(), "not found") {
-				util.LogWithRed("DeleteRuning "+name+" ", err)
+				util.LogError("DeleteRuning "+name+" ", err)
 				return err
 			}
 			return nil
 		})
 		if err != nil {
-			util.LogWithRed("DeleteFormCache", err)
+			util.LogError("DeleteFormCache", err)
 			continue
 		}
 
@@ -213,7 +213,7 @@ mintStart:
 		// Get the charge cycle
 		stage, err := worker.GetStage()
 		if err != nil {
-			util.LogWithRed("GetStage", err)
+			util.LogError("GetStage", err)
 			continue
 		}
 
@@ -230,7 +230,7 @@ mintStart:
 				// If it is APP type, check Pod status, check if it needs to upload work proof
 				call, err := m.DoWithAppState(&ctx, c, stage, head)
 				if err != nil {
-					util.LogWithRed("DoWithAppState", err)
+					util.LogError("DoWithAppState", err)
 				}
 				if call != nil {
 					proofs = append(proofs, *call)
@@ -240,7 +240,7 @@ mintStart:
 				// If it is TASK type, check Pod status, Pod if it is executed, upload logs and results
 				call, err := m.DoWithTaskState(&ctx, c, stage, head)
 				if err != nil {
-					util.LogWithRed("DoWithTaskState", err)
+					util.LogError("DoWithTaskState", err)
 				}
 				if call != nil {
 					proofs = append(proofs, *call)
@@ -248,7 +248,7 @@ mintStart:
 			} else if c.ContractState.WorkId.Wtype.IsGPU {
 				call, err := m.DoWithGpuAppState(&ctx, c, stage, head)
 				if err != nil {
-					util.LogWithRed("DoWithGpuAppState", err)
+					util.LogError("DoWithGpuAppState", err)
 				}
 				if call != nil {
 					proofs = append(proofs, *call)
@@ -261,7 +261,7 @@ mintStart:
 			// Upload work proof
 			err = proof.SubmitWorkProof(client, worker.Signer, proofs)
 			if err != nil {
-				util.LogWithRed("WorkProofUpload", err)
+				util.LogError("WorkProofUpload", err)
 				continue
 			}
 		}
@@ -290,7 +290,7 @@ func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap, deleteFunc func(gty
 		}
 
 		if _, ok := cs[wid]; !ok {
-			util.LogWithRed("DeleteFormCache", fmt.Sprintf("Delete cache %s", name))
+			util.LogError("DeleteFormCache", fmt.Sprintf("Delete cache %s", name))
 			if deleteFunc(wid, cache) == nil {
 				delete(caches, name)
 				deletes = append(deletes, wid)

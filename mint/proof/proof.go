@@ -29,12 +29,12 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 		var bt []byte
 		logHash, bt, err = GetWorkLogHash(logs, BlockNumber)
 		if err != nil {
-			util.LogWithRed("getWorkLogHash", err)
+			util.LogError("getWorkLogHash", err)
 			return nil, err
 		}
 		err = store.AddToList(LogBucket, []byte(LogBucket+name), bt)
 		if err != nil {
-			util.LogWithRed("Addlog", err)
+			util.LogError("Addlog", err)
 			return nil, err
 		}
 	}
@@ -45,12 +45,12 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 		var bt []byte
 		crHash, cr, bt, err = GetWorkCrHash(crs, BlockNumber)
 		if err != nil {
-			util.LogWithRed("getWorkCrHash", err)
+			util.LogError("getWorkCrHash", err)
 			return nil, err
 		}
 		err := store.AddToList(CrBucket, []byte(CrBucket+name), bt)
 		if err != nil {
-			util.LogWithRed("AddCr", err)
+			util.LogError("AddCr", err)
 			return nil, err
 		}
 	}
@@ -70,7 +70,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 	// Get report of work
 	report, err := store.GetWorkDcapReport(wid)
 	if err != nil {
-		util.LogWithRed("GetWorkDcapReport", err)
+		util.LogError("GetWorkDcapReport", err)
 		report = []byte{}
 	}
 

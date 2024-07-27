@@ -61,7 +61,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 		for _, change := range elem.Changes {
 			var cs gtypes.ClusterContractState
 			if err := codec.Decode(change.StorageData, &cs); err != nil {
-				util.LogWithRed("codec.Decode", err)
+				util.LogError("codec.Decode", err)
 				continue
 			}
 
@@ -181,69 +181,69 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 	// 获取 work contract 的状态
 	err = m.GetWorkContracts(workIds, workContractkeys, list, at)
 	if err != nil {
-		util.LogWithRed("GetWorkContracts", err)
+		util.LogError("GetWorkContracts", err)
 		return nil, err
 	}
 
 	// 获取 app 的状态
 	err = m.GetApps(appIds, appKeys, list, at)
 	if err != nil {
-		util.LogWithRed("GetApps", err)
+		util.LogError("GetApps", err)
 		return nil, err
 	}
 
 	err = m.GetGpuApps(gpuAppIds, gpuAppKeys, list, at)
 	if err != nil {
-		util.LogWithRed("GetGpuApps", err)
+		util.LogError("GetGpuApps", err)
 		return nil, err
 	}
 
 	// 获取 task 的状态
 	err = m.GetTasks(taskIds, tasKeys, list, at)
 	if err != nil {
-		util.LogWithRed("GetTasks", err)
+		util.LogError("GetTasks", err)
 		return nil, err
 	}
 
 	// 获取 app 的版本
 	err = m.GetVerions(appIds, appVersions, list, at)
 	if err != nil {
-		util.LogWithRed("GetVerions APP", err)
+		util.LogError("GetVerions APP", err)
 		return nil, err
 	}
 
 	// 获取 task 的版本
 	err = m.GetVerions(taskIds, taskVersions, list, at)
 	if err != nil {
-		util.LogWithRed("GetVerions TASK", err)
+		util.LogError("GetVerions TASK", err)
 		return nil, err
 	}
 
 	// 获取 task 的版本
 	err = m.GetVerions(gpuAppIds, gpuAppVersions, list, at)
 	if err != nil {
-		util.LogWithRed("GetVerions GPU", err)
+		util.LogError("GetVerions GPU", err)
 		return nil, err
 	}
 
 	// 获取 app 的设置
 	err = m.GetSettings(appSettingIds, appSettings, list, at)
 	if err != nil {
-		util.LogWithRed("GetSettings APP", err)
+		util.LogError("GetSettings APP", err)
 		return nil, err
 	}
 
 	// 获取 task 的设置
 	err = m.GetSettings(taskSettingIds, taskSettings, list, at)
 	if err != nil {
-		util.LogWithRed("GetSettings TASK", err)
+		util.LogError("GetSettings TASK", err)
 		return nil, err
 	}
 
 	// 获取 task 的设置
 	err = m.GetSettings(gpuAppSettingIds, gpuAppSettings, list, at)
 	if err != nil {
-		util.LogWithRed("GetSettings GPU", err)
+		util.LogError("GetSettings GPU", err)
 		return nil, err
 	}
 
@@ -264,7 +264,7 @@ func (m *Minter) GetWorkContracts(workId []gtypes.WorkId, wkeys []types.StorageK
 			var workId = workId[IndexOf(wkeys, key)]
 			var wcs gtypes.ContractState
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				util.LogWithRed("codec.Decode", err)
+				util.LogError("codec.Decode", err)
 				continue
 			}
 			d := data[workId]
@@ -291,7 +291,7 @@ func (m *Minter) GetApps(workId []gtypes.WorkId, wkeys []types.StorageKey, data 
 			var workId = workId[IndexOf(wkeys, key)]
 			var wcs gtypes.TeeApp
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				util.LogWithRed("codec.Decode", err)
+				util.LogError("codec.Decode", err)
 				continue
 			}
 			d := data[workId]
@@ -318,7 +318,7 @@ func (m *Minter) GetTasks(workId []gtypes.WorkId, wkeys []types.StorageKey, data
 			var workId = workId[IndexOf(wkeys, key)]
 			var wcs gtypes.TeeTask
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				util.LogWithRed("codec.Decode", err)
+				util.LogError("codec.Decode", err)
 				continue
 			}
 			d := data[workId]
@@ -345,7 +345,7 @@ func (m *Minter) GetGpuApps(workId []gtypes.WorkId, wkeys []types.StorageKey, da
 			var workId = workId[IndexOf(wkeys, key)]
 			var wcs gtypes.GpuApp
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				util.LogWithRed("codec.Decode", err)
+				util.LogError("codec.Decode", err)
 				continue
 			}
 			d := data[workId]
@@ -372,7 +372,7 @@ func (m *Minter) GetVerions(workId []gtypes.WorkId, wkeys []types.StorageKey, da
 			var workId = workId[IndexOf(wkeys, key)]
 			var wcs uint64
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				util.LogWithRed("codec.Decode", err)
+				util.LogError("codec.Decode", err)
 				continue
 			}
 			d := data[workId]
@@ -398,7 +398,7 @@ func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, d
 			var workId = workId[IndexOf(wkeys, key)]
 			var wcs gtypes.Env
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				util.LogWithRed("codec.Decode", err)
+				util.LogError("codec.Decode", err)
 				continue
 			}
 			d := data[workId]
@@ -427,7 +427,7 @@ func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*g
 
 	sets, err := m.ChainClient.QueryDoubleMapAll(pallet, method, workId.Id, at)
 	if err != nil {
-		util.LogWithRed("QueryDoubleMapAll", err)
+		util.LogError("QueryDoubleMapAll", err)
 		return []*gtypes.Env{}, err
 	}
 
@@ -436,7 +436,7 @@ func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*g
 		for _, change := range elem.Changes {
 			var wcs gtypes.Env
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
-				util.LogWithRed("codec.Decode", err)
+				util.LogError("codec.Decode", err)
 				continue
 			}
 			settings = append(settings, &wcs)
