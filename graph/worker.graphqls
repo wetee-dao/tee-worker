@@ -134,4 +134,6 @@ extend type Mutation {
   Stop Cluster
   """
   cluster_stop: String! @AuthCheck(role: ADMIN)
+
+  start_for_test: Boolean!
 }

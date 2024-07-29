@@ -12,12 +12,6 @@ tag=`date "+%Y-%m-%d-%H_%M"`
 
 sudo chmod 777 /etc/rancher/k3s/k3s.yaml
 
-# 清理旧的部署
-make undeploy
-
-make manifests
-make install
-
 # 创建暂时无用的目录
 sudo mkdir -p /var/run/secrets/kubernetes.io/serviceaccount/
 
@@ -34,6 +28,12 @@ make build
 
 # 构建镜像
 make docker-build docker-push IMG=registry.cn-hangzhou.aliyuncs.com/wetee_dao/worker:$tag
+
+# 清理旧的部署
+make undeploy
+
+make manifests
+make install
 
 # 部署镜像
 make deploy IMG=registry.cn-hangzhou.aliyuncs.com/wetee_dao/worker:$tag

@@ -18,7 +18,9 @@ import (
 	"github.com/wetee-dao/go-sdk/pallet/system"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/mint/proof"
+	"wetee.app/worker/peer"
 	"wetee.app/worker/store"
+	"wetee.app/worker/types"
 	"wetee.app/worker/util"
 )
 
@@ -28,13 +30,15 @@ type Minter struct {
 	K8sClient     *kubernetes.Clientset
 	MetricsClient *versioned.Clientset
 	ChainClient   *chain.ChainClient
+	P2Peer        *peer.Peer
+	Signer        *core.Signer
+	PrivateKey    *types.PrivKey
 	HostDomain    string
 }
 
 var (
-	MinterIns       *Minter
 	lock            sync.Mutex
-	Signer          *core.Signer
+	MinterIns       *Minter
 	DefaultChainUrl string = "ws://wetee-node.worker-addon.svc.cluster.local:9944"
 )
 
@@ -63,7 +67,13 @@ func InitCluster(mgr manager.Manager) error {
 	}
 
 	// 获取签名账户
-	Signer, err = GetMintKey()
+	signer, privateKey, err := GetMintKey()
+	if err != nil {
+		return err
+	}
+
+	MinterIns.Signer = signer
+	MinterIns.PrivateKey = privateKey
 	lock.Unlock()
 
 	// 此处不捕获错误，因为如果初始化失败，程序可以继续运行
@@ -89,7 +99,7 @@ func InitChainClient(url string) error {
 // start mint
 // 开始挖矿
 func (m *Minter) StartMint() {
-	fmt.Println("MintKey => ", Signer.Address)
+	fmt.Println("MintKey => ", m.Signer.Address)
 
 	// 挖矿开始
 mintStart:
@@ -119,19 +129,20 @@ mintStart:
 		// Initialize the worker object
 		worker = module.Worker{
 			Client: m.ChainClient,
-			Signer: Signer,
+			Signer: m.Signer,
 		}
 
 		// 获取clusterId
-		clusterId, err := worker.Getk8sClusterAccounts(Signer.PublicKey)
+		clusterId, err := worker.Getk8sClusterAccounts(m.Signer.PublicKey)
 		if err != nil {
 			fmt.Println("ClusterId => clusterId not found, mint not started")
 			time.Sleep(time.Second * 10)
 			continue
 		}
 
-		// 上传dcap根证书
-		err = worker.ClusterProofUpload(clusterId, report, true)
+		// 上传 dcap 证书
+		fmt.Println(report)
+		err = worker.ClusterProofUpload(clusterId, []byte("test"), true)
 		if err != nil {
 			fmt.Println("worker.ClusterProofUpload => ", err)
 			time.Sleep(time.Second * 10)
@@ -146,6 +157,8 @@ mintStart:
 
 	clusterId, _ := store.GetClusterId()
 	fmt.Println("ClusterId => ", clusterId)
+
+	m.StartP2P()
 
 	client := m.ChainClient
 	chainAPI := client.Api

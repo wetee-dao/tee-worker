@@ -10,7 +10,7 @@ func TestGetMintKey(t *testing.T) {
 	store.DBInit("bin/testdb")
 	defer store.DBClose()
 
-	k, err := GetMintKey()
+	k, _, err := GetMintKey()
 	if err != nil {
 		t.Error(err)
 	}

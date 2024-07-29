@@ -123,7 +123,7 @@ func main() {
 		setupLog.Error(err, "unable to start mint")
 		os.Exit(1)
 	}
-	go secret.StartSecretServerInCluster(mint.Signer.Address)
+	go secret.StartSecretServerInCluster(mint.MinterIns.Signer.Address)
 	go mint.MinterIns.StartMint()
 
 	// 开启 http 服务器

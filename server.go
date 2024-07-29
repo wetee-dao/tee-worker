@@ -1,9 +1,9 @@
 package worker
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -14,15 +14,10 @@ import (
 	"wetee.app/worker/util"
 )
 
-const defaultPort = "8880"
-
 // 启动GraphQL服务器
 // StartServer starts the GraphQL server.
 func StartServer() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
+	port := util.GetEnvInt("PORT", 8880)
 
 	router := chi.NewRouter()
 	router.Use(graph.AuthMiddleware())
@@ -43,11 +38,10 @@ func StartServer() {
 	router.Handle("/gql", srv)
 
 	if util.IsFileExists(util.WORK_DIR+"/ser.pem") && util.IsFileExists(util.WORK_DIR+"/ser.key") {
-		log.Printf("connect to https://localhost:%s/ for GraphQL playground", port)
-		// http.ListenAndServe(":"+defaultPort, router)
-		http.ListenAndServeTLS(":"+port, util.WORK_DIR+"/ser.pem", util.WORK_DIR+"/ser.key", router)
+		log.Printf("connect to https://localhost:%s/ for GraphQL playground", fmt.Sprint(port))
+		http.ListenAndServeTLS(":"+fmt.Sprint(port), util.WORK_DIR+"/ser.pem", util.WORK_DIR+"/ser.key", router)
 	} else {
-		log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-		http.ListenAndServe(":"+defaultPort, router)
+		log.Printf("connect to http://localhost:%s/ for GraphQL playground", fmt.Sprint(port))
+		http.ListenAndServe(":"+fmt.Sprint(port), router)
 	}
 }
