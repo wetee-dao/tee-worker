@@ -2,7 +2,7 @@ package mint
 
 import (
 	"context"
-	"encoding/hex"
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 
@@ -41,12 +41,26 @@ func (c *Minter) StartP2P() error {
 		fmt.Println("Get node list error:", err)
 		return err
 	}
+	workersFromChain, err := c.GetWorkerList()
+	if err != nil {
+		fmt.Println("Get worker list error:", err)
+		return err
+	}
 
-	// 获取阈值参数
+	// 获取机密节点和矿工节点
 	nodes := []*types.Node{}
 	for _, n := range nodesFromChain {
+		var gopub ed25519.PublicKey = n.Pubkey[:]
+		pub, _ := types.PubKeyFromStdPubKey(gopub)
 		nodes = append(nodes, &types.Node{
-			ID: hex.EncodeToString(n.Pubkey[:]),
+			ID: pub.String(),
+		})
+	}
+	for _, w := range workersFromChain {
+		var gopub ed25519.PublicKey = w.Account[:]
+		pub, _ := types.PubKeyFromStdPubKey(gopub)
+		nodes = append(nodes, &types.Node{
+			ID: pub.String(),
 		})
 	}
 
@@ -55,17 +69,19 @@ func (c *Minter) StartP2P() error {
 
 	boots := make([]string, 0, len(bootPeers))
 	for _, b := range bootPeers {
+		var gopub ed25519.PublicKey = b.Id[:]
+		pub, _ := types.PubKeyFromStdPubKey(gopub)
 		n := &types.Node{
-			ID: hex.EncodeToString(b.Id[:]),
+			ID: pub.String(),
 		}
 		d := util.GetUrlFromIp1(b.Ip)
-		url := "/ip4/" + d + "/tcp/" + fmt.Sprint(b.Port) + "/p2p/" + string(n.PeerID())
+		url := d + "/tcp/" + fmt.Sprint(b.Port) + "/p2p/" + n.PeerID().String()
 		boots = append(boots, url)
 	}
 
 	// 启动 P2P 网络
 	port := util.GetEnvInt("P2P_PORT", 8881)
-	peer, err := peer.NewP2PNetwork(ctx, c.PrivateKey, boots, uint32(port), uint32(port))
+	peer, err := peer.NewP2PNetwork(ctx, c.PrivateKey, boots, nodes, uint32(port), uint32(port))
 	if err != nil {
 		fmt.Println("Start P2P peer error:", err)
 		return err

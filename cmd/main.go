@@ -37,8 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	server "wetee.app/worker"
 	secretv1 "wetee.app/worker/api/v1"
+	"wetee.app/worker/graph"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/secret"
@@ -127,7 +127,7 @@ func main() {
 	go mint.MinterIns.StartMint()
 
 	// 开启 http 服务器
-	go server.StartServer()
+	go graph.StartServer()
 
 	if err = (&controller.AppReconciler{
 		Client: mgr.GetClient(),

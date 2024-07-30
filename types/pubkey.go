@@ -9,6 +9,7 @@ import (
 
 	libp2pCrypto "github.com/libp2p/go-libp2p/core/crypto"
 	libp2pCryptoPb "github.com/libp2p/go-libp2p/core/crypto/pb"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/group/edwards25519"
 	"go.dedis.ch/kyber/v3/suites"
@@ -36,6 +37,15 @@ func (p *PubKey) String() string {
 		return ""
 	}
 	return hex.EncodeToString(bt)
+}
+
+func (p *PubKey) PeerID() peer.ID {
+	peerID, err := peer.IDFromPublicKey(p)
+	if err != nil {
+		fmt.Println("Node peer.IDFromPublicKey error:", err)
+		return peer.ID("")
+	}
+	return peerID
 }
 
 func (p *PubKey) Byte() ([]byte, error) {

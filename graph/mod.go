@@ -1,4 +1,4 @@
-package worker
+package graph
 
 import (
 	"fmt"
@@ -10,7 +10,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 
-	"wetee.app/worker/graph"
 	"wetee.app/worker/util"
 )
 
@@ -19,8 +18,13 @@ import (
 func StartServer() {
 	port := util.GetEnvInt("PORT", 8880)
 
+	// 创建路由
 	router := chi.NewRouter()
-	router.Use(graph.AuthMiddleware())
+
+	// 添加认证中间件
+	router.Use(AuthMiddleware())
+
+	// 添加跨域中间件
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -30,18 +34,21 @@ func StartServer() {
 		MaxAge:           300,
 	}))
 
+	// graphql playground
 	router.Handle("/", playground.Handler("Wetee-Worker", "/gql"))
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
-		Resolvers:  &graph.Resolver{},
-		Directives: graph.NewDirectiveRoot(),
+	srv := handler.NewDefaultServer(NewExecutableSchema(Config{
+		Resolvers:  &Resolver{},
+		Directives: NewDirectiveRoot(),
 	}))
+
+	// main graphql
 	router.Handle("/gql", srv)
 
 	if util.IsFileExists(util.WORK_DIR+"/ser.pem") && util.IsFileExists(util.WORK_DIR+"/ser.key") {
-		log.Printf("connect to https://localhost:%s/ for GraphQL playground", fmt.Sprint(port))
+		log.Printf("connect to https://0.0.0.0:%s/ for GraphQL playground", fmt.Sprint(port))
 		http.ListenAndServeTLS(":"+fmt.Sprint(port), util.WORK_DIR+"/ser.pem", util.WORK_DIR+"/ser.key", router)
 	} else {
-		log.Printf("connect to http://localhost:%s/ for GraphQL playground", fmt.Sprint(port))
+		log.Printf("connect to http://0.0.0.0:%s/ for GraphQL playground", fmt.Sprint(port))
 		http.ListenAndServe(":"+fmt.Sprint(port), router)
 	}
 }

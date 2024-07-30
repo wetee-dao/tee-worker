@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 )
@@ -12,15 +11,15 @@ type Node struct {
 }
 
 func (n *Node) PeerID() peer.ID {
-	pk, err := PublicKeyFromHex(n.ID)
+	pk, err := PublicKeyFromLibp2pHex(n.ID)
 	if err != nil {
 		fmt.Println("Node types.PublicKeyFromHex error:", err)
-		os.Exit(1)
+		return peer.ID("")
 	}
 	peerID, err := peer.IDFromPublicKey(pk)
 	if err != nil {
 		fmt.Println("Node peer.IDFromPublicKey error:", err)
-		os.Exit(1)
+		return peer.ID("")
 	}
 	return peer.ID(peerID)
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,12 +28,25 @@ import (
 )
 
 // NewP2PNetwork 创建一个新的 P2P 网络实例。
-func NewP2PNetwork(ctx context.Context, priv *types.PrivKey, boots []string, tcp, udp uint32) (*Peer, error) {
+func NewP2PNetwork(ctx context.Context, priv *types.PrivKey, boots []string, nodes []*types.Node, tcp, udp uint32) (*Peer, error) {
 	var idht *dht.IpfsDHT
 	var dhtOptions []dht.Option
-	if len(boots) == 0 {
+
+	// 判断是否是种子节点
+	var peerId = priv.GetPublic().PeerID()
+	isBoot := false
+	for _, b := range boots {
+		if strings.Index(b, peerId.String()) > -1 {
+			isBoot = true
+		}
+	}
+	if isBoot {
 		dhtOptions = append(dhtOptions, dht.Mode(dht.ModeServer))
 	}
+
+	// 创建连接筛选器
+	gater := newConnectionGater(nodes)
+	dhtOptions = append(dhtOptions, dht.RoutingTableFilter(gater.chainRoutingTableFilter))
 	dhtOptions = append(dhtOptions, dht.ProtocolPrefix("/wetee"))
 
 	// 创建连接管理器
@@ -93,6 +107,7 @@ func NewP2PNetwork(ctx context.Context, priv *types.PrivKey, boots []string, tcp
 		pubsub:    gossipSub,
 		topics:    make(map[string]*pubsub.Topic),
 		bootPeers: bootPeers,
+		gater:     gater,
 	}
 
 	return peer, nil
@@ -107,6 +122,7 @@ type Peer struct {
 	topicsLock  sync.Mutex
 	bootPeers   map[peer.ID]peer.AddrInfo
 	reonnecting sync.Map
+	gater       *ChainConnectionGater
 }
 
 func (p *Peer) Send(ctx context.Context, node *types.Node, pid string, message *types.Message) error {
