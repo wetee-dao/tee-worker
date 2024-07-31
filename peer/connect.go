@@ -132,7 +132,6 @@ func (p *Peer) Discover(ctx context.Context) error {
 		return fmt.Errorf("Find peers error: %w", err)
 	}
 
-	defer fmt.Println("Peer discovery finished...")
 	for peer := range peerChan {
 		if peer.ID == p.ID() {
 			continue

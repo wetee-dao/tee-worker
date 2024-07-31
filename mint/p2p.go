@@ -33,8 +33,6 @@ func (c *Minter) StartP2P() error {
 		return errors.New("No boot peers found")
 	}
 
-	// 检查节点代码是否和 wetee 上要求的版本一致
-
 	// 获取节点列表
 	nodesFromChain, err := c.GetNodeList()
 	if err != nil {
@@ -53,7 +51,8 @@ func (c *Minter) StartP2P() error {
 		var gopub ed25519.PublicKey = n.Pubkey[:]
 		pub, _ := types.PubKeyFromStdPubKey(gopub)
 		nodes = append(nodes, &types.Node{
-			ID: pub.String(),
+			ID:   pub.String(),
+			Type: 1,
 		})
 	}
 	for _, w := range workersFromChain {

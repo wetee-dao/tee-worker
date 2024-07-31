@@ -152,13 +152,20 @@ mintStart:
 		// 保存clusterId
 		store.SetClusterId(clusterId)
 
+		// 启动p2p
+		// Start p2p
+		err = m.StartP2P()
+		if err != nil {
+			fmt.Println("worker.ClusterProofUpload => ", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
+
 		break
 	}
 
 	clusterId, _ := store.GetClusterId()
 	fmt.Println("ClusterId => ", clusterId)
-
-	m.StartP2P()
 
 	client := m.ChainClient
 	chainAPI := client.Api
@@ -179,6 +186,13 @@ mintStart:
 		head := <-sub.Chan()
 		util.LogError("Chain is at block: #", fmt.Sprint(head.Number))
 		blockHash, _ := chainAPI.RPC.Chain.GetBlockHash(uint64(head.Number))
+
+		// P2P 节点发现 10个区块刷新一次
+		// P2P node discovery
+		if uint64(head.Number)%10 == 0 {
+			m.P2Peer.Discover(context.Background())
+			fmt.Println("Peer len:", len(m.P2Peer.Network().Peers()))
+		}
 
 		// 读取/处理新的区块信息
 		// Read/process new block information

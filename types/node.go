@@ -7,7 +7,8 @@ import (
 )
 
 type Node struct {
-	ID string `json:"id"`
+	ID   string `json:"id"`
+	Type uint8  `json:"type"` // 0: worker, 1: dsecret
 }
 
 func (n *Node) PeerID() peer.ID {
