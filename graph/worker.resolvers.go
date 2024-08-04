@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
-	"github.com/vedhavyas/go-subkey/v2"
+	subkey "github.com/vedhavyas/go-subkey/v2"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/wetee-dao/go-sdk/core"
 	"github.com/wetee-dao/go-sdk/module"
