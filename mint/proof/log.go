@@ -8,7 +8,7 @@ import (
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"golang.org/x/crypto/blake2b"
 
-	"wetee.app/worker/store"
+	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
 

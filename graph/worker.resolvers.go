@@ -24,9 +24,9 @@ import (
 	"github.com/wetee-dao/go-sdk/pallet/weteedsecret"
 	"github.com/wetee-dao/go-sdk/pallet/weteeworker"
 	"wetee.app/worker/graph/model"
+	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"
-	"wetee.app/worker/store"
 	"wetee.app/worker/util"
 )
 

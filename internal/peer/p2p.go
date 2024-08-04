@@ -23,7 +23,7 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/security/noise"
 	libp2ptls "github.com/libp2p/go-libp2p/p2p/security/tls"
 
-	"wetee.app/worker/types"
+	types "wetee.app/worker/type"
 	"wetee.app/worker/util"
 )
 

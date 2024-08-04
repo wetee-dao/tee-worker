@@ -8,8 +8,8 @@ import (
 
 	"github.com/wetee-dao/go-sdk/core"
 	"go.dedis.ch/kyber/v3/suites"
-	"wetee.app/worker/store"
-	"wetee.app/worker/types"
+	"wetee.app/worker/internal/store"
+	types "wetee.app/worker/type"
 )
 
 // 获取挖矿密钥

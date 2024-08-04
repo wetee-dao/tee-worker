@@ -17,10 +17,10 @@ import (
 	"github.com/wetee-dao/go-sdk/module"
 	"github.com/wetee-dao/go-sdk/pallet/system"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/worker/internal/peer"
+	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint/proof"
-	"wetee.app/worker/peer"
-	"wetee.app/worker/store"
-	"wetee.app/worker/types"
+	types "wetee.app/worker/type"
 	"wetee.app/worker/util"
 )
 

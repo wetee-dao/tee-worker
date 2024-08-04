@@ -10,7 +10,7 @@ import (
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"github.com/wetee-dao/go-sdk/pallet/utility"
 	"github.com/wetee-dao/go-sdk/pallet/weteeworker"
-	"wetee.app/worker/store"
+	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
 

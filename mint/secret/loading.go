@@ -12,8 +12,8 @@ import (
 	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint/proof"
-	"wetee.app/worker/store"
 )
 
 // 加载应用加密文件，加密环境变量

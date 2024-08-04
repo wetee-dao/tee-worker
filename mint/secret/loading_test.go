@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
-	"wetee.app/worker/store"
+	"wetee.app/worker/internal/store"
 
 	"github.com/wetee-dao/go-sdk/pallet/types"
 )

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"wetee.app/worker/peer"
-	"wetee.app/worker/types"
+	"wetee.app/worker/internal/peer"
+	types "wetee.app/worker/type"
 	"wetee.app/worker/util"
 )
 

@@ -8,7 +8,7 @@ import (
 	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"wetee.app/worker/graph/model"
-	"wetee.app/worker/store"
+	"wetee.app/worker/internal/store"
 )
 
 func TestDecodeToken(t *testing.T) {

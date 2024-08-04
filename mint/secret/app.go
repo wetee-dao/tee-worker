@@ -9,8 +9,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/go-sdk/module"
+	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint"
-	"wetee.app/worker/store"
 )
 
 // load app info

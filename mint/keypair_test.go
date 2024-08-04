@@ -3,7 +3,7 @@ package mint
 import (
 	"testing"
 
-	"wetee.app/worker/store"
+	"wetee.app/worker/internal/store"
 )
 
 func TestGetMintKey(t *testing.T) {

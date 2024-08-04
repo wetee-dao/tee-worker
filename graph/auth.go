@@ -14,7 +14,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
 	"wetee.app/worker/graph/model"
-	"wetee.app/worker/store"
+	"wetee.app/worker/internal/store"
 )
 
 var (
