@@ -4,10 +4,12 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"
 )
 
@@ -16,15 +18,18 @@ import (
 func StartSecretServerInCluster(addr string) {
 	router := chi.NewRouter()
 
-	// Get root dcap report
-	cert, priv, report, _ := proof.GetRemoteReport(addr)
-
-	// Get root dcap report
 	router.Get("/report", func(w http.ResponseWriter, r *http.Request) {
+		minter, _, _ := mint.GetMintKey()
+
+		// Get root dcap report
+		report, t, _ := proof.GetRemoteReport(minter)
 		resp := map[string]string{
-			"report": hex.EncodeToString(report),
+			"time":    fmt.Sprint(t),
+			"report":  hex.EncodeToString(report),
+			"address": minter.Address,
 		}
 
+		// Return report
 		bt, _ := json.Marshal(resp)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
@@ -34,6 +39,8 @@ func StartSecretServerInCluster(addr string) {
 	router.Post("/appInfo/{AppID}", AppInfoHandler)
 	router.Post("/appLoader/{AppID}", LoadingHandler)
 
+	// TODO
+	cert, priv := proof.CreateCertificate(addr)
 	tlsCfg := tls.Config{
 		Certificates: []tls.Certificate{
 			{

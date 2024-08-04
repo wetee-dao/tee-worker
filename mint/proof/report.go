@@ -1,21 +1,25 @@
 package proof
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"math/big"
 	"time"
 
 	"github.com/edgelesssys/ego/enclave"
+	"github.com/wetee-dao/go-sdk/core"
+	"wetee.app/worker/util"
 )
 
 var (
 	// report: 远程报告
 	Report []byte
+	// lastReport: 上次报告时间戳
+	LastReport int64
 	// cert: 证书
 	SslCert []byte
 	// priv: 私钥
@@ -25,17 +29,22 @@ var (
 // 获取远程报告
 // GetRemoteReport get remote report
 // return: cert, priv, report, err
-func GetRemoteReport(addr string) ([]byte, crypto.PrivateKey, []byte, error) {
-	if Report != nil {
-		return SslCert, SslPriv, Report, nil
+func GetRemoteReport(minter *core.Signer) ([]byte, int64, error) {
+	timestamp := time.Now().Unix()
+	if Report != nil && LastReport+30 > timestamp {
+		return Report, LastReport, nil
 	}
 
-	SslCert, SslPriv = CreateCertificate(addr)
-	hash := sha256.Sum256(SslCert)
+	var buf bytes.Buffer
+	buf.Write(util.Int64ToBytes(timestamp))
+	buf.Write(minter.PublicKey)
+	sig, err := minter.Sign(buf.Bytes())
+	if err != nil {
+		return nil, 0, err
+	}
 
-	var err error
-	Report, err = enclave.GetRemoteReport(hash[:])
-	return SslCert, SslPriv, Report, err
+	Report, err = enclave.GetRemoteReport(sig)
+	return Report, timestamp, err
 }
 
 // 创建证书

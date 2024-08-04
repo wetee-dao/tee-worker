@@ -109,8 +109,8 @@ mintStart:
 	// 等待集群开启
 	// Waiting for cluster start
 	for {
-		// 获取dcap根证书
-		_, _, report, err := proof.GetRemoteReport("")
+		// 获取dcap根证书 TODO add time to check
+		report, _, err := proof.GetRemoteReport(m.Signer)
 		if err != nil {
 			fmt.Println("GetRootDcapReport => ", err)
 			time.Sleep(time.Second * 10)
@@ -140,8 +140,8 @@ mintStart:
 			continue
 		}
 
-		// 上传 dcap 证书
-		fmt.Println(report)
+		// 上传 dcap 证书 //TODO
+		fmt.Println(len(report))
 		err = worker.ClusterProofUpload(clusterId, []byte("test"), true)
 		if err != nil {
 			fmt.Println("worker.ClusterProofUpload => ", err)

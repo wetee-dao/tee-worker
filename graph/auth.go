@@ -38,6 +38,7 @@ func AuthCheck(ctx context.Context, obj interface{}, next graphql.Resolver, role
 		return
 	}
 
+	// TODO
 	if user.Timestamp+360000 < time.Now().Unix() {
 		fmt.Println("Login expired, please log in again.")
 		// err = gqlerror.Errorf("Login expired, please log in again.")
@@ -129,7 +130,7 @@ func decodeToken(tokenStr string) *model.User {
 	}
 	inputbt, _ := json.Marshal(uinput)
 
-	// 验证签名
+	// 验证签名 TODO
 	ok := pubkey.Verify([]byte("<Bytes>"+string(inputbt)+"</Bytes>"), sig)
 	if !ok {
 		fmt.Println("Verify error")
@@ -167,7 +168,7 @@ func login(input model.LoginContent, signature string) (string, error) {
 		return "", gqlerror.Errorf("Bad signature hex")
 	}
 
-	// 验证签名
+	// 验证签名 TODO
 	ok := pubkey.Verify([]byte("<Bytes>"+string(inputbt)+"</Bytes>"), sig)
 	if !ok {
 		// return "", gqlerror.Errorf("Bad signature")
