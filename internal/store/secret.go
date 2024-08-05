@@ -9,19 +9,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nutsdb/nutsdb"
 	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/util"
 )
 
 const SecretBucket = "secret"
 
-type LoadParam struct {
-	Address   string
-	Time      string
-	Signature string
-	Cert      []byte
-	Report    []byte
+type TeeParam struct {
+	Address string
+	Time    int64
+	Data    []byte
+	Report  []byte
 }
 
 type Secrets struct {
@@ -101,50 +99,50 @@ func GetSecrets(id types.WorkId) (*Secrets, error) {
 	return s, nil
 }
 
-func GetSetAppSignerAddress(id types.WorkId, address string) (string, error) {
-	key := []byte(util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id) + "-" + "signer")
-	val := []byte(address)
+// func GetSetAppSignerAddress(id types.WorkId, address string) (string, error) {
+// 	key := []byte(util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id) + "-" + "signer")
+// 	val := []byte(address)
 
-	// 加密数据
-	val, errr := SealWithProductKey(val, nil)
-	if errr != nil {
-		return "", errr
-	}
+// 	// 加密数据
+// 	val, errr := SealWithProductKey(val, nil)
+// 	if errr != nil {
+// 		return "", errr
+// 	}
 
-	var data []byte = []byte{}
-	err := DB.Update(
-		func(tx *nutsdb.Tx) error {
-			// 检查是否存在bucket
-			if !tx.ExistBucket(nutsdb.DataStructureBTree, SecretBucket) {
-				if err := tx.NewBucket(nutsdb.DataStructureBTree, SecretBucket); err != nil {
-					return err
-				}
-				tx.SubmitBucket()
-			}
+// 	var data []byte = []byte{}
+// 	err := DB.Update(
+// 		func(tx *nutsdb.Tx) error {
+// 			// 检查是否存在bucket
+// 			if !tx.ExistBucket(nutsdb.DataStructureBTree, SecretBucket) {
+// 				if err := tx.NewBucket(nutsdb.DataStructureBTree, SecretBucket); err != nil {
+// 					return err
+// 				}
+// 				tx.SubmitBucket()
+// 			}
 
-			// 如果不存在则写入数据
-			err := tx.PutIfNotExists(SecretBucket, key, val, 0)
-			if err != nil {
-				return err
-			}
+// 			// 如果不存在则写入数据
+// 			err := tx.PutIfNotExists(SecretBucket, key, val, 0)
+// 			if err != nil {
+// 				return err
+// 			}
 
-			// 获取数据
-			val, err := tx.Get(SecretBucket, key)
-			if err != nil {
-				return err
-			}
+// 			// 获取数据
+// 			val, err := tx.Get(SecretBucket, key)
+// 			if err != nil {
+// 				return err
+// 			}
 
-			// 解析数据
-			val, err = Unseal(val, nil)
-			if err != nil {
-				return err
-			}
-			data = val
-			return nil
-		},
-	)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
+// 			// 解析数据
+// 			val, err = Unseal(val, nil)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			data = val
+// 			return nil
+// 		},
+// 	)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return string(data), nil
+// }

@@ -2,13 +2,12 @@ package secret
 
 import (
 	"crypto/tls"
-	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"
 )
@@ -23,10 +22,11 @@ func StartSecretServerInCluster(addr string) {
 
 		// Get root dcap report
 		report, t, _ := proof.GetRemoteReport(minter)
-		resp := map[string]string{
-			"time":    fmt.Sprint(t),
-			"report":  hex.EncodeToString(report),
-			"address": minter.Address,
+		resp := store.TeeParam{
+			Time:    t,
+			Report:  report,
+			Address: minter.Address,
+			Data:    nil,
 		}
 
 		// Return report

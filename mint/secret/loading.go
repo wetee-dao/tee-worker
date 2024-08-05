@@ -1,16 +1,14 @@
 package secret
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 
+	"github.com/edgelesssys/ego/attestation"
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
-	"github.com/vedhavyas/go-subkey/v2"
-	"github.com/vedhavyas/go-subkey/v2/sr25519"
 	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint/proof"
@@ -32,7 +30,7 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 解析请求数据
-	param := &store.LoadParam{}
+	param := &store.TeeParam{}
 	err = json.Unmarshal(bodyBytes, param)
 	if err != nil {
 		w.WriteHeader(500)
@@ -56,23 +54,20 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 
 // 加载应用加密文件，加密环境变量
 // load app secret file and env
-func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
-	wid, err := VerifyLibOs(appID, param)
-	if err != nil {
-		return nil, errors.Wrap(err, "VerifyLibOs error")
-	}
-	// 验证地址
-	address, err := store.GetSetAppSignerAddress(*wid, param.Address)
-	if err != nil || address != param.Address {
-		// return nil, errors.New("VerifyAddress error")
-	}
-
-	_, err = proof.VerifyReportProof(param.Report, nil, nil)
+func loading(appID string, param *store.TeeParam) (*store.Secrets, error) {
+	// 验证报告是否合理
+	report, err := proof.VerifyReportFromTeeParam(param)
 	if err != nil {
 		return nil, errors.Wrap(err, "VerifyLocalReport error")
 	}
 
-	// 存入Work DCAP信息
+	// 验证 libos 完整性信息
+	wid, err := VerifyLibOs(appID, report)
+	if err != nil {
+		return nil, errors.Wrap(err, "VerifyLibOs error")
+	}
+
+	// 存入 Work DCAP 信息
 	err = store.SetWorkDcapReport(*wid, param.Report)
 	if err != nil {
 		return nil, errors.Wrap(err, "DCAP Report set error")
@@ -87,36 +82,12 @@ func loading(appID string, param *store.LoadParam) (*store.Secrets, error) {
 	return s, nil
 }
 
-func VerifyLibOs(appID string, param *store.LoadParam) (*types.WorkId, error) {
+func VerifyLibOs(appID string, report *attestation.Report) (*types.WorkId, error) {
 	wid, err := store.UnSealAppID(appID)
 	if err != nil {
 		return nil, errors.Wrap(err, "AppID error")
 	}
 
-	// 验证消息
-	// 解析地址
-	_, pubkeyBytes, err := subkey.SS58Decode(param.Address)
-	if err != nil {
-		return nil, errors.Wrap(err, "Address decode error")
-	}
-
-	// 解析公钥
-	pubkey, err := sr25519.Scheme{}.FromPublicKey(pubkeyBytes)
-	if err != nil {
-		return nil, errors.Wrap(err, "Pubkey error")
-	}
-
-	// 解析 hex 签名
-	sig, err := hex.DecodeString(param.Signature)
-	if err != nil {
-		return nil, errors.Wrap(err, "Signature decode error")
-	}
-
-	// 验证签名
-	ok := pubkey.Verify([]byte(param.Time), sig)
-	if !ok {
-		return nil, errors.New("Signature error")
-	}
-
+	//TODO 验证程序的版本和链上程序的版本是否一样
 	return &wid, nil
 }

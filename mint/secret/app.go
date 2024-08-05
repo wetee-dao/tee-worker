@@ -29,7 +29,7 @@ func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 解析请求数据
-	param := &store.LoadParam{}
+	param := &store.TeeParam{}
 	err = json.Unmarshal(bodyBytes, param)
 	if err != nil {
 		w.WriteHeader(500)
@@ -37,6 +37,7 @@ func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 获取数据
 	s, err := GetAppInfo(appID, param)
 	if err != nil {
 		w.WriteHeader(500)
@@ -51,8 +52,9 @@ func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 // 获取应用消息
 // get app info
-func GetAppInfo(appID string, param *store.LoadParam) (map[string]string, error) {
-	wid, err := VerifyLibOs(appID, param)
+func GetAppInfo(appID string, param *store.TeeParam) (map[string]string, error) {
+	// 验证 report
+	wid, err := VerifyLibOs(appID, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "VerifyLibOs error")
 	}

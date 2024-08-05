@@ -1,14 +1,21 @@
 package proof
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/edgelesssys/ego/attestation"
 	"github.com/edgelesssys/ego/attestation/tcbstatus"
 	"github.com/edgelesssys/ego/enclave"
+	"github.com/vedhavyas/go-subkey/v2"
+	"github.com/vedhavyas/go-subkey/v2/ed25519"
+	"wetee.app/worker/internal/store"
+	"wetee.app/worker/util"
 )
 
-func VerifyReportProof(reportBytes, certBytes, signer []byte) (*attestation.Report, error) {
+func VerifyReportProof(reportBytes, msgBytes, signer []byte) (*attestation.Report, error) {
 	report, err := enclave.VerifyRemoteReport(reportBytes)
 	if err == attestation.ErrTCBLevelInvalid {
 		fmt.Printf("Warning: TCB level is invalid: %v\n%v\n", report.TCBStatus, tcbstatus.Explain(report.TCBStatus))
@@ -17,25 +24,45 @@ func VerifyReportProof(reportBytes, certBytes, signer []byte) (*attestation.Repo
 		return nil, err
 	}
 
-	// hash := sha256.Sum256(certBytes)
-	// if !bytes.Equal(report.Data[:len(hash)], hash[:]) {
-	// 	return nil, errors.New("report data does not match the certificate's hash")
-	// }
+	sig := report.Data
+	pubkey, err := ed25519.Scheme{}.FromPublicKey(signer)
+	if err != nil {
+		return nil, err
+	}
 
-	// You can either verify the UniqueID or the tuple (SignerID, ProductID, SecurityVersion, Debug).
+	if !pubkey.Verify(msgBytes, sig) {
+		return nil, errors.New("invalid sgx report")
+	}
 
-	fmt.Println("report.SecurityVersion", report.SecurityVersion)
-	// if report.SecurityVersion < 2 {
-	// 	return nil, errors.New("invalid security version")
-	// }
-	// if binary.LittleEndian.Uint16(report.ProductID) != 1234 {
-	// 	return nil, errors.New("invalid product")
-	// }
-	// if !bytes.Equal(report.SignerID, signer) {
-	// 	return nil, errors.New("invalid signer")
-	// }
-
-	// For production, you must also verify that report.Debug == false
+	if report.Debug {
+		return nil, errors.New("debug mode is not allowed")
+	}
 
 	return &report, nil
+}
+
+func VerifyReportFromTeeParam(workerReport *store.TeeParam) (*attestation.Report, error) {
+	// decode time
+	timestamp := workerReport.Time
+
+	// 检查时间戳，超过 30s 签名过期
+	if timestamp+30 < time.Now().Unix() {
+		return nil, errors.New("Report expired")
+	}
+
+	// decode report
+	report := workerReport.Report
+
+	// decode address
+	_, signer, err := subkey.SS58Decode(workerReport.Address)
+	if err != nil {
+		return nil, errors.New("VerifyReportFromTeeParam: SS58 decode")
+	}
+
+	// 构建验证数据
+	var buf bytes.Buffer
+	buf.Write(util.Int64ToBytes(timestamp))
+	buf.Write(signer)
+
+	return VerifyReportProof(report, buf.Bytes(), signer)
 }

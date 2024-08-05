@@ -13,7 +13,7 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/wetee-dao/go-sdk/pallet/types"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"
@@ -108,6 +108,7 @@ func (r *queryResolver) AttestationReportVerify(ctx context.Context, report stri
 	if err != nil {
 		return false, gqlerror.Errorf("HexDecodeString:" + err.Error())
 	}
+
 	_, err = proof.VerifyReportProof(bt, nil, nil)
 	if err != nil {
 		return false, gqlerror.Errorf("VerifyLocalReport error:" + err.Error())

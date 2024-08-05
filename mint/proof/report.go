@@ -28,7 +28,7 @@ var (
 
 // 获取远程报告
 // GetRemoteReport get remote report
-// return: cert, priv, report, err
+// return: report, time, err
 func GetRemoteReport(minter *core.Signer) ([]byte, int64, error) {
 	timestamp := time.Now().Unix()
 	if Report != nil && LastReport+30 > timestamp {
@@ -43,8 +43,15 @@ func GetRemoteReport(minter *core.Signer) ([]byte, int64, error) {
 		return nil, 0, err
 	}
 
-	Report, err = enclave.GetRemoteReport(sig)
-	return Report, timestamp, err
+	// 获取远程报告
+	report, err := enclave.GetRemoteReport(sig)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	LastReport = timestamp
+	Report = report
+	return report, timestamp, nil
 }
 
 // 创建证书
