@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"
+	wtypes "wetee.app/worker/type"
 )
 
 // 启动InCluster服务器
@@ -22,7 +22,7 @@ func StartSecretServerInCluster(addr string) {
 
 		// Get root dcap report
 		report, t, _ := proof.GetRemoteReport(minter)
-		resp := store.TeeParam{
+		resp := wtypes.TeeParam{
 			Time:    t,
 			Report:  report,
 			Address: minter.Address,

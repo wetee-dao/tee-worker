@@ -12,6 +12,7 @@ import (
 	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint/proof"
+	wtypes "wetee.app/worker/type"
 )
 
 // 加载应用加密文件，加密环境变量
@@ -30,7 +31,7 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 解析请求数据
-	param := &store.TeeParam{}
+	param := &wtypes.TeeParam{}
 	err = json.Unmarshal(bodyBytes, param)
 	if err != nil {
 		w.WriteHeader(500)
@@ -54,7 +55,7 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 
 // 加载应用加密文件，加密环境变量
 // load app secret file and env
-func loading(appID string, param *store.TeeParam) (*store.Secrets, error) {
+func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
 	// 验证报告是否合理
 	report, err := proof.VerifyReportFromTeeParam(param)
 	if err != nil {

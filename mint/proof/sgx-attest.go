@@ -11,26 +11,39 @@ import (
 	"github.com/edgelesssys/ego/enclave"
 	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/ed25519"
-	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
+
+	wtypes "wetee.app/worker/type"
 )
 
-func VerifyReportProof(reportBytes, msgBytes, signer []byte) (*attestation.Report, error) {
+func VerifyReportProof(reportBytes, msgBytes, signer []byte, timestamp int64) (*attestation.Report, error) {
+	// 检查时间戳，超过 30s 签名过期
+	if timestamp+30 < time.Now().Unix() {
+		return nil, errors.New("report expired")
+	}
+
 	report, err := enclave.VerifyRemoteReport(reportBytes)
 	if err == attestation.ErrTCBLevelInvalid {
 		fmt.Printf("Warning: TCB level is invalid: %v\n%v\n", report.TCBStatus, tcbstatus.Explain(report.TCBStatus))
-		fmt.Println("We'll ignore this issue in this sample. For an app that should run in production, you must decide which of the different TCBStatus values are acceptable for you to continue.")
 	} else if err != nil {
 		return nil, err
 	}
 
-	sig := report.Data
 	pubkey, err := ed25519.Scheme{}.FromPublicKey(signer)
 	if err != nil {
 		return nil, err
 	}
 
-	if !pubkey.Verify(msgBytes, sig) {
+	var buf bytes.Buffer
+	buf.Write(util.Int64ToBytes(timestamp))
+	buf.Write(signer)
+	if len(msgBytes) > 0 {
+		buf.Write(msgBytes)
+	}
+
+	sig := report.Data
+
+	if !pubkey.Verify(buf.Bytes(), sig) {
 		return nil, errors.New("invalid sgx report")
 	}
 
@@ -41,28 +54,11 @@ func VerifyReportProof(reportBytes, msgBytes, signer []byte) (*attestation.Repor
 	return &report, nil
 }
 
-func VerifyReportFromTeeParam(workerReport *store.TeeParam) (*attestation.Report, error) {
-	// decode time
-	timestamp := workerReport.Time
-
-	// 检查时间戳，超过 30s 签名过期
-	if timestamp+30 < time.Now().Unix() {
-		return nil, errors.New("Report expired")
-	}
-
-	// decode report
-	report := workerReport.Report
-
-	// decode address
+func VerifyReportFromTeeParam(workerReport *wtypes.TeeParam) (*attestation.Report, error) {
 	_, signer, err := subkey.SS58Decode(workerReport.Address)
 	if err != nil {
 		return nil, errors.New("VerifyReportFromTeeParam: SS58 decode")
 	}
 
-	// 构建验证数据
-	var buf bytes.Buffer
-	buf.Write(util.Int64ToBytes(timestamp))
-	buf.Write(signer)
-
-	return VerifyReportProof(report, buf.Bytes(), signer)
+	return VerifyReportProof(workerReport.Report, workerReport.Data, signer, workerReport.Time)
 }

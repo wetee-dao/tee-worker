@@ -9,8 +9,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/go-sdk/module"
-	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint"
+	wtypes "wetee.app/worker/type"
 )
 
 // load app info
@@ -29,7 +29,7 @@ func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 解析请求数据
-	param := &store.TeeParam{}
+	param := &wtypes.TeeParam{}
 	err = json.Unmarshal(bodyBytes, param)
 	if err != nil {
 		w.WriteHeader(500)
@@ -52,7 +52,7 @@ func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 // 获取应用消息
 // get app info
-func GetAppInfo(appID string, param *store.TeeParam) (map[string]string, error) {
+func GetAppInfo(appID string, param *wtypes.TeeParam) (map[string]string, error) {
 	// 验证 report
 	wid, err := VerifyLibOs(appID, nil)
 	if err != nil {

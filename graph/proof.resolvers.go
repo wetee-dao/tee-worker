@@ -18,6 +18,8 @@ import (
 	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/util"
+
+	wtypes "wetee.app/worker/type"
 )
 
 // WorkLoglist is the resolver for the work_loglist field.
@@ -109,7 +111,10 @@ func (r *queryResolver) AttestationReportVerify(ctx context.Context, report stri
 		return false, gqlerror.Errorf("HexDecodeString:" + err.Error())
 	}
 
-	_, err = proof.VerifyReportProof(bt, nil, nil)
+	ps := wtypes.TeeParam{}
+	json.Unmarshal(bt, &wtypes.TeeParam{})
+
+	_, err = proof.VerifyReportFromTeeParam(&ps)
 	if err != nil {
 		return false, gqlerror.Errorf("VerifyLocalReport error:" + err.Error())
 	}

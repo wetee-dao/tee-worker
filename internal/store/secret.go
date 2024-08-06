@@ -15,13 +15,6 @@ import (
 
 const SecretBucket = "secret"
 
-type TeeParam struct {
-	Address string
-	Time    int64
-	Data    []byte
-	Report  []byte
-}
-
 type Secrets struct {
 	Files map[string]string
 	Env   map[string]string
