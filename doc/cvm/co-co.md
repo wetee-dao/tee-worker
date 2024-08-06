@@ -1,4 +1,4 @@
-```bash
+````bash
 sudo modprobe br_netfilter
 run as root $ echo 1 > /proc/sys/net/ipv4/ip_forward
 
@@ -64,32 +64,42 @@ helm install --wait --generate-name \
 
 sudo kubeadm join 192.168.111.109:6443 --token lbv3j8.ohs18v5bhkqs7zdm \
     --discovery-token-ca-cert-hash sha256:cb36bc948497bdc9a79a0553f91fc26ae8066d4a1851d0aea88df63577c4757f
-```
+````
 
 #### 查看驱动是否已经变成 vfio-pci
+
 ```bash
 lspci -nnk -d 10de:
 ```
 
-#### 检查 dmesg, 查询是否有vfio-pci驱动启动
+#### 检查 dmesg, 查询是否有 vfio-pci 驱动启动
+
 ```bash
 sudo dmesg | grep vfio
 ```
 
-#### 检查 dmesg, 查询是否有vfio-pci驱动启动
+#### 检查 dmesg, 查询是否有 vfio-pci 驱动启动
+
 ```bash
 sudo dmesg | grep vfio
 ```
 
-##### 问题1
-``` bash
+##### 问题 1
+
+```bash
 Normal   Scheduled                 10m                   default-scheduler  Successfully assigned default/cuda-vectoradd-kata to wetee
 Warning  FailedCreatePodSandBox    8m19s (x20 over 10m)  kubelet            Failed to create pod sandbox: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: QMP command failed: vfio 0000:06:00.0: group 5 is not viable: unknown
 Warning  UnexpectedAdmissionError  23s                   kubelet            Allocate failed due to no healthy devices present; cannot allocate unhealthy devices nvidia.com/GP104_GEFORCE_GTX_1070_TI, which is unexpected
 Warning  FailedMount               22s (x2 over 23s)     kubelet            MountVolume.SetUp failed for volume "kube-api-access-bckdn" : object "default"/"kube-root-ca.crt" not registered
 ```
-  Normal   Scheduled                 10m                   default-scheduler  Successfully assigned default/cuda-vectoradd-kata to wetee
-  Warning  FailedCreatePodSandBox    8m19s (x20 over 10m)  kubelet            Failed to create pod sandbox: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: QMP command failed: vfio 0000:06:00.0: group 5 is not viable: unknown
-  Warning  UnexpectedAdmissionError  23s                   kubelet            Allocate failed due to no healthy devices present; cannot allocate unhealthy devices nvidia.com/GP104_GEFORCE_GTX_1070_TI, which is unexpected
-  Warning  FailedMount               22s (x2 over 23s)     kubelet            MountVolume.SetUp failed for volume "kube-api-access-bckdn" : object "default"/"kube-root-ca.crt" not registered
+
+Normal Scheduled 10m default-scheduler Successfully assigned default/cuda-vectoradd-kata to wetee
+Warning FailedCreatePodSandBox 8m19s (x20 over 10m) kubelet Failed to create pod sandbox: rpc error: code = Unknown desc = failed to create containerd task: failed to create shim task: QMP command failed: vfio 0000:06:00.0: group 5 is not viable: unknown
+Warning UnexpectedAdmissionError 23s kubelet Allocate failed due to no healthy devices present; cannot allocate unhealthy devices nvidia.com/GP104_GEFORCE_GTX_1070_TI, which is unexpected
+Warning FailedMount 22s (x2 over 23s) kubelet MountVolume.SetUp failed for volume "kube-api-access-bckdn" : object "default"/"kube-root-ca.crt" not registered
+
+```
+
+### 块储存加密
+ - 文档 https://github.com/confidential-containers/guest-components/blob/main/confidential-data-hub/docs/SECURE_STORAGE.md
 ```
