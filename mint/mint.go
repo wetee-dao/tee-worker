@@ -63,7 +63,7 @@ func InitCluster(mgr manager.Manager) error {
 		K8sClient:     clientset,
 		MetricsClient: metricsClient,
 		ChainClient:   nil,
-		HostDomain:    "xiaobai.asyou.me",
+		HostDomain:    "",
 	}
 
 	// 获取签名账户
@@ -110,7 +110,7 @@ mintStart:
 	// Waiting for cluster start
 	for {
 		// 获取dcap根证书 TODO add time to check
-		report, _, err := proof.GetRemoteReport(m.Signer)
+		report, _, err := proof.GetRemoteReport(m.Signer, nil)
 		if err != nil {
 			fmt.Println("GetRootDcapReport => ", err)
 			time.Sleep(time.Second * 10)
@@ -148,6 +148,15 @@ mintStart:
 			time.Sleep(time.Second * 10)
 			continue
 		}
+
+		// 获取集群域名
+		cluster, err := worker.GetCluster(clusterId)
+		if err != nil {
+			fmt.Println("worker.GetCluster => ", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
+		MinterIns.HostDomain = string(cluster.Ip[0].Domain.AsSomeField0)
 
 		// 保存clusterId
 		store.SetClusterId(clusterId)
@@ -273,6 +282,7 @@ mintStart:
 					proofs = append(proofs, *call)
 				}
 			} else if c.ContractState.WorkId.Wtype.IsGPU {
+				// 如果是GPU类型，检查Pod状态，检查是否需要上传工作证明
 				call, err := m.DoWithGpuAppState(&ctx, c, stage, head)
 				if err != nil {
 					util.LogError("DoWithGpuAppState", err)

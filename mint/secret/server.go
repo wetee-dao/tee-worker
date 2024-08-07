@@ -21,7 +21,7 @@ func StartSecretServerInCluster(addr string) {
 		minter, _, _ := mint.GetMintKey()
 
 		// Get root dcap report
-		report, t, _ := proof.GetRemoteReport(minter)
+		report, t, _ := proof.GetRemoteReport(minter, nil)
 		resp := wtypes.TeeParam{
 			Time:    t,
 			Report:  report,

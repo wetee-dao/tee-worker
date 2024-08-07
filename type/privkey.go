@@ -29,6 +29,10 @@ func (p *PrivKey) Scalar() kyber.Scalar {
 	}
 }
 
+func (p *PrivKey) Suite() suites.Suite {
+	return p.suite
+}
+
 func (p *PrivKey) ed25519Scalar() kyber.Scalar {
 	// There is a discrepency between LibP2P private keys
 	// and "raw" EC scalars. LibP2P private keys is an

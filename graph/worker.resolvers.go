@@ -315,7 +315,7 @@ func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, erro
 		maddress = minter.Address
 	}
 
-	report, _, err := proof.GetRemoteReport(minter)
+	report, _, err := proof.GetRemoteReport(minter, nil)
 	if err != nil {
 		report = nil
 	}

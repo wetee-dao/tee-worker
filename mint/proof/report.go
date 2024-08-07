@@ -29,15 +29,18 @@ var (
 // 获取远程报告
 // GetRemoteReport get remote report
 // return: report, time, err
-func GetRemoteReport(minter *core.Signer) ([]byte, int64, error) {
+func GetRemoteReport(minter *core.Signer, data []byte) ([]byte, int64, error) {
 	timestamp := time.Now().Unix()
-	if Report != nil && LastReport+30 > timestamp {
+	if Report != nil && LastReport+30 > timestamp && data == nil {
 		return Report, LastReport, nil
 	}
 
 	var buf bytes.Buffer
 	buf.Write(util.Int64ToBytes(timestamp))
 	buf.Write(minter.PublicKey)
+	if len(data) > 0 {
+		buf.Write(data)
+	}
 	sig, err := minter.Sign(buf.Bytes())
 	if err != nil {
 		return nil, 0, err
