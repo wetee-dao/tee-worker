@@ -274,6 +274,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 			Id:   minter.AsID,
 		},
 	})
+
 	err = client.SignAndSubmit(&signer, call, false)
 	if err != nil {
 		return false, errors.New("Chain call error:" + err.Error())

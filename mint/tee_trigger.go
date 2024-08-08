@@ -37,35 +37,31 @@ func (m *Minter) trigger(clusterId uint64) {
 		return
 	}
 
-	// 获取 worker report
-	report, t, err := proof.GetRemoteReport(m.Signer, nil)
-	if err != nil {
-		fmt.Println("Tee trigger GetRemoteReport error", err)
-		return
-	}
-
-	paramWrap := wtypes.TeeParam{
-		Address: m.Signer.Address,
-		Time:    t,
-		Data:    nil,
-		Report:  report,
-	}
-
 	for workId, ids := range callId {
 		account := accounts[workId]
 		saddress := AccountToSpace(account[:])
 		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 		client := resty.New()
 
+		msg := fmt.Sprint(clusterId, ids)
+		// 获取 worker report
+		report, t, err := proof.GetRemoteReport(m.Signer, []byte(msg))
+		if err != nil {
+			fmt.Println("Tee trigger GetRemoteReport error", err)
+			return
+		}
+
+		paramWrap := wtypes.TeeParam{
+			Address: m.Signer.Address,
+			Time:    t,
+			Data:    nil,
+			Report:  report,
+		}
+
 		ps := wtypes.TeeTrigger{
 			Tee:       paramWrap,
 			ClusterId: clusterId,
 			Callids:   ids,
-		}
-		err := ps.Sign(m.Signer)
-		if err != nil {
-			fmt.Println("Tee trigger Sign error", err)
-			continue
 		}
 
 		bt, _ := json.Marshal(ps)
@@ -74,7 +70,12 @@ func (m *Minter) trigger(clusterId uint64) {
 		// suite := m.PrivateKey.Suite()
 		// ciphertext, err := ecies.Encrypt(suite, public, bt, suite.Hash)
 
-		client.R().SetBody(bt).Post("http://" + name + "." + saddress + ".svc.cluster.local:65535/tee_call")
+		_, err = client.R().SetBody(bt).Post("http://" + name + "." + saddress + ".svc.cluster.local:65535/tee-call")
+		if err != nil {
+			fmt.Println("http://" + name + "." + saddress + ".svc.cluster.local:65535/tee-call")
+			fmt.Println("Tee trigger http error", err)
+			return
+		}
 	}
 }
 

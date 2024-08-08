@@ -256,6 +256,9 @@ mintStart:
 		fmt.Println("===========================================GetClusterContracts: ", len(cs))
 		proofs := make([]gtypes.RuntimeCall, 0, 20)
 
+		fmt.Println("===========================================m.trigger(clusterId): ", clusterId)
+		m.trigger(clusterId)
+
 		// 校对合约状态
 		// Check contract status
 		for _, c := range cs {

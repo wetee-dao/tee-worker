@@ -18,15 +18,15 @@ func StartSecretServerInCluster(addr string) {
 	router := chi.NewRouter()
 
 	router.Get("/report", func(w http.ResponseWriter, r *http.Request) {
-		minter, _, _ := mint.GetMintKey()
+		minter := mint.MinterIns.Signer
 
 		// Get root dcap report
-		report, t, _ := proof.GetRemoteReport(minter, nil)
+		report, t, _ := proof.GetRemoteReport(minter, []byte{})
 		resp := wtypes.TeeParam{
 			Time:    t,
 			Report:  report,
 			Address: minter.Address,
-			Data:    nil,
+			Data:    []byte{},
 		}
 
 		// Return report
