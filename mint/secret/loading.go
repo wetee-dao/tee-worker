@@ -9,8 +9,10 @@ import (
 	"github.com/edgelesssys/ego/attestation"
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
+	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/internal/store"
+	"wetee.app/worker/mint"
 	"wetee.app/worker/mint/proof"
 	wtypes "wetee.app/worker/type"
 )
@@ -68,11 +70,23 @@ func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
 		return nil, errors.Wrap(err, "VerifyLibOs error")
 	}
 
+	_, account, err := subkey.SS58Decode(param.Address)
+	if err != nil {
+		return nil, errors.Wrap(err, "Address error")
+	}
+
 	// 存入 Work DCAP 信息
 	err = store.SetWorkDcapReport(*wid, param.Report)
 	if err != nil {
 		return nil, errors.Wrap(err, "DCAP Report set error")
 	}
+
+	err = store.SetWorkDeploy(*wid, account)
+	if err != nil {
+		return nil, errors.Wrap(err, "Set deploy error")
+	}
+
+	mint.MinterIns.Addlanch(*wid)
 
 	// 获取加密信息
 	s, err := store.GetSecrets(*wid)

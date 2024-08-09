@@ -16,7 +16,7 @@ import (
 	"wetee.app/worker/util"
 )
 
-func (m *Minter) trigger(clusterId uint64) {
+func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint64, blockNumber uint64) {
 	calls, keys, err := m.listTeeCalls(clusterId)
 	if err != nil {
 		fmt.Println("Tee trigger listTeeCalls error", err)
@@ -37,7 +37,16 @@ func (m *Minter) trigger(clusterId uint64) {
 		return
 	}
 
+	fmt.Println("Find ", len(callId), " trigger")
 	for workId, ids := range callId {
+		work := cs[workId]
+
+		if blockNumber-work.Version < 100 || work.GetStatus() != 3 {
+			// 跳过部署不超过 20 个区块的 TEECall
+			fmt.Println("Skip ", workId, " trigger")
+			continue
+		}
+
 		account := accounts[workId]
 		saddress := AccountToSpace(account[:])
 		name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
@@ -58,10 +67,15 @@ func (m *Minter) trigger(clusterId uint64) {
 			Report:  report,
 		}
 
+		var idstr []string
+		for _, id := range ids {
+			idstr = append(idstr, id.String())
+		}
+
 		ps := wtypes.TeeTrigger{
 			Tee:       paramWrap,
 			ClusterId: clusterId,
-			Callids:   ids,
+			Callids:   idstr,
 		}
 
 		bt, _ := json.Marshal(ps)

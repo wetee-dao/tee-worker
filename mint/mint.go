@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/crypto/blake2b"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -34,6 +35,11 @@ type Minter struct {
 	Signer        *core.Signer
 	PrivateKey    *types.PrivKey
 	HostDomain    string
+
+	// App lanch event
+	// 应用启动事件
+	AppLanch []gtypes.WorkId
+	mu       sync.Mutex
 }
 
 var (
@@ -140,9 +146,10 @@ mintStart:
 			continue
 		}
 
-		// 上传 dcap 证书 //TODO
-		fmt.Println(len(report))
-		err = worker.ClusterProofUpload(clusterId, []byte("test"), true)
+		// 上传 dcap 证书
+		// TODO 去中心存储证书
+		hash := blake2b.Sum256(report)
+		err = worker.ClusterProofUpload(clusterId, hash[:], true)
 		if err != nil {
 			fmt.Println("worker.ClusterProofUpload => ", err)
 			time.Sleep(time.Second * 10)
@@ -256,8 +263,9 @@ mintStart:
 		fmt.Println("===========================================GetClusterContracts: ", len(cs))
 		proofs := make([]gtypes.RuntimeCall, 0, 20)
 
-		fmt.Println("===========================================m.trigger(clusterId): ", clusterId)
-		m.trigger(clusterId)
+		// 触发TEE调用
+		// Trigger TEE calls
+		m.trigger(cs, clusterId, uint64(head.Number))
 
 		// 校对合约状态
 		// Check contract status
@@ -296,16 +304,40 @@ mintStart:
 			}
 		}
 
+		// 获取启动应用列表
+		var lanchs = []gtypes.WorkId{}
+		m.mu.Lock()
+		lanchs = m.AppLanch
+		m.AppLanch = []gtypes.WorkId{}
+		m.mu.Unlock()
+		for _, wid := range lanchs {
+			call, err := proof.MakeStartProof(wid, uint64(head.Number))
+			if err != nil {
+				util.LogError("MakeStartProof", err)
+				continue
+			}
+			proofs = append(proofs, *call)
+		}
+
 		if len(proofs) > 0 {
 			// 上传工作证明
 			// Upload work proof
-			err = proof.SubmitWorkProof(client, worker.Signer, proofs)
-			if err != nil {
-				util.LogError("WorkProofUpload", err)
-				continue
-			}
+			go func(b uint64) {
+				err = proof.SubmitWorkProof(client, worker.Signer, proofs)
+				if err != nil {
+					util.LogError("WorkProofUpload", err)
+				} else {
+					fmt.Println("Proof.SubmitWorkProof blocknumber =>", b, "success")
+				}
+			}(uint64(head.Number))
 		}
 	}
+}
+
+func (m *Minter) Addlanch(wid gtypes.WorkId) {
+	m.mu.Lock()
+	m.AppLanch = append(m.AppLanch, wid)
+	m.mu.Unlock()
 }
 
 func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap, deleteFunc func(gtypes.WorkId, store.RuningCache) error) ([]gtypes.WorkId, error) {

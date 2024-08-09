@@ -26,6 +26,18 @@ type ContractStateWrap struct {
 	Envs          []*gtypes.Env
 }
 
+func (c *ContractStateWrap) GetStatus() byte {
+	if c.App != nil {
+		return c.App.Status
+	} else if c.Task != nil {
+		return c.Task.Status
+	} else if c.GpuApp != nil {
+		return c.GpuApp.Status
+	} else {
+		return 0
+	}
+}
+
 // 获取合约状态
 // Get Cluster Contracts
 func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtypes.WorkId]ContractStateWrap, error) {
