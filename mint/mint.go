@@ -210,6 +210,12 @@ mintStart:
 			fmt.Println("Peer len:", len(m.P2Peer.Network().Peers()))
 		}
 
+		err := client.CheckMetadata()
+		if err != nil {
+			util.LogError("CheckMetadata", err)
+			continue
+		}
+
 		// 读取/处理新的区块信息
 		// Read/process new block information
 		events, err := system.GetEvents(chainAPI.RPC.State, blockHash)

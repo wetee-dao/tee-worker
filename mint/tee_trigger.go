@@ -53,6 +53,7 @@ func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint6
 		client := resty.New()
 
 		msg := fmt.Sprint(clusterId, ids)
+
 		// 获取 worker report
 		report, t, err := proof.GetRemoteReport(m.Signer, []byte(msg))
 		if err != nil {
@@ -60,6 +61,7 @@ func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint6
 			return
 		}
 
+		// 获取 worker report
 		paramWrap := wtypes.TeeParam{
 			Address: m.Signer.Address,
 			Time:    t,
@@ -67,6 +69,7 @@ func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint6
 			Report:  report,
 		}
 
+		// 解决 u128 编码和解码在tee中的错误问题
 		var idstr []string
 		for _, id := range ids {
 			idstr = append(idstr, id.String())
@@ -83,13 +86,14 @@ func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint6
 		// TODO
 		// suite := m.PrivateKey.Suite()
 		// ciphertext, err := ecies.Encrypt(suite, public, bt, suite.Hash)
-
-		_, err = client.R().SetBody(bt).Post("http://" + name + "." + saddress + ".svc.cluster.local:65535/tee-call")
-		if err != nil {
-			fmt.Println("http://" + name + "." + saddress + ".svc.cluster.local:65535/tee-call")
-			fmt.Println("Tee trigger http error", err)
-			return
-		}
+		go func() {
+			_, err = client.R().SetBody(bt).Post("http://" + name + "." + saddress + ".svc.cluster.local:65535/tee-call")
+			if err != nil {
+				fmt.Println("http://" + name + "." + saddress + ".svc.cluster.local:65535/tee-call")
+				fmt.Println("Tee trigger http error", err)
+				return
+			}
+		}()
 	}
 }
 
