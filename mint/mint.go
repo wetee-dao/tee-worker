@@ -115,7 +115,7 @@ mintStart:
 	// 等待集群开启
 	// Waiting for cluster start
 	for {
-		// 获取dcap根证书 TODO add time to check
+		// 获取 TEE 根证书
 		report, _, err := proof.GetRemoteReport(m.Signer, nil)
 		if err != nil {
 			fmt.Println("GetRootDcapReport => ", err)
@@ -146,7 +146,7 @@ mintStart:
 			continue
 		}
 
-		// 上传 dcap 证书
+		// 上传 TEE 证书
 		// TODO 去中心存储证书
 		hash := blake2b.Sum256(report)
 		err = worker.ClusterProofUpload(clusterId, hash[:], true)

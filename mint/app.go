@@ -11,7 +11,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/util"
 )
@@ -118,15 +117,6 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-
-	err := store.SetSecrets(workId, &store.Secrets{
-		Env: map[string]string{
-			"": "",
-		},
-	})
-	if err != nil {
-		return err
-	}
 
 	// 构建容器
 	main := gtypes.Container{

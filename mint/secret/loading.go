@@ -70,7 +70,7 @@ func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
 		return nil, errors.Wrap(err, "VerifyLibOs error")
 	}
 
-	_, account, err := subkey.SS58Decode(param.Address)
+	_, deployAccount, err := subkey.SS58Decode(param.Address)
 	if err != nil {
 		return nil, errors.Wrap(err, "Address error")
 	}
@@ -81,18 +81,18 @@ func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
 		return nil, errors.Wrap(err, "DCAP Report set error")
 	}
 
-	err = store.SetWorkDeploy(*wid, account)
+	err = store.SetWorkDeploy(*wid, deployAccount)
 	if err != nil {
 		return nil, errors.Wrap(err, "Set deploy error")
 	}
 
 	mint.MinterIns.Addlanch(*wid)
 
-	// 获取加密信息
-	s, err := store.GetSecrets(*wid)
-	if err != nil {
-		return nil, errors.Wrap(err, "Secret error")
-	}
+	// deploy := param.Address
+
+	// 获取配置文件
+	// 获取加密配置文件
+	s := &store.Secrets{}
 
 	return s, nil
 }

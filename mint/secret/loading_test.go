@@ -22,13 +22,4 @@ func TestLoading(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	err = store.SetSecrets(workId, &store.Secrets{
-		Env: map[string]string{
-			"": "",
-		},
-	})
-	if err != nil {
-		t.Error(err)
-	}
 }

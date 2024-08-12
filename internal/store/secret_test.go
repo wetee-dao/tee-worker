@@ -49,35 +49,3 @@ func TestUnSealAppID(t *testing.T) {
 		return
 	}
 }
-
-func TestSetSecrets(t *testing.T) {
-	DBInit("bin/testdb")
-	defer DBClose()
-	if err := SetSecrets(types.WorkId{
-		Wtype: types.WorkType{IsAPP: true},
-		Id:    1,
-	}, &Secrets{
-		Files: map[string]string{
-			"test": "test",
-		},
-		Env: map[string]string{
-			"test": "test",
-		},
-	}); err != nil {
-		log.Println(err)
-		t.Fail()
-	}
-}
-
-func TestGetSecrets(t *testing.T) {
-	DBInit("bin/testdb")
-	defer DBClose()
-
-	if _, err := GetSecrets(types.WorkId{
-		Wtype: types.WorkType{IsAPP: true},
-		Id:    1,
-	}); err != nil {
-		log.Println(err)
-		t.Fail()
-	}
-}

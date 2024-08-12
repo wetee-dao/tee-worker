@@ -17,6 +17,17 @@ import (
 func StartSecretServerInCluster(addr string) {
 	router := chi.NewRouter()
 
+	// TODO
+	cert, priv := proof.CreateCertificate(addr)
+	tlsCfg := tls.Config{
+		Certificates: []tls.Certificate{
+			{
+				Certificate: [][]byte{cert},
+				PrivateKey:  priv,
+			},
+		},
+	}
+
 	router.Get("/report", func(w http.ResponseWriter, r *http.Request) {
 		minter := mint.MinterIns.Signer
 
@@ -39,16 +50,6 @@ func StartSecretServerInCluster(addr string) {
 	router.Post("/appInfo/{AppID}", AppInfoHandler)
 	router.Post("/appLoader/{AppID}", LoadingHandler)
 
-	// TODO
-	cert, priv := proof.CreateCertificate(addr)
-	tlsCfg := tls.Config{
-		Certificates: []tls.Certificate{
-			{
-				Certificate: [][]byte{cert},
-				PrivateKey:  priv,
-			},
-		},
-	}
 	server := &http.Server{Addr: ":8883", Handler: router, TLSConfig: &tlsCfg}
 	log.Printf("Start http://0.0.0.0:8883 for InCluster server")
 	server.ListenAndServeTLS("", "")

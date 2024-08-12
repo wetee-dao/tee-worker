@@ -2,7 +2,6 @@ package store
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -16,8 +15,8 @@ import (
 const SecretBucket = "secret"
 
 type Secrets struct {
-	Files map[string]string
-	Env   map[string]string
+	Envs  map[string]string
+	Files map[string][]byte
 }
 
 func SealAppID(WorkID types.WorkId) (string, error) {
@@ -66,30 +65,6 @@ func UnSealAppID(id string) (types.WorkId, error) {
 		Wtype: util.GetWorkType(strs[0]),
 		Id:    wid,
 	}, nil
-}
-
-func SetSecrets(id types.WorkId, secrets *Secrets) error {
-	key := []byte(util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id))
-	val, err := json.Marshal(secrets)
-	if err != nil {
-		return err
-	}
-
-	return SealSave(SecretBucket, key, val)
-}
-
-func GetSecrets(id types.WorkId) (*Secrets, error) {
-	key := []byte(util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id))
-	val, err := SealGet(SecretBucket, key)
-	if err != nil {
-		return nil, err
-	}
-	s := &Secrets{}
-	err = json.Unmarshal(val, s)
-	if err != nil {
-		return nil, err
-	}
-	return s, nil
 }
 
 // func GetSetAppSignerAddress(id types.WorkId, address string) (string, error) {

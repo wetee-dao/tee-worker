@@ -125,7 +125,6 @@ func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.
 
 	envs := []corev1.EnvVar{
 		{Name: "APPID", Value: wid},
-		{Name: "IN_TEE", Value: string("1")},
 	}
 
 	for _, setting := range settings {

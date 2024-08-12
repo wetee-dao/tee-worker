@@ -10,7 +10,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/util"
 )
@@ -93,16 +92,7 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.Wor
 	nameSpace := m.K8sClient.CoreV1().Pods(saddress)
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
 
-	err := store.SetSecrets(workId, &store.Secrets{
-		Env: map[string]string{
-			"": "",
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	_, err = nameSpace.Get(*ctx, name, metav1.GetOptions{})
+	_, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err == nil {
 		existingPod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 		if err != nil {

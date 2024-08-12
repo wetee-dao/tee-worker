@@ -24,10 +24,6 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			cid := startEvent.AsWorkRuningClusterId2
 			if cid == clusterId {
 				version, _ := module.GetVersion(m.ChainClient, workId)
-				// envs, err := m.BuildEnvs(workId)
-				// if err != nil {
-				// 	return err
-				// }
 				settings, err := m.GetSettingsFromWork(workId, nil)
 				if err != nil {
 					return errors.Wrap(err, "GetSettingsFromWork error")
