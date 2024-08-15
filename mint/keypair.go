@@ -1,7 +1,6 @@
 package mint
 
 import (
-	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -41,16 +40,6 @@ func GetMintKey() (*core.Signer, *types.PrivKey, error) {
 
 	store.SetMintId(mss)
 
-	bt, err := privateKey.Raw()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ed25519Key ed25519.PrivateKey = bt
-	kr, err := core.Ed25519PairFromPk(ed25519Key, 42)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return &kr, privateKey, nil
+	kr, err := privateKey.ToSigner()
+	return kr, privateKey, nil
 }

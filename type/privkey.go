@@ -11,6 +11,7 @@ import (
 
 	libp2pCrypto "github.com/libp2p/go-libp2p/core/crypto"
 	libp2pCryptoPb "github.com/libp2p/go-libp2p/core/crypto/pb"
+	"github.com/wetee-dao/go-sdk/core"
 	"go.dedis.ch/kyber/v3"
 	"go.dedis.ch/kyber/v3/suites"
 )
@@ -77,6 +78,20 @@ func (p *PrivKey) GetPublic() *PubKey {
 		PubKey: p.PrivKey.GetPublic(),
 		suite:  p.suite,
 	}
+}
+
+func (p *PrivKey) ToSigner() (*core.Signer, error) {
+	bt, err := p.Raw()
+	if err != nil {
+		return nil, err
+	}
+
+	var ed25519Key ed25519.PrivateKey = bt
+	s, err := core.Ed25519PairFromPk(ed25519Key, 42)
+	if err != nil {
+		return nil, err
+	}
+	return &s, nil
 }
 
 func GenerateKeyPair(ste suites.Suite, src io.Reader) (*PrivKey, *PubKey, error) {

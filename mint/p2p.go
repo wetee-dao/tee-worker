@@ -48,7 +48,7 @@ func (c *Minter) StartP2P() error {
 	// 获取机密节点和矿工节点
 	nodes := []*types.Node{}
 	for _, n := range nodesFromChain {
-		var gopub ed25519.PublicKey = n.Pubkey[:]
+		var gopub ed25519.PublicKey = n[:]
 		pub, _ := types.PubKeyFromStdPubKey(gopub)
 		nodes = append(nodes, &types.Node{
 			ID:   pub.String(),

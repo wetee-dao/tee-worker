@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/crypto/blake2b"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -122,6 +121,7 @@ mintStart:
 			time.Sleep(time.Second * 10)
 			continue
 		}
+		fmt.Println(report)
 
 		// 此处不捕获错误，因为如果初始化失败，程序可以继续运行
 		InitChainClient(DefaultChainUrl)
@@ -148,13 +148,13 @@ mintStart:
 
 		// 上传 TEE 证书
 		// TODO 去中心存储证书
-		hash := blake2b.Sum256(report)
-		err = worker.ClusterProofUpload(clusterId, hash[:], true)
-		if err != nil {
-			fmt.Println("worker.ClusterProofUpload => ", err)
-			time.Sleep(time.Second * 10)
-			continue
-		}
+		// hash := blake2b.Sum256(report)
+		// err = worker.ClusterProofUpload(clusterId, hash[:], true)
+		// if err != nil {
+		// 	fmt.Println("worker.ClusterProofUpload => ", err)
+		// 	time.Sleep(time.Second * 10)
+		// 	continue
+		// }
 
 		// 获取集群域名
 		cluster, err := worker.GetCluster(clusterId)

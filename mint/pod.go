@@ -160,7 +160,6 @@ func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, nodeSers
 			if err != nil {
 				return err
 			}
-
 			envs[i].Value = v
 		}
 	}

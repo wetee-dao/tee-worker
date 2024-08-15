@@ -21,17 +21,17 @@ func (c *Minter) RegisterNode(signer *core.Signer, pubkey []byte) error {
 
 // GetNodeList get node list
 // 获取节点列表
-func (c *Minter) GetNodeList() ([]*types.Node, error) {
+func (c *Minter) GetNodeList() ([][32]byte, error) {
 	ret, err := c.ChainClient.QueryMapAll("WeTEEDsecret", "Nodes")
 	if err != nil {
 		return nil, err
 	}
 
-	nodes := make([]*types.Node, 0)
+	nodes := make([][32]byte, 0)
 	for _, elem := range ret {
 		for _, change := range elem.Changes {
-			n := &types.Node{}
-			if err := codec.Decode(change.StorageData, n); err != nil {
+			n := [32]byte{}
+			if err := codec.Decode(change.StorageData, &n); err != nil {
 				util.LogError("codec.Decode", err)
 				continue
 			}

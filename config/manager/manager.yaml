@@ -89,7 +89,7 @@ spec:
             periodSeconds: 10
           env:
             - name: P2P_PORT
-              value: "30010"
+              value: "8881"
           # TODO(user): Configure the resources accordingly based on the project requirements.
           # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
           resources:
