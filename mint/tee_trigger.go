@@ -54,8 +54,14 @@ func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint6
 
 		msg := fmt.Sprint(clusterId, ids)
 
+		signer, err := m.PrivateKey.ToSigner()
+		if err != nil {
+			fmt.Println("Tee trigger GetSigner error", err)
+			return
+		}
+
 		// 获取 worker report
-		report, t, err := proof.GetRemoteReport(m.Signer, []byte(msg))
+		report, t, err := proof.GetRemoteReport(signer, []byte(msg))
 		if err != nil {
 			fmt.Println("Tee trigger GetRemoteReport error", err)
 			return
@@ -63,7 +69,7 @@ func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint6
 
 		// 获取 worker report
 		paramWrap := wtypes.TeeParam{
-			Address: m.Signer.Address,
+			Address: signer.Address,
 			Time:    t,
 			Data:    nil,
 			Report:  report,

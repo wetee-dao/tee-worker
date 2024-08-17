@@ -29,7 +29,7 @@ func StartSecretServerInCluster(addr string) {
 	}
 
 	router.Get("/report", func(w http.ResponseWriter, r *http.Request) {
-		minter := mint.MinterIns.Signer
+		minter, _ := mint.MinterIns.PrivateKey.ToSigner()
 
 		// Get root dcap report
 		report, t, _ := proof.GetRemoteReport(minter, []byte{})

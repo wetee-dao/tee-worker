@@ -39,9 +39,11 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
+
+	gsigner, _ := mint.MinterIns.PrivateKey.ToSigner()
 	worker := &module.Worker{
 		Client: client,
-		Signer: mint.MinterIns.Signer,
+		Signer: gsigner,
 	}
 
 	ipstrs := strings.Split(ip, ".")
@@ -89,9 +91,11 @@ func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
+
+	gsigner, _ := mint.MinterIns.PrivateKey.ToSigner()
 	worker := &module.Worker{
 		Client: client,
-		Signer: mint.MinterIns.Signer,
+		Signer: gsigner,
 	}
 
 	id, err := store.GetClusterId()
@@ -114,9 +118,11 @@ func (r *mutationResolver) ClusterUnmortgage(ctx context.Context, id int64) (str
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
+
+	gsigner, _ := mint.MinterIns.PrivateKey.ToSigner()
 	worker := &module.Worker{
 		Client: client,
-		Signer: mint.MinterIns.Signer,
+		Signer: gsigner,
 	}
 
 	clusterID, err := store.GetClusterId()
@@ -140,9 +146,11 @@ func (r *mutationResolver) ClusterWithdrawal(ctx context.Context, id int64, ty m
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
+
+	gsigner, _ := mint.MinterIns.PrivateKey.ToSigner()
 	worker := &module.Worker{
 		Client: client,
-		Signer: mint.MinterIns.Signer,
+		Signer: gsigner,
 	}
 
 	err := worker.ClusterWithdrawal(gtypes.WorkId{
@@ -164,9 +172,11 @@ func (r *mutationResolver) ClusterStop(ctx context.Context) (string, error) {
 	if client == nil {
 		return "", gqlerror.Errorf("Cant connect to chain")
 	}
+
+	gsigner, _ := mint.MinterIns.PrivateKey.ToSigner()
 	worker := &module.Worker{
 		Client: client,
-		Signer: mint.MinterIns.Signer,
+		Signer: gsigner,
 	}
 
 	clusterID, err := store.GetClusterId()
@@ -188,10 +198,10 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		return false, gqlerror.Errorf("Cant connect to chain")
 	}
 
-	gsigner := mint.MinterIns.Signer
+	gsigner, _ := mint.MinterIns.PrivateKey.ToSigner()
 	worker := &module.Worker{
 		Client: client,
-		Signer: mint.MinterIns.Signer,
+		Signer: gsigner,
 	}
 
 	// 1 unit of transfer
@@ -334,9 +344,11 @@ func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
 	if client == nil {
 		return nil, gqlerror.Errorf("Cant connect to chain")
 	}
+
+	gsigner, _ := mint.MinterIns.PrivateKey.ToSigner()
 	worker := &module.Worker{
 		Client: client,
-		Signer: mint.MinterIns.Signer,
+		Signer: gsigner,
 	}
 
 	clusterID, err := store.GetClusterId()

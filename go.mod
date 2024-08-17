@@ -5,7 +5,7 @@ go 1.21.1
 toolchain go1.21.6
 
 require (
-	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.1
+	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.2-0.20240731190417-9d7be34be928
 	github.com/libp2p/go-libp2p v0.35.2
 	github.com/libp2p/go-libp2p-kad-dht v0.25.2
 	github.com/libp2p/go-libp2p-pubsub v0.11.0
@@ -29,7 +29,10 @@ require (
 
 require (
 	github.com/cenkalti/backoff/v4 v4.2.1
+	github.com/consensys/gnark v0.10.0
+	github.com/consensys/gnark-crypto v0.12.2-0.20240215234832-d72fcb379d3e
 	github.com/go-chi/chi/v5 v5.0.11
+	github.com/go-resty/resty/v2 v2.14.0
 	github.com/nutsdb/nutsdb v1.0.3
 	github.com/pkg/errors v0.9.1
 	go.dedis.ch/kyber/v3 v3.1.0
@@ -40,10 +43,7 @@ require (
 	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
-	github.com/consensys/gnark v0.10.0 // indirect
-	github.com/consensys/gnark-crypto v0.12.2-0.20240215234832-d72fcb379d3e // indirect
 	github.com/fxamacker/cbor/v2 v2.5.0 // indirect
-	github.com/go-resty/resty/v2 v2.14.0 // indirect
 	github.com/ingonyama-zk/icicle v0.0.0-20230928131117-97f0079e5c71 // indirect
 	github.com/ingonyama-zk/iciclegnark v0.1.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
@@ -209,6 +209,7 @@ require (
 	github.com/prometheus/common v0.51.0 // indirect
 	github.com/prometheus/procfs v0.13.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/satori/go.uuid v1.2.0
 	github.com/sosodev/duration v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tidwall/btree v1.6.0 // indirect

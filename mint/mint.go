@@ -13,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	chain "github.com/wetee-dao/go-sdk"
-	"github.com/wetee-dao/go-sdk/core"
 	"github.com/wetee-dao/go-sdk/module"
 	"github.com/wetee-dao/go-sdk/pallet/system"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
@@ -31,14 +30,17 @@ type Minter struct {
 	MetricsClient *versioned.Clientset
 	ChainClient   *chain.ChainClient
 	P2Peer        *peer.Peer
-	Signer        *core.Signer
+	Nodes         []*types.Node
 	PrivateKey    *types.PrivKey
 	HostDomain    string
 
 	// App lanch event
 	// 应用启动事件
 	AppLanch []gtypes.WorkId
-	mu       sync.Mutex
+	mu       sync.RWMutex
+
+	// preRecerve is the channel to receive SendEncryptedSecretRequest
+	preRecerve map[string]chan interface{}
 }
 
 var (
@@ -69,15 +71,15 @@ func InitCluster(mgr manager.Manager) error {
 		MetricsClient: metricsClient,
 		ChainClient:   nil,
 		HostDomain:    "",
+		preRecerve:    make(map[string]chan interface{}),
 	}
 
 	// 获取签名账户
-	signer, privateKey, err := GetMintKey()
+	_, privateKey, err := GetMintKey()
 	if err != nil {
 		return err
 	}
 
-	MinterIns.Signer = signer
 	MinterIns.PrivateKey = privateKey
 	lock.Unlock()
 
@@ -104,7 +106,8 @@ func InitChainClient(url string) error {
 // start mint
 // 开始挖矿
 func (m *Minter) StartMint() {
-	fmt.Println("MintKey => ", m.Signer.Address)
+	signer, _ := m.PrivateKey.ToSigner()
+	fmt.Println("MintKey => ", signer.Address)
 
 	// 挖矿开始
 mintStart:
@@ -114,19 +117,22 @@ mintStart:
 	// 等待集群开启
 	// Waiting for cluster start
 	for {
-		// 获取 TEE 根证书
-		report, _, err := proof.GetRemoteReport(m.Signer, nil)
-		if err != nil {
-			fmt.Println("GetRootDcapReport => ", err)
-			time.Sleep(time.Second * 10)
-			continue
-		}
-		fmt.Println(report)
-
 		// 此处不捕获错误，因为如果初始化失败，程序可以继续运行
 		InitChainClient(DefaultChainUrl)
 		if MinterIns.ChainClient == nil {
-			fmt.Println("Chain connect is not init => ", err)
+			fmt.Println("Chain connect is not init")
+			time.Sleep(time.Second * 10)
+			continue
+		}
+
+		// 启动p2p
+		// Start p2p
+		err := m.StartP2P()
+		if m.P2Peer != nil {
+			m.P2Peer.Discover(context.Background())
+		}
+		if err != nil {
+			fmt.Println("worker.ClusterProofUpload => ", err)
 			time.Sleep(time.Second * 10)
 			continue
 		}
@@ -135,26 +141,40 @@ mintStart:
 		// Initialize the worker object
 		worker = module.Worker{
 			Client: m.ChainClient,
-			Signer: m.Signer,
+			Signer: signer,
 		}
 
 		// 获取clusterId
-		clusterId, err := worker.Getk8sClusterAccounts(m.Signer.PublicKey)
+		clusterId, err := worker.Getk8sClusterAccounts(signer.PublicKey)
 		if err != nil {
 			fmt.Println("ClusterId => clusterId not found, mint not started")
 			time.Sleep(time.Second * 10)
 			continue
 		}
 
+		// 获取 TEE 根证书
+		report, t, err := proof.GetRemoteReport(signer, nil)
+		if err != nil {
+			fmt.Println("GetRootDcapReport => ", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
+
 		// 上传 TEE 证书
-		// TODO 去中心存储证书
 		// hash := blake2b.Sum256(report)
-		// err = worker.ClusterProofUpload(clusterId, hash[:], true)
-		// if err != nil {
-		// 	fmt.Println("worker.ClusterProofUpload => ", err)
-		// 	time.Sleep(time.Second * 10)
-		// 	continue
-		// }
+		param := types.TeeParam{
+			Report:  report,
+			Time:    t,
+			TeeType: 0,
+			Address: signer.SS58Address(42),
+			Data:    nil,
+		}
+		_, err = m.UploadClusterProof(&param)
+		if err != nil {
+			fmt.Println("worker.ClusterProofUpload => ", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
 
 		// 获取集群域名
 		cluster, err := worker.GetCluster(clusterId)
@@ -167,15 +187,6 @@ mintStart:
 
 		// 保存clusterId
 		store.SetClusterId(clusterId)
-
-		// 启动p2p
-		// Start p2p
-		err = m.StartP2P()
-		if err != nil {
-			fmt.Println("worker.ClusterProofUpload => ", err)
-			time.Sleep(time.Second * 10)
-			continue
-		}
 
 		break
 	}
