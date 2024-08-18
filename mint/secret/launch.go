@@ -69,7 +69,6 @@ func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "VerifyLibOs error")
 	}
-
 	_, deployAccount, err := subkey.SS58Decode(param.Address)
 	if err != nil {
 		return nil, errors.Wrap(err, "Address error")
@@ -80,15 +79,13 @@ func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "DCAP Report set error")
 	}
-
 	err = store.SetWorkDeploy(*wid, deployAccount)
 	if err != nil {
 		return nil, errors.Wrap(err, "Set deploy error")
 	}
 
-	mint.MinterIns.Addlanch(*wid)
-
-	// deploy := param.Address
+	// 上传TEE环境变量，设置当前的部署 Key
+	mint.MinterIns.LaunchFromDsecret(wid, param)
 
 	// 获取配置文件
 	// 获取加密配置文件
@@ -103,6 +100,8 @@ func VerifyLibOs(appID string, report *attestation.Report) (*types.WorkId, error
 		return nil, errors.Wrap(err, "AppID error")
 	}
 
-	//TODO 验证程序的版本和链上程序的版本是否一样
+	// TODO 验证程序的版本和链上程序的版本是否一样
+	// TODO 验证程序的完整性, 防止篡改
+
 	return &wid, nil
 }

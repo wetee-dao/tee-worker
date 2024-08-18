@@ -121,47 +121,6 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 	return &runtimeCall, nil
 }
 
-func MakeStartProof(wid gtypes.WorkId, BlockNumber uint64) (*gtypes.RuntimeCall, error) {
-	// 获取 tee 工作证明
-	// Get tee report of work
-	report := []byte{}
-	reportData, err := store.GetWorkDcapReport(wid)
-	if err != nil {
-		util.LogError("GetWorkDcapReport", err)
-		report = []byte{}
-	} else {
-		hash := blake2b.Sum256(reportData)
-		report = hash[:]
-	}
-
-	// TODO 暂时全部设置为true
-	hasReport := true
-	if len(report) > 0 {
-		hasReport = true
-	}
-
-	deploy, err := store.GetWorkDeploy(wid)
-	if err != nil {
-		return nil, errors.New("deploy key is nil")
-	}
-
-	// 获取部署帐户
-	var deployKey [32]byte
-	copy(deployKey[:], deploy)
-
-	runtimeCall := weteeworker.MakeWorkStartCall(
-		wid,
-		gtypes.OptionTByteSlice{
-			IsNone:       !hasReport,
-			IsSome:       hasReport,
-			AsSomeField0: report,
-		},
-		deployKey,
-	)
-
-	return &runtimeCall, nil
-}
-
 func SubmitWorkProof(client *chain.ChainClient, signer *core.Signer, proof []gtypes.RuntimeCall) error {
 	call := utility.MakeBatchCall(proof)
 	return client.SignAndSubmit(signer, call, true)

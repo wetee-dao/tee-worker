@@ -48,7 +48,7 @@ func StartSecretServerInCluster(addr string) {
 	})
 
 	router.Post("/appInfo/{AppID}", AppInfoHandler)
-	router.Post("/appLoader/{AppID}", LoadingHandler)
+	router.Post("/appLaunch/{AppID}", LoadingHandler)
 
 	server := &http.Server{Addr: ":8883", Handler: router, TLSConfig: &tlsCfg}
 	log.Printf("Start http://0.0.0.0:8883 for InCluster server")

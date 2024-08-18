@@ -23,6 +23,12 @@ import (
 	"wetee.app/worker/util"
 )
 
+var (
+	lock            sync.Mutex
+	MinterIns       *Minter
+	DefaultChainUrl string = "ws://wetee-node.worker-addon.svc.cluster.local:9944"
+)
+
 // Minter
 // 矿工
 type Minter struct {
@@ -33,21 +39,10 @@ type Minter struct {
 	Nodes         []*types.Node
 	PrivateKey    *types.PrivKey
 	HostDomain    string
-
-	// App lanch event
-	// 应用启动事件
-	AppLanch []gtypes.WorkId
-	mu       sync.RWMutex
-
+	mu            sync.RWMutex
 	// preRecerve is the channel to receive SendEncryptedSecretRequest
 	preRecerve map[string]chan interface{}
 }
-
-var (
-	lock            sync.Mutex
-	MinterIns       *Minter
-	DefaultChainUrl string = "ws://wetee-node.worker-addon.svc.cluster.local:9944"
-)
 
 // InitCluster
 // 初始化矿工
@@ -152,24 +147,7 @@ mintStart:
 			continue
 		}
 
-		// 获取 TEE 根证书
-		report, t, err := proof.GetRemoteReport(signer, nil)
-		if err != nil {
-			fmt.Println("GetRootDcapReport => ", err)
-			time.Sleep(time.Second * 10)
-			continue
-		}
-
-		// 上传 TEE 证书
-		// hash := blake2b.Sum256(report)
-		param := types.TeeParam{
-			Report:  report,
-			Time:    t,
-			TeeType: 0,
-			Address: signer.SS58Address(42),
-			Data:    nil,
-		}
-		_, err = m.UploadClusterProof(&param)
+		_, err = m.UploadClusterProof()
 		if err != nil {
 			fmt.Println("worker.ClusterProofUpload => ", err)
 			time.Sleep(time.Second * 10)
@@ -321,21 +299,6 @@ mintStart:
 			}
 		}
 
-		// 获取启动应用列表
-		var lanchs = []gtypes.WorkId{}
-		m.mu.Lock()
-		lanchs = m.AppLanch
-		m.AppLanch = []gtypes.WorkId{}
-		m.mu.Unlock()
-		for _, wid := range lanchs {
-			call, err := proof.MakeStartProof(wid, uint64(head.Number))
-			if err != nil {
-				util.LogError("MakeStartProof", err)
-				continue
-			}
-			proofs = append(proofs, *call)
-		}
-
 		if len(proofs) > 0 {
 			// 上传工作证明
 			// Upload work proof
@@ -349,12 +312,6 @@ mintStart:
 			}(uint64(head.Number))
 		}
 	}
-}
-
-func (m *Minter) Addlanch(wid gtypes.WorkId) {
-	m.mu.Lock()
-	m.AppLanch = append(m.AppLanch, wid)
-	m.mu.Unlock()
 }
 
 func DeleteFormCache(cs map[gtypes.WorkId]ContractStateWrap, deleteFunc func(gtypes.WorkId, store.RuningCache) error) ([]gtypes.WorkId, error) {
