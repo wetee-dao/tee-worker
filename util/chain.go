@@ -1,6 +1,12 @@
 package util
 
-import "github.com/wetee-dao/go-sdk/pallet/types"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/wetee-dao/go-sdk/pallet/types"
+)
 
 // work type to string
 func GetWorkTypeStr(work types.WorkId) string {
@@ -21,14 +27,28 @@ func GetWorkTypeStr(work types.WorkId) string {
 
 // string to work type
 func GetWorkType(ty string) types.WorkType {
-	if ty == "app" || ty == "APP" || ty == "s" {
+	if ty == "s" {
 		return types.WorkType{IsAPP: true}
 	}
-	if ty == "task" || ty == "TASK" || ty == "t" {
+	if ty == "t" {
 		return types.WorkType{IsTASK: true}
 	}
-	if ty == "gpu" || ty == "GPU" || ty == "g" {
+	if ty == "g" {
 		return types.WorkType{IsGPU: true}
 	}
 	return types.WorkType{}
+}
+
+func GetWorkTypeFromWorkId(workId string) types.WorkId {
+	ws := strings.Split(workId, "::")
+	wty := GetWorkType(ws[0])
+	num, _ := strconv.ParseUint(ws[1], 10, 64)
+	return types.WorkId{
+		Wtype: wty,
+		Id:    num,
+	}
+}
+
+func GetWorkIdFromWorkType(wtype types.WorkId) string {
+	return GetWorkTypeStr(wtype) + "::" + fmt.Sprint(wtype.Id)
 }

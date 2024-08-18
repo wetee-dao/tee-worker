@@ -24,7 +24,6 @@ func (m *Minter) UploadClusterProof() ([]byte, error) {
 	}
 
 	// 上传 TEE 证书
-	// hash := blake2b.Sum256(report)
 	param := types.TeeParam{
 		Report:  report,
 		Time:    t,

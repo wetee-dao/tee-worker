@@ -1,9 +1,5 @@
 package types
 
-import (
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
-)
-
 // P2P 请求 Message 消息体
 type Message struct {
 	// 消息ID
@@ -47,5 +43,5 @@ type LaunchRequest struct {
 	// cluster tee report
 	Cluster *TeeParam
 	// worker tee report
-	WorkID *gtypes.WorkId
+	WorkID string
 }

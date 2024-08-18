@@ -11,6 +11,7 @@ import (
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/mint/proof"
 	types "wetee.app/worker/type"
+	"wetee.app/worker/util"
 )
 
 // ReencryptSecretRequest 函数用于生成重新加密的请求，并处理返回结果
@@ -92,7 +93,7 @@ func (m *Minter) ReencryptSecretReply(data []byte, err string, msgID string, Org
 	return nil
 }
 
-// LaunchFromDsecret
+// LaunchFromDsecret 函数处理重新加密的秘密回复
 func (m *Minter) LaunchFromDsecret(wid *gtypes.WorkId, libosReport *types.TeeParam) (*types.ReencryptSecret, error) {
 	signer, _ := m.PrivateKey.ToSigner()
 
@@ -117,6 +118,7 @@ func (m *Minter) LaunchFromDsecret(wid *gtypes.WorkId, libosReport *types.TeePar
 	// 构造启动请求
 	// make launch request
 	req := types.LaunchRequest{
+		WorkID:  util.GetWorkIdFromWorkType(*wid),
 		Libos:   libosReport,
 		Cluster: &clusterReport,
 	}
@@ -171,4 +173,19 @@ func (m *Minter) LaunchFromDsecret(wid *gtypes.WorkId, libosReport *types.TeePar
 	err = json.Unmarshal(data.Result, &reencryptSecret)
 
 	return &reencryptSecret, err
+}
+
+// LaunchFromDsecret 函数处理重新加密的秘密回复
+func (m *Minter) WorkLaunchReply(data []byte, err string, msgID string, OrgId string) error {
+	// 检查消息ID是否存在
+	if _, ok := m.preRecerve[msgID]; !ok {
+		return nil
+	}
+
+	m.preRecerve[msgID] <- &types.Result{
+		Error:  err,
+		Result: data,
+	}
+
+	return nil
 }

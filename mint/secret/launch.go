@@ -85,7 +85,12 @@ func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
 	}
 
 	// 上传TEE环境变量，设置当前的部署 Key
-	mint.MinterIns.LaunchFromDsecret(wid, param)
+	secret, err := mint.MinterIns.LaunchFromDsecret(wid, param)
+	if err != nil {
+		return nil, errors.Wrap(err, "LaunchFromDsecret error")
+	}
+
+	fmt.Println(secret)
 
 	// 获取配置文件
 	// 获取加密配置文件

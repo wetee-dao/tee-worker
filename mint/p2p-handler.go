@@ -1,8 +1,6 @@
 package mint
 
 import (
-	"fmt"
-
 	types "wetee.app/worker/type"
 )
 
@@ -17,7 +15,11 @@ func (m *Minter) HandleWorker(msg *types.Message) error {
 	case "reencrypt_secret_remote_reply":
 		err := m.ReencryptSecretReply(msg.Payload, msg.Error, msg.MsgID, msg.OrgId)
 		return err
+	/// -------------------- work -----------------------
+	case "work_launch_reply":
+		err := m.WorkLaunchReply(msg.Payload, msg.Error, msg.MsgID, msg.OrgId)
+		return err
 	default:
-		return fmt.Errorf("unknown message type: %s", msg.Type)
+		return nil
 	}
 }
