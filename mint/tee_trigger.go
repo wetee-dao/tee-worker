@@ -41,9 +41,9 @@ func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint6
 	for workId, ids := range callId {
 		work := cs[workId]
 
-		if blockNumber-work.Version < 100 || work.GetStatus() != 3 {
+		if blockNumber-work.Version < 20 || work.GetStatus() != 3 {
 			// 跳过部署不超过 20 个区块的 TEECall
-			fmt.Println("Skip ", workId, " trigger")
+			fmt.Println("Skip ", util.GetWorkIdFromWorkType(workId), " trigger")
 			continue
 		}
 

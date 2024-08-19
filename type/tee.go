@@ -1,5 +1,6 @@
 package types
 
+// TeeParam 结构体包含 TEE 证明的信息
 type TeeParam struct {
 	// sign address
 	Address string

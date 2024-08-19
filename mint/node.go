@@ -43,15 +43,15 @@ func (c *Minter) GetNodeList() ([][32]byte, error) {
 }
 
 // 获取全网当前程序的代码版本
-// Get CodeMrenclave
-func (c *Minter) GetCodeMrenclave() ([]byte, error) {
-	return weteedsecret.GetCodeMrenclaveLatest(c.ChainClient.Api.RPC.State)
+// Get CodeSignature
+func (c *Minter) GetCodeSignature() ([]byte, error) {
+	return weteedsecret.GetCodeSignatureLatest(c.ChainClient.Api.RPC.State)
 }
 
 // 获取全网当前程序的签名人
-// Get CodeMrsigner
-func (c *Minter) GetCodeMrsigner() ([]byte, error) {
-	return weteedsecret.GetCodeMrsignerLatest(c.ChainClient.Api.RPC.State)
+// Get GetCodeSigner
+func (c *Minter) GetGetCodeSigner() ([]byte, error) {
+	return weteedsecret.GetCodeSignerLatest(c.ChainClient.Api.RPC.State)
 }
 
 func (c *Minter) GetWorkerList() ([]*types.K8sCluster, error) {

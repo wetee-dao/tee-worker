@@ -85,20 +85,11 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 		hasReport = true
 	}
 
-	deploy, err := store.GetWorkDeploy(wid)
-	if err != nil {
-		return nil, errors.New("deploy key is nil")
-	}
-
 	// 所有需要提交的信息都不存在，不继续提交
 	// All required submission information is missing, and the submission will not be continued.
 	if report == nil && crHash == nil && logHash == nil {
 		return nil, errors.New("report, crHash and logHash are all nil")
 	}
-
-	// 获取部署帐户
-	var deployKey [32]byte
-	copy(deployKey[:], deploy)
 
 	runtimeCall := weteeworker.MakeWorkProofUploadCall(
 		wid,

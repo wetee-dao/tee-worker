@@ -1,7 +1,11 @@
 package types
 
+// TeeTrigger TEE 触发器
 type TeeTrigger struct {
-	Tee       TeeParam
+	// TEE 证明
+	Tee TeeParam
+	// 集群 ID
 	ClusterId uint64
-	Callids   []string
+	// 调用 ID
+	Callids []string
 }

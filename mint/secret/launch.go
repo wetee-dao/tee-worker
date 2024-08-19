@@ -9,7 +9,6 @@ import (
 	"github.com/edgelesssys/ego/attestation"
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
-	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint"
@@ -57,7 +56,7 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 
 // 加载应用加密文件，加密环境变量
 // load app secret file and env
-func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
+func loading(appID string, param *wtypes.TeeParam) (*wtypes.EnvWrap, error) {
 	// 验证报告是否合理
 	report, err := proof.VerifyReportFromTeeParam(param)
 	if err != nil {
@@ -69,19 +68,12 @@ func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "VerifyLibOs error")
 	}
-	_, deployAccount, err := subkey.SS58Decode(param.Address)
-	if err != nil {
-		return nil, errors.Wrap(err, "Address error")
-	}
 
 	// 存入 Work DCAP 信息
-	err = store.SetWorkDcapReport(*wid, param.Report)
+	bt, _ := json.Marshal(param)
+	err = store.SetWorkDcapReport(*wid, bt)
 	if err != nil {
 		return nil, errors.Wrap(err, "DCAP Report set error")
-	}
-	err = store.SetWorkDeploy(*wid, deployAccount)
-	if err != nil {
-		return nil, errors.Wrap(err, "Set deploy error")
 	}
 
 	// 上传TEE环境变量，设置当前的部署 Key
@@ -90,11 +82,11 @@ func loading(appID string, param *wtypes.TeeParam) (*store.Secrets, error) {
 		return nil, errors.Wrap(err, "LaunchFromDsecret error")
 	}
 
-	fmt.Println(secret)
-
 	// 获取配置文件
 	// 获取加密配置文件
-	s := &store.Secrets{}
+	s := &wtypes.EnvWrap{
+		Sec: *secret,
+	}
 
 	return s, nil
 }

@@ -45,3 +45,15 @@ type LaunchRequest struct {
 	// worker tee report
 	WorkID string
 }
+
+// 公开的环境变量
+type Envs struct {
+	Envs  map[string]string
+	Files map[string][]byte
+}
+
+// 环境变量包装
+type EnvWrap struct {
+	Pub Envs
+	Sec ReencryptSecret
+}
