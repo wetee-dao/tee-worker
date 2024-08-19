@@ -1,4 +1,4 @@
-package secret
+package libos
 
 import (
 	"encoding/json"
@@ -6,13 +6,11 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/edgelesssys/ego/attestation"
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint"
-	"wetee.app/worker/mint/proof"
 	wtypes "wetee.app/worker/type"
 )
 
@@ -57,14 +55,8 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 // 加载应用加密文件，加密环境变量
 // load app secret file and env
 func loading(appID string, param *wtypes.TeeParam) (*wtypes.EnvWrap, error) {
-	// 验证报告是否合理
-	report, err := proof.VerifyReportFromTeeParam(param)
-	if err != nil {
-		return nil, errors.Wrap(err, "VerifyLocalReport error")
-	}
-
 	// 验证 libos 完整性信息
-	wid, err := VerifyLibOs(appID, report)
+	wid, err := VerifyLibOs(appID, param)
 	if err != nil {
 		return nil, errors.Wrap(err, "VerifyLibOs error")
 	}
@@ -91,14 +83,22 @@ func loading(appID string, param *wtypes.TeeParam) (*wtypes.EnvWrap, error) {
 	return s, nil
 }
 
-func VerifyLibOs(appID string, report *attestation.Report) (*types.WorkId, error) {
+// VerifyLibOs 函数验证应用程序标识和报告，并返回工作标识或错误
+func VerifyLibOs(appID string, report *wtypes.TeeParam) (*types.WorkId, error) {
+	// 解包应用程序标识
 	wid, err := store.UnSealAppID(appID)
 	if err != nil {
+		// 如果解包过程中出现错误，则返回错误信息
 		return nil, errors.Wrap(err, "AppID error")
 	}
 
-	// TODO 验证程序的版本和链上程序的版本是否一样
-	// TODO 验证程序的完整性, 防止篡改
+	// 验证工作标识和报告
+	_, err = mint.MinterIns.VerifyWorkLibos(wid, report)
+	if err != nil {
+		// 如果验证过程中出现错误，则返回错误信息
+		return nil, errors.Wrap(err, "VerifyWorkLibos error")
+	}
 
+	// 返回解包后的工作标识
 	return &wid, nil
 }
