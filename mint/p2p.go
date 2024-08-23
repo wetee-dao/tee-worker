@@ -84,7 +84,7 @@ func (m *Minter) StartP2P() error {
 		n := &types.Node{
 			ID: pub.String(),
 		}
-		d := util.GetUrlFromIp1(b.Ip)
+		d := util.GetUrlFromIp(b.Ip)
 		url := d + "/tcp/" + fmt.Sprint(b.Port) + "/p2p/" + n.PeerID().String()
 		boots = append(boots, url)
 	}
@@ -113,6 +113,7 @@ func (m *Minter) SendMessageToSecret(ctx context.Context, message *types.Message
 	}
 
 	// Create a slice to store nodes of type 1
+	// 创建一个切片，存储节点类型为 1 的节点
 	nodes := make([]*types.Node, 0, len(m.Nodes))
 	for _, n := range m.Nodes {
 		if n.Type == 1 {

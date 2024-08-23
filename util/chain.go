@@ -27,13 +27,13 @@ func GetWorkTypeStr(work types.WorkId) string {
 
 // string to work type
 func GetWorkType(ty string) types.WorkType {
-	if ty == "s" {
+	if ty == "s" || ty == "APP" {
 		return types.WorkType{IsAPP: true}
 	}
-	if ty == "t" {
+	if ty == "t" || ty == "TASK" {
 		return types.WorkType{IsTASK: true}
 	}
-	if ty == "g" {
+	if ty == "g" || ty == "GPU" {
 		return types.WorkType{IsGPU: true}
 	}
 	return types.WorkType{}

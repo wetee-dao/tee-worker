@@ -26,14 +26,20 @@ type ContractStateWrap struct {
 	Envs          []*gtypes.Env
 }
 
+// GetStatus 方法返回当前合同的状态
 func (c *ContractStateWrap) GetStatus() byte {
+	// 检查 c 是否有 App 字段，且其值不为 nil
 	if c.App != nil {
+		// 如果 App 字段存在且不为 nil，则返回 App 字段的 Status 状态
 		return c.App.Status
 	} else if c.Task != nil {
+		// 如果 Task 字段存在且不为 nil，则返回 Task 字段的 Status 状态
 		return c.Task.Status
 	} else if c.GpuApp != nil {
+		// 如果 GpuApp 字段存在且不为 nil，则返回 GpuApp 字段的 Status 状态
 		return c.GpuApp.Status
 	} else {
+		// 如果以上条件都不满足，即所有可能的状态字段都为 nil，则返回默认值 0
 		return 0
 	}
 }

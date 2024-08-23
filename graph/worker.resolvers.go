@@ -15,14 +15,11 @@ import (
 	"time"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
-	subkey "github.com/vedhavyas/go-subkey/v2"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/wetee-dao/go-sdk/core"
 	"github.com/wetee-dao/go-sdk/module"
 	"github.com/wetee-dao/go-sdk/pallet/balances"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
-	"github.com/wetee-dao/go-sdk/pallet/weteedsecret"
-	"github.com/wetee-dao/go-sdk/pallet/weteeworker"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/mint"
@@ -265,51 +262,51 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 	}
 
 	// 创建 P2P 节点 p2p boot nodes
-	port := util.GetEnvInt("P2P_PORT", 8881)
-	call := weteeworker.MakeSetBootPeersCall([]gtypes.P2PAddr{
-		{
-			Ip: gtypes.Ip1{
-				Ipv4: gtypes.OptionTUint32{
-					IsNone: true,
-				},
-				Ipv6: gtypes.OptionTU128{
-					IsNone: true,
-				},
-				Domain: gtypes.OptionTByteSlice{
-					IsSome:       true,
-					AsSomeField0: []byte("xiaobai.asyou.me"),
-				},
-			},
-			Port: uint16(port),
-			Id:   minter.AsID,
-		},
-	})
+	// port := util.GetEnvInt("P2P_PORT", 8881)
+	// call := weteeworker.MakeSetBootPeersCall([]gtypes.P2PAddr{
+	// 	{
+	// 		Ip: gtypes.Ip{
+	// 			Ipv4: gtypes.OptionTUint32{
+	// 				IsNone: true,
+	// 			},
+	// 			Ipv6: gtypes.OptionTU128{
+	// 				IsNone: true,
+	// 			},
+	// 			Domain: gtypes.OptionTByteSlice{
+	// 				IsSome:       true,
+	// 				AsSomeField0: []byte("xiaobai.asyou.me"),
+	// 			},
+	// 		},
+	// 		Port: uint16(port),
+	// 		Id:   minter.AsID,
+	// 	},
+	// })
 
-	err = client.SignAndSubmit(&signer, call, false)
-	if err != nil {
-		return false, errors.New("Chain call error:" + err.Error())
-	}
-	time.Sleep(10 * time.Second)
+	// err = client.SignAndSubmit(&signer, call, false)
+	// if err != nil {
+	// 	return false, errors.New("Chain call error:" + err.Error())
+	// }
+	// time.Sleep(10 * time.Second)
 
-	var nodes []string = []string{
-		"5GmiTJQfjKQnmoVQBFTFoBVTqGyJb8vJQRx5FTGxySMbytkt",
-		"5Fk55vz7hXNKgize4yGoyqixiYbgj6djdDGHktw6ggKPePqE",
-		"5FYJhLSqFRXRy17oHKgKjx7BvjMGXNu8ndAGt56ipwFSUNqu",
-	}
+	// var nodes []string = []string{
+	// 	"5GmiTJQfjKQnmoVQBFTFoBVTqGyJb8vJQRx5FTGxySMbytkt",
+	// 	"5Fk55vz7hXNKgize4yGoyqixiYbgj6djdDGHktw6ggKPePqE",
+	// 	"5FYJhLSqFRXRy17oHKgKjx7BvjMGXNu8ndAGt56ipwFSUNqu",
+	// }
 
-	for _, node := range nodes {
-		_, k, _ := subkey.SS58Decode(node)
-		var a [32]byte
-		copy(a[:], k)
+	// for _, node := range nodes {
+	// 	_, k, _ := subkey.SS58Decode(node)
+	// 	var a [32]byte
+	// 	copy(a[:], k)
 
-		// 创建 dsecret 节点
-		call = weteedsecret.MakeRegisterNodeCall(a)
-		err = client.SignAndSubmit(&signer, call, false)
-		if err != nil {
-			return false, errors.New("Chain call error:" + err.Error())
-		}
-		time.Sleep(10 * time.Second)
-	}
+	// 	// 创建 dsecret 节点
+	// 	call = weteedsecret.MakeRegisterNodeCall(a)
+	// 	err = client.SignAndSubmit(&signer, call, false)
+	// 	if err != nil {
+	// 		return false, errors.New("Chain call error:" + err.Error())
+	// 	}
+	// 	time.Sleep(10 * time.Second)
+	// }
 
 	return true, nil
 }
