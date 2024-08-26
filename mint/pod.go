@@ -434,13 +434,13 @@ func (m *Minter) buildPodContainer(
 	// 构建容器
 	for i, container := range cs {
 		ports := BuildContainerPortFormService(name, container.Port)
-		if i == 0 {
-			ports = append(ports, v1.ContainerPort{
-				Name:          "port0",
-				ContainerPort: int32(65535),
-				Protocol:      "TCP",
-			})
-		}
+		// if i == 0 {
+		// 	ports = append(ports, v1.ContainerPort{
+		// 		Name:          "port0",
+		// 		ContainerPort: int32(65535),
+		// 		Protocol:      "TCP",
+		// 	})
+		// }
 
 		cnevs, err := m.BuildEnvsFromSettings(workId, filterEnvs(envs, uint16(i)))
 		if err != nil {

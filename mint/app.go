@@ -159,6 +159,9 @@ func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.Work
 	// 初始化TEE
 	m.DeploymentTEEWrap(&deployment, &app.TeeVersion)
 
+	// ADD Libos
+	m.WrapLibos(&deployment, &app.TeeVersion)
+
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
 	fmt.Println("================================================= Create pod", err)
 	if err != nil {

@@ -19,7 +19,7 @@ func (m *Minter) VerifyWorker(reportData *types.TeeParam) ([]byte, error) {
 		return nil, errors.New("SS58 decode: " + err.Error())
 	}
 
-	report, err := proof.VerifyReportFromTeeParam(reportData)
+	report, err := proof.VerifyReportProof(reportData)
 	if err != nil {
 		return nil, errors.New("verify cluster report: " + err.Error())
 	}
@@ -30,11 +30,11 @@ func (m *Minter) VerifyWorker(reportData *types.TeeParam) ([]byte, error) {
 		return nil, errors.New("GetWorkerCode error:" + err.Error())
 	}
 	if len(codeHash) > 0 || len(codeSigner) > 0 {
-		if hex.EncodeToString(codeHash) != hex.EncodeToString(report.UniqueID) {
+		if hex.EncodeToString(codeHash) != hex.EncodeToString(report.CodeSignature) {
 			return nil, errors.New("worker code hash error")
 		}
 
-		if hex.EncodeToString(codeSigner) != hex.EncodeToString(report.SignerID) {
+		if hex.EncodeToString(codeSigner) != hex.EncodeToString(report.CodeSigner) {
 			return nil, errors.New("worker signer error")
 		}
 	}
@@ -50,7 +50,7 @@ func (m *Minter) VerifyDsecret(reportData *types.TeeParam) ([]byte, error) {
 		return nil, errors.New("SS58 decode: " + err.Error())
 	}
 
-	report, err := proof.VerifyReportFromTeeParam(reportData)
+	report, err := proof.VerifyReportProof(reportData)
 	if err != nil {
 		return nil, errors.New("verify cluster report: " + err.Error())
 	}
@@ -61,11 +61,11 @@ func (m *Minter) VerifyDsecret(reportData *types.TeeParam) ([]byte, error) {
 		return nil, errors.New("GetWorkerCode error:" + err.Error())
 	}
 	if len(codeHash) > 0 || len(codeSigner) > 0 {
-		if hex.EncodeToString(codeHash) != hex.EncodeToString(report.UniqueID) {
+		if hex.EncodeToString(codeHash) != hex.EncodeToString(report.CodeSignature) {
 			return nil, errors.New("worker code hash error")
 		}
 
-		if hex.EncodeToString(codeSigner) != hex.EncodeToString(report.SignerID) {
+		if hex.EncodeToString(codeSigner) != hex.EncodeToString(report.CodeSigner) {
 			return nil, errors.New("worker signer error")
 		}
 	}
@@ -81,7 +81,7 @@ func (m *Minter) VerifyWorkLibos(wid gtypes.WorkId, reportData *types.TeeParam) 
 		return nil, errors.New("SS58 decode: " + err.Error())
 	}
 
-	report, err := proof.VerifyReportFromTeeParam(reportData)
+	report, err := proof.VerifyReportProof(reportData)
 	if err != nil {
 		return nil, errors.New("verify cluster report: " + err.Error())
 	}
@@ -92,11 +92,11 @@ func (m *Minter) VerifyWorkLibos(wid gtypes.WorkId, reportData *types.TeeParam) 
 		return nil, errors.New("GetWorkerCode error:" + err.Error())
 	}
 	if len(codeHash) > 0 || len(codeSigner) > 0 {
-		if hex.EncodeToString(codeHash) != hex.EncodeToString(report.UniqueID) {
+		if hex.EncodeToString(codeHash) != hex.EncodeToString(report.CodeSignature) {
 			return nil, errors.New("worker code hash error")
 		}
 
-		if hex.EncodeToString(codeSigner) != hex.EncodeToString(report.SignerID) {
+		if hex.EncodeToString(codeSigner) != hex.EncodeToString(report.CodeSigner) {
 			return nil, errors.New("worker signer error")
 		}
 	}

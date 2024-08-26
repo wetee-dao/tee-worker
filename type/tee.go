@@ -13,3 +13,14 @@ type TeeParam struct {
 	// report
 	Report []byte
 }
+
+type TeeReport struct {
+	// 0: sgx, 1: sev 2: tdx 3: sev-snp
+	TeeType uint8
+	// report code signer
+	CodeSigner []byte
+	// report code signature
+	CodeSignature []byte
+	// report ProductID
+	CodeProductID []byte
+}

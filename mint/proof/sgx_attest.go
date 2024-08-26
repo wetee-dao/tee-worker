@@ -16,7 +16,24 @@ import (
 	wtypes "wetee.app/worker/type"
 )
 
-func VerifyReportProof(reportBytes, msgBytes, signer []byte, timestamp int64) (*attestation.Report, error) {
+func VerifyReportProof(workerReport *wtypes.TeeParam) (*wtypes.TeeReport, error) {
+	// TODO SEV/TDX not support
+	if workerReport.TeeType != 0 {
+		return &wtypes.TeeReport{
+			CodeSignature: []byte{},
+			CodeSigner:    []byte{},
+			CodeProductID: []byte{},
+		}, nil
+	}
+
+	var reportBytes, msgBytes, timestamp = workerReport.Report, workerReport.Data, workerReport.Time
+
+	// decode address
+	_, signer, err := subkey.SS58Decode(workerReport.Address)
+	if err != nil {
+		return nil, errors.New("SS58 decode: " + err.Error())
+	}
+
 	// 检查时间戳，超过 30s 签名过期
 	if timestamp+30 < time.Now().Unix() {
 		return nil, errors.New("report expired")
@@ -51,14 +68,10 @@ func VerifyReportProof(reportBytes, msgBytes, signer []byte, timestamp int64) (*
 		return nil, errors.New("debug mode is not allowed")
 	}
 
-	return &report, nil
-}
-
-func VerifyReportFromTeeParam(workerReport *wtypes.TeeParam) (*attestation.Report, error) {
-	_, signer, err := subkey.SS58Decode(workerReport.Address)
-	if err != nil {
-		return nil, errors.New("VerifyReportFromTeeParam: SS58 decode")
-	}
-
-	return VerifyReportProof(workerReport.Report, workerReport.Data, signer, workerReport.Time)
+	return &wtypes.TeeReport{
+		TeeType:       workerReport.TeeType,
+		CodeSigner:    report.SignerID,
+		CodeSignature: report.UniqueID,
+		CodeProductID: report.ProductID,
+	}, nil
 }

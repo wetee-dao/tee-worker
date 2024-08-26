@@ -114,7 +114,7 @@ func (r *queryResolver) AttestationReportVerify(ctx context.Context, report stri
 	ps := wtypes.TeeParam{}
 	json.Unmarshal(bt, &wtypes.TeeParam{})
 
-	_, err = proof.VerifyReportFromTeeParam(&ps)
+	_, err = proof.VerifyReportProof(&ps)
 	if err != nil {
 		return false, gqlerror.Errorf("VerifyLocalReport error:" + err.Error())
 	}
