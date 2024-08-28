@@ -165,6 +165,9 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	// 添加模型
 	m.WrapAiModel(app, &deployment)
 
+	// ADD Libos
+	m.WrapLibos(&deployment, &app.TeeVersion)
+
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
 	if err != nil {
 		return err

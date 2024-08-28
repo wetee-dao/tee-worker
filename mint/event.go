@@ -63,13 +63,13 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			workId := appEvent.AsWorkStoppedWorkId1
 
 			err = m.StopApp(workId, "")
-			util.LogError("===========================================StopPod error: ", err)
+			util.LogError("===========================================APP StopPod error: ", err)
 		}
 		if appEvent.IsWorkUpdated {
 			workId := appEvent.AsWorkUpdatedWorkId1
 			user := appEvent.AsWorkUpdatedUser0
 
-			util.LogError("===========================================WorkUpdated: ", workId)
+			util.LogError("===========================================APP WorkUpdated: ", workId)
 			version, _ := module.GetVersion(m.ChainClient, workId)
 			appIns := module.App{
 				Client: m.ChainClient,
@@ -77,7 +77,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			app, _ := appIns.GetApp(user[:], workId.Id)
 			envs, _ := m.BuildEnvs(workId)
 			err = m.UpdateApp(&ctx, user[:], workId, app, envs, version)
-			util.LogError("===========================================CreateOrUpdatePod error: ", err)
+			util.LogError("===========================================APP CreateOrUpdatePod error: ", err)
 		}
 	}
 
@@ -102,13 +102,13 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			workId := appEvent.AsWorkStoppedWorkId1
 
 			err = m.StopApp(workId, "")
-			util.LogError("===========================================StopPod error: ", err)
+			util.LogError("===========================================GPU StopPod error: ", err)
 		}
 		if appEvent.IsWorkUpdated {
 			workId := appEvent.AsWorkUpdatedWorkId1
 			user := appEvent.AsWorkUpdatedUser0
 
-			util.LogError("===========================================WorkUpdated: ", workId)
+			util.LogError("===========================================GPU WorkUpdated: ", workId)
 			version, _ := module.GetVersion(m.ChainClient, workId)
 			appIns := module.GpuApp{
 				Client: m.ChainClient,
@@ -116,7 +116,7 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			app, _ := appIns.GetApp(user[:], workId.Id)
 			envs, _ := m.BuildEnvs(workId)
 			err = m.UpdateGpuApp(&ctx, user[:], workId, app, envs, version)
-			util.LogError("===========================================CreateOrUpdatePod error: ", err)
+			util.LogError("===========================================GPU CreateOrUpdatePod error: ", err)
 		}
 	}
 
