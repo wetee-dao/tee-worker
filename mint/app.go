@@ -110,9 +110,9 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, state ContractStateWrap) (
 // 校对应用链上状态后创建或更新应用
 func (m *Minter) CreateApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeApp, envs []*gtypes.Env, version uint64) error {
 	saddress := AccountToSpace(user)
-	errc := m.checkNameSpace(*ctx, saddress)
-	if errc != nil {
-		return errc
+	err := m.checkNameSpace(*ctx, saddress)
+	if err != nil {
+		return err
 	}
 
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)

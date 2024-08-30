@@ -110,9 +110,9 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap
 // 校对应用链上状态后创建或更新应用
 func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.GpuApp, envs []*gtypes.Env, version uint64) error {
 	saddress := AccountToSpace(user)
-	errc := m.checkNameSpace(*ctx, saddress)
-	if errc != nil {
-		return errc
+	err := m.checkNameSpace(*ctx, saddress)
+	if err != nil {
+		return err
 	}
 
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
@@ -136,6 +136,10 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	// 添加gpu资源
 	pContainers[0].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent)
 	pContainers[0].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent)
+	for i := 1; i < len(pContainers); i++ {
+		pContainers[i].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.SideContainer[i-1].Cr.Gpu), resource.DecimalExponent)
+		pContainers[i].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.SideContainer[i-1].Cr.Gpu), resource.DecimalExponent)
+	}
 
 	nvidiaClass := "nvidia"
 	deployment := appsv1.Deployment{

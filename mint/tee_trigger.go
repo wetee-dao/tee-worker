@@ -103,6 +103,7 @@ func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint6
 	}
 }
 
+// 获取 Work 的帐户
 func (m *Minter) GetUsersFromCall(calls map[gtypes.WorkId][]types.StorageKey) (map[gtypes.WorkId][32]byte, error) {
 	keys := make([]types.StorageKey, 0, len(calls))
 	keyMap := make(map[gtypes.WorkId]types.StorageKey)

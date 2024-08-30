@@ -2,6 +2,9 @@ package mint
 
 import (
 	"context"
+	"encoding/base32"
+	"encoding/hex"
+	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,4 +35,20 @@ func (m *Minter) checkNameSpace(ctx context.Context, address string) error {
 		}
 	}
 	return nil
+}
+
+// Account To Hex Address
+// 将用户公钥转换为hex地址
+func AccountToSpace(user []byte) string {
+	address := base32.HexEncoding.EncodeToString(user[:])
+	address = strings.ReplaceAll(strings.ToLower(address), "=", "")
+	return strings.TrimRight(address, "000000000000000000")
+}
+
+// Hex Address To Account
+// 将hex地址转换为用户公钥
+func HexStringToSpace(address string) string {
+	address = strings.ReplaceAll(address, "0x", "")
+	user, _ := hex.DecodeString(address)
+	return AccountToSpace(user)
 }

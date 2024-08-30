@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/base32"
-	"encoding/hex"
 	"html/template"
 	"math/rand"
 	"strings"
@@ -84,22 +82,6 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 	}
 
 	return logs, use, nil
-}
-
-// Account To Hex Address
-// 将用户公钥转换为hex地址
-func AccountToSpace(user []byte) string {
-	address := base32.HexEncoding.EncodeToString(user[:])
-	address = strings.ReplaceAll(strings.ToLower(address), "=", "")
-	return strings.TrimRight(address, "000000000000000000")
-}
-
-// Hex Address To Account
-// 将hex地址转换为用户公钥
-func HexStringToSpace(address string) string {
-	address = strings.ReplaceAll(address, "0x", "")
-	user, _ := hex.DecodeString(address)
-	return AccountToSpace(user)
 }
 
 // Get Envs from Work
