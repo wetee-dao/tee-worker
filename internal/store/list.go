@@ -4,8 +4,11 @@ import (
 	"github.com/nutsdb/nutsdb"
 )
 
+var listBucket = "list"
+
 // AddToList 将键值对添加到指定的 bucket 中
-func AddToList(bucket string, key []byte, val []byte) error {
+func AddToList(lbucket string, skey string, val []byte) error {
+	key := []byte(lbucket + skey)
 	// 使用 SealWithProductKey 函数对值进行处理
 	val, err := SealWithProductKey(val, nil)
 	if err != nil {
@@ -13,7 +16,7 @@ func AddToList(bucket string, key []byte, val []byte) error {
 		return err
 	}
 	// 检查 bucket 是否有效
-	err = checkBucket(bucket, nutsdb.DataStructureList)
+	err = checkBucket(listBucket, nutsdb.DataStructureList)
 	if err != nil {
 		// 如果 bucket 无效，则返回相应错误
 		return err
@@ -23,16 +26,18 @@ func AddToList(bucket string, key []byte, val []byte) error {
 	return DB.Update(
 		func(tx *nutsdb.Tx) error {
 			// 使用 LPush 命令将 key 和 val 添加到 bucket 中
-			err := tx.LPush(bucket, key, val)
+			err := tx.LPush(listBucket, key, val)
 			return err
 		},
 	)
 }
 
 // GetList 根据指定的 bucket、key、page 和 size，从 NutsDB 中获取列表数据，进行解密封装后返回
-func GetList(bucket string, key []byte, page int, size int) ([][]byte, error) {
+func GetList(lbucket string, skey string, page int, size int) ([][]byte, error) {
+	key := []byte(lbucket + skey)
+
 	// 检查 bucket 是否有效，内容是否为列表
-	err := checkBucket(bucket, nutsdb.DataStructureList)
+	err := checkBucket(listBucket, nutsdb.DataStructureList)
 	if err != nil {
 		// 如果 bucket 无效或类型错误，返回错误
 		return nil, err
@@ -53,7 +58,7 @@ func GetList(bucket string, key []byte, page int, size int) ([][]byte, error) {
 			}
 
 			// 使用 LRange 命令从指定的 bucket 中获取 key 对应的列表数据
-			clist, err2 := tx.LRange(bucket, key, start, end)
+			clist, err2 := tx.LRange(listBucket, key, start, end)
 
 			// 遍历读取到的列表数据，对每个元素进行解密封装后，添加到新的列表中
 			for _, v := range clist {
@@ -72,4 +77,27 @@ func GetList(bucket string, key []byte, page int, size int) ([][]byte, error) {
 	)
 	// 返回读取到的列表数据以及读取过程中可能发生的错误
 	return list, err
+}
+
+func DeleteList(lbucket string, skey string) error {
+	key := []byte(lbucket + skey)
+
+	// 检查 bucket 是否有效，内容是否为列表
+	err := checkBucket(listBucket, nutsdb.DataStructureList)
+	if err != nil {
+		// 如果 bucket 无效或类型错误，返回错误
+		return err
+	}
+
+	// 使用事务来删除数据库的内容
+	return DB.Update(
+		func(tx *nutsdb.Tx) error {
+			err := tx.LTrim(listBucket, key, 0, 0)
+			if err != nil {
+				return err
+			}
+
+			return tx.LRemByIndex(listBucket, key, 0)
+		},
+	)
 }

@@ -29,9 +29,9 @@ func TestListLogsById(t *testing.T) {
 	}
 
 	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
-	store.AddToList(LogBucket, []byte(LogBucket+name), bt)
+	store.AddToList(LogBucket, name, bt)
 
-	logs, err := ListLogsById(id, page, size)
+	logs, err := ListLogsById(id, page, size, false)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -43,7 +43,7 @@ func TestListLogsById(t *testing.T) {
 	// Test case 2: Error case
 	page = 2
 	size = 1
-	logs, err = ListLogsById(id, page, size)
+	logs, err = ListLogsById(id, page, size, false)
 	if err == nil {
 		t.Error("Expected error, got nil")
 	}

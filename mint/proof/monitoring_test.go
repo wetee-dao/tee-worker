@@ -30,9 +30,9 @@ func TestListMonitoringsById(t *testing.T) {
 	}
 
 	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
-	store.AddToList(CrBucket, []byte(CrBucket+name), bt)
+	store.AddToList(CrBucket, name, bt)
 
-	crs, err := ListMonitoringsById(id, page, size)
+	crs, err := ListMonitoringsById(id, page, size, false)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

@@ -340,6 +340,7 @@ func renderTemplate(templateString string, data map[string]string) (string, erro
 	return result.String(), nil
 }
 
+// Build Pod Container
 func (m *Minter) buildPodContainer(
 	ctx *context.Context,
 	workId gtypes.WorkId,
@@ -457,6 +458,40 @@ func (m *Minter) buildPodContainer(
 	return podContainers, nil
 }
 
+// 获取工作日志和硬件资源使用量
+func (m *Minter) GetLogAndCr(ctx *context.Context, nameSpace string, workId gtypes.WorkId, stage uint64) ([]string, map[string][]int64, error) {
+	// 通过 K8s API 获取指定命名空间中的 Pod 列表
+	clientset := m.K8sClient
+	pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: getLabelSelector(workId),
+	})
+	if err != nil {
+		util.LogError("getPod", err)
+		return nil, nil, err
+	}
+
+	// 判断是否找到匹配的 Pod
+	if len(pods.Items) == 0 {
+		// 记录错误信息：没有找到匹配的 Pod
+		util.LogError("pods is empty")
+		return nil, nil, errors.New("pods is empty")
+	}
+
+	// 打印获取到的 Pod 名称
+	fmt.Println("pods: ", pods.Items[0].Name)
+
+	// 获取指定 Pod 的日志和硬件资源使用量信息
+	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, stage)
+
+	// 如果获取 log 和硬件资源使用量的过程中出现错误，则记录错误日志
+	if err != nil {
+		util.LogError("getMetricInfo", err)
+	}
+
+	// 返回获取到的日志和硬件资源使用量
+	return logs, crs, nil
+}
+
 func filterEnvs(envs []*gtypes.Env, index uint16) []*gtypes.Env {
 	var fenvs []*gtypes.Env
 	for i, env := range envs {
@@ -474,4 +509,17 @@ func contains(s []int32, e int32) bool {
 		}
 	}
 	return false
+}
+
+func getLabelSelector(workId gtypes.WorkId) string {
+	t := ""
+	if workId.Wtype.IsAPP {
+		t = "app"
+	} else if workId.Wtype.IsGPU {
+		t = "gpu"
+	}
+
+	// 获取工作类型字符串表示
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	return t + "=" + name
 }

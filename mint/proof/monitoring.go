@@ -21,9 +21,12 @@ type WorkCrProof struct {
 var CrBucket = "cr"
 
 // 工作量证明资源占用列表
-func ListMonitoringsById(id gtypes.WorkId, page int, size int) ([]WorkCrProof, error) {
-	name := CrBucket + util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
-	res, err := store.GetList(CrBucket, []byte(name), page, size)
+func ListMonitoringsById(id gtypes.WorkId, page int, size int, isCache bool) ([]WorkCrProof, error) {
+	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
+	if isCache {
+		name = name + "_cache"
+	}
+	res, err := store.GetList(CrBucket, name, page, size)
 	if err != nil {
 		return nil, err
 	}

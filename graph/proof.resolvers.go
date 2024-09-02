@@ -24,13 +24,21 @@ import (
 
 // WorkLoglist is the resolver for the work_loglist field.
 func (r *queryResolver) WorkLoglist(ctx context.Context, workType string, workID int, page int, size int) (string, error) {
-	list, err := proof.ListLogsById(types.WorkId{
+	wid := types.WorkId{
 		Id:    uint64(workID),
 		Wtype: util.GetWorkType(workType),
-	}, page, size)
-	if err != nil {
+	}
+	list, err := proof.ListLogsById(wid, page, size, false)
+	if err != nil && err.Error() != "the list not found" {
 		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
+
+	listCache, err := proof.ListLogsById(wid, page, size, true)
+	if err != nil && err.Error() != "the list not found" {
+		return "", gqlerror.Errorf("WorkLogCacheList:" + err.Error())
+	}
+
+	list = append(list, listCache...)
 
 	bt, err := json.Marshal(list)
 	if err != nil {
@@ -42,14 +50,20 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, workType string, workID
 
 // WorkWetriclist is the resolver for the work_wetriclist field.
 func (r *queryResolver) WorkWetriclist(ctx context.Context, workType string, workID int, page int, size int) (string, error) {
-	list, err := proof.ListMonitoringsById(types.WorkId{
+	wid := types.WorkId{
 		Id:    uint64(workID),
 		Wtype: util.GetWorkType(workType),
-	}, page, size)
-
-	if err != nil {
+	}
+	list, err := proof.ListMonitoringsById(wid, page, size, false)
+	if err != nil && err.Error() != "the list not found" {
 		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
+
+	listCache, err := proof.ListMonitoringsById(wid, page, size, true)
+	if err != nil && err.Error() != "the list not found" {
+		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
+	}
+	list = append(list, listCache...)
 
 	bt, err := json.Marshal(list)
 	if err != nil {

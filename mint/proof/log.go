@@ -23,9 +23,12 @@ var LogBucket = "log"
 
 // 工作量日志列表
 // Work Log List
-func ListLogsById(id gtypes.WorkId, page int, size int) ([]WorkLogProof, error) {
-	name := LogBucket + util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
-	res, err := store.GetList(LogBucket, []byte(name), page, size)
+func ListLogsById(id gtypes.WorkId, page int, size int, isCache bool) ([]WorkLogProof, error) {
+	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
+	if isCache {
+		name = name + "_cache"
+	}
+	res, err := store.GetList(LogBucket, name, page, size)
 	if err != nil {
 		return nil, err
 	}

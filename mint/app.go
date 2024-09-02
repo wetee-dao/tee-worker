@@ -35,42 +35,31 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 		return nil, nil
 	}
 
+	workId := c.ContractState.WorkId
+	nameSpace := AccountToSpace(c.ContractState.User[:])
+
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
 	// App状态 0: created, 1: deploying, 2: stop, 3: deoloyed
 	if uint64(head.Number)-state.BlockNumber < uint64(stage) {
-		return nil, nil
+		if (uint64(head.Number)+workId.Id)%10 != 0 {
+			return nil, nil
+		}
+		// 如果当前区块高度小于当前工作高度+阶段高度则不上传工作证明 但是保存工作证明到本地
+		logs, crs, err := m.GetLogAndCr(ctx, nameSpace, workId, 9)
+		if err != nil {
+			util.LogError("getMetricInfo", err)
+			return nil, err
+		}
+		return nil, proof.CacheWorkProof(workId, logs, crs, uint64(head.Number))
 	}
 
 	util.LogError("=========================================== WorkProofUpload APP")
 
-	workId := c.ContractState.WorkId
-	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-	nameSpace := AccountToSpace(c.ContractState.User[:])
-
-	// 获取pod信息
-	// Get pod information
-	clientset := m.K8sClient
-	pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: "app=" + name,
-	})
-	if err != nil {
-		util.LogError("getPod", err)
-		return nil, err
-	}
-
-	if len(pods.Items) == 0 {
-		util.LogError("pods is empty")
-		return nil, errors.New("pods is empty")
-	}
-	fmt.Println("pods: ", pods.Items[0].Name)
-
-	// 获取log和硬件资源使用量
-	// Get log and hardware resource usage
-	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, uint64(head.Number)-uint64(state.BlockNumber))
-	// 如果获取log和硬件资源使用量失败就不提交相关数据
+	logs, crs, err := m.GetLogAndCr(ctx, nameSpace, workId, uint64(head.Number)-uint64(state.BlockNumber))
 	if err != nil {
 		util.LogError("getMetricInfo", err)
+		return nil, err
 	}
 
 	return proof.MakeWorkProof(workId, logs, crs, uint64(state.BlockNumber))

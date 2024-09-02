@@ -24,6 +24,11 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 	var cr = []uint32{0, 0, 0}
 	var err error
 
+	err = store.DeleteList(LogBucket, name+"_cache")
+	if err != nil {
+		util.LogError("DeleteLog", err)
+		return nil, err
+	}
 	if len(logs) > 0 {
 		// 获取log hash
 		// Get log hash
@@ -33,13 +38,18 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 			util.LogError("getWorkLogHash", err)
 			return nil, err
 		}
-		err = store.AddToList(LogBucket, []byte(LogBucket+name), bt)
+		err = store.AddToList(LogBucket, name, bt)
 		if err != nil {
 			util.LogError("Addlog", err)
 			return nil, err
 		}
 	}
 
+	err = store.DeleteList(CrBucket, name+"_cache")
+	if err != nil {
+		util.LogError("DeleteLog", err)
+		return nil, err
+	}
 	if len(crs) > 0 {
 		// 获取计算资源hash
 		// Get Computing resource hash
@@ -49,7 +59,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 			util.LogError("getWorkCrHash", err)
 			return nil, err
 		}
-		err := store.AddToList(CrBucket, []byte(CrBucket+name), bt)
+		err := store.AddToList(CrBucket, name, bt)
 		if err != nil {
 			util.LogError("AddCr", err)
 			return nil, err
@@ -115,4 +125,47 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 func SubmitWorkProof(client *chain.ChainClient, signer *core.Signer, proof []gtypes.RuntimeCall) error {
 	call := utility.MakeBatchCall(proof)
 	return client.SignAndSubmit(signer, call, true)
+}
+
+func CacheWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, BlockNumber uint64) error {
+	name := util.GetWorkTypeStr(wid) + "-" + fmt.Sprint(wid.Id)
+
+	// 获取log和硬件资源使用量
+	var err error
+
+	if len(logs) > 0 {
+		// 获取 log hash
+		// Get log hash
+		var bt []byte
+		_, bt, err = GetWorkLogHash(logs, BlockNumber)
+		if err != nil {
+			util.LogError("getWorkLogHash", err)
+			return err
+		}
+		err = store.AddToList(LogBucket, name+"_cache", bt)
+		if err != nil {
+			util.LogError("Addlog", err)
+			return err
+		}
+	}
+
+	if len(crs) > 0 {
+		// 获取计算资源hash
+		// Get Computing resource hash
+		var bt []byte
+		_, _, bt, err = GetWorkCrHash(crs, BlockNumber)
+		if err != nil {
+			util.LogError("getWorkCrHash", err)
+			return err
+		}
+		err := store.AddToList(CrBucket, name+"_cache", bt)
+		if err != nil {
+			util.LogError("AddCr", err)
+			return err
+		}
+	}
+
+	fmt.Println("cache work proof ========> ", len(logs), len(crs))
+
+	return nil
 }

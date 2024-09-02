@@ -16,15 +16,19 @@ import (
 	"wetee.app/worker/util"
 )
 
+// trigger 函数负责处理和触发TEE（可信执行环境）调用相关的一系列操作
 func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint64, blockNumber uint64) {
+	// 获取TEE调用列表以及相关密钥
 	calls, keys, err := m.listTeeCalls(clusterId)
 	if err != nil {
 		fmt.Println("Tee trigger listTeeCalls error", err)
 		return
 	}
 
+	// 存储不同 worker id 对应的调用信息
 	callKey := make(map[gtypes.WorkId][]types.StorageKey)
 	callId := make(map[gtypes.WorkId][]types.U128)
+
 	// 为所有的 TEECall 通过 worker id 分组
 	for i, call := range calls {
 		callKey[call.WorkId] = append(callKey[call.WorkId], keys[i])
@@ -92,6 +96,7 @@ func (m *Minter) trigger(cs map[gtypes.WorkId]ContractStateWrap, clusterId uint6
 		// TODO
 		// suite := m.PrivateKey.Suite()
 		// ciphertext, err := ecies.Encrypt(suite, public, bt, suite.Hash)
+		fmt.Println("Trigger ", name+"."+saddress, " >>> ", idstr)
 		go func() {
 			_, err = client.R().SetBody(bt).Post("http://" + name + "." + saddress + ".svc.cluster.local:65535/tee-call")
 			if err != nil {
@@ -108,6 +113,7 @@ func (m *Minter) GetUsersFromCall(calls map[gtypes.WorkId][]types.StorageKey) (m
 	keys := make([]types.StorageKey, 0, len(calls))
 	keyMap := make(map[gtypes.WorkId]types.StorageKey)
 	accounts := make(map[gtypes.WorkId][32]byte)
+
 	for w := range calls {
 		pallet := ""
 		if w.Wtype.IsAPP {
