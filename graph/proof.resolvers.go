@@ -33,14 +33,13 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, workType string, workID
 		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
 
-	listCache, err := proof.ListLogsById(wid, page, size, true)
+	listCache, err := proof.ListLogsById(wid, page, 200, true)
 	if err != nil && err.Error() != "the list not found" {
 		return "", gqlerror.Errorf("WorkLogCacheList:" + err.Error())
 	}
 
-	list = append(list, listCache...)
-
-	bt, err := json.Marshal(list)
+	listCache = append(listCache, list...)
+	bt, err := json.Marshal(listCache)
 	if err != nil {
 		return "", gqlerror.Errorf("JsonMarshal:" + err.Error())
 	}
@@ -59,13 +58,13 @@ func (r *queryResolver) WorkWetriclist(ctx context.Context, workType string, wor
 		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
 
-	listCache, err := proof.ListMonitoringsById(wid, page, size, true)
+	listCache, err := proof.ListMonitoringsById(wid, page, 200, true)
 	if err != nil && err.Error() != "the list not found" {
 		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
-	list = append(list, listCache...)
 
-	bt, err := json.Marshal(list)
+	listCache = append(listCache, list...)
+	bt, err := json.Marshal(listCache)
 	if err != nil {
 		return "", gqlerror.Errorf("JsonMarshal:" + err.Error())
 	}
