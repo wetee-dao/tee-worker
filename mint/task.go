@@ -3,6 +3,7 @@ package mint
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
@@ -45,14 +46,18 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stag
 
 	// 获取log和硬件资源使用量
 	// Obtain the log and hardware resource usage
-	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, name, uint64(head.Number)-uint64(state.BlockNumber))
+	t := uint64(head.Number) - uint64(state.BlockNumber)
+	from := time.Now().Add(-6 * time.Second * time.Duration(t)).Unix()
+	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, name, from)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
 		return nil, err
 	}
 
 	m.StopApp(c.ContractState.WorkId, "")
-	return proof.MakeWorkProof(workId, logs, crs, uint64(state.BlockNumber))
+
+	now := time.Now()
+	return proof.MakeWorkProof(workId, logs, crs, now, uint64(state.BlockNumber))
 }
 
 // check task status，if task is running, return pod, if task not run, create pod

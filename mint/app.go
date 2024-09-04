@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
@@ -37,6 +38,7 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 
 	workId := c.ContractState.WorkId
 	nameSpace := AccountToSpace(c.ContractState.User[:])
+	now := time.Now()
 
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
@@ -45,24 +47,25 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 		if (uint64(head.Number)+workId.Id)%10 != 0 {
 			return nil, nil
 		}
+
 		// 如果当前区块高度小于当前工作高度+阶段高度则不上传工作证明 但是保存工作证明到本地
-		logs, crs, err := m.GetLogAndCr(ctx, nameSpace, workId, 9)
+		logs, crs, err := m.GetLogAndCr(ctx, nameSpace, workId, now, stage, true)
 		if err != nil {
 			util.LogError("getMetricInfo", err)
 			return nil, err
 		}
-		return nil, proof.CacheWorkProof(workId, logs, crs, uint64(head.Number))
+		return nil, proof.CacheWorkProof(workId, logs, crs, now, uint64(head.Number))
 	}
 
 	util.LogError("=========================================== WorkProofUpload APP")
 
-	logs, crs, err := m.GetLogAndCr(ctx, nameSpace, workId, uint64(head.Number)-uint64(state.BlockNumber))
+	logs, crs, err := m.GetLogAndCr(ctx, nameSpace, workId, now, stage, false)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
 		return nil, err
 	}
 
-	return proof.MakeWorkProof(workId, logs, crs, uint64(state.BlockNumber))
+	return proof.MakeWorkProof(workId, logs, crs, now, uint64(state.BlockNumber))
 }
 
 // checkAppStatus check app status

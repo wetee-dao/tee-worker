@@ -3,6 +3,7 @@ package proof
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	chain "github.com/wetee-dao/go-sdk"
 	"golang.org/x/crypto/blake2b"
@@ -15,7 +16,7 @@ import (
 	"wetee.app/worker/util"
 )
 
-func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, BlockNumber uint64) (*gtypes.RuntimeCall, error) {
+func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now time.Time, BlockNumber uint64) (*gtypes.RuntimeCall, error) {
 	name := util.GetWorkTypeStr(wid) + "-" + fmt.Sprint(wid.Id)
 
 	// 获取log和硬件资源使用量
@@ -23,6 +24,12 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, Blo
 	var crHash = []byte{}
 	var cr = []uint32{0, 0, 0}
 	var err error
+
+	err = store.SetCacheId(name, now.Unix())
+	if err != nil {
+		util.LogError("SetCacheId", err)
+		return nil, err
+	}
 
 	err = store.DeleteList(LogBucket, name+"_cache")
 	if err != nil {
@@ -127,11 +134,17 @@ func SubmitWorkProof(client *chain.ChainClient, signer *core.Signer, proof []gty
 	return client.SignAndSubmit(signer, call, true)
 }
 
-func CacheWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, BlockNumber uint64) error {
+func CacheWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now time.Time, BlockNumber uint64) error {
 	name := util.GetWorkTypeStr(wid) + "-" + fmt.Sprint(wid.Id)
 
 	// 获取log和硬件资源使用量
 	var err error
+
+	err = store.SetCacheId(name+"-cache", now.Unix())
+	if err != nil {
+		util.LogError("SetCacheId", err)
+		return err
+	}
 
 	if len(logs) > 0 {
 		// 获取 log hash

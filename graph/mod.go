@@ -35,7 +35,7 @@ func StartServer() {
 	}))
 
 	// graphql playground
-	router.Handle("/", playground.Handler("Wetee-Worker", "/gql"))
+	router.Handle("/", playground.Handler("WeTEE-WORKER", "/gql"))
 	srv := handler.NewDefaultServer(NewExecutableSchema(Config{
 		Resolvers:  &Resolver{},
 		Directives: NewDirectiveRoot(),

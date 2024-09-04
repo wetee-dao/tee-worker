@@ -24,10 +24,10 @@ import (
 )
 
 // 获取容器的资源信息和日志
-func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace, name string, stage uint64) ([]string, map[string][]int64, error) {
+func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace, name string, form int64) ([]string, map[string][]int64, error) {
 	podLogOpts := &corev1.PodLogOptions{
 		SinceTime: &metav1.Time{
-			Time: time.Now().Add(-6 * time.Second * time.Duration(stage)),
+			Time: time.Unix(form, 0),
 		},
 	}
 
@@ -459,7 +459,20 @@ func (m *Minter) buildPodContainer(
 }
 
 // 获取工作日志和硬件资源使用量
-func (m *Minter) GetLogAndCr(ctx *context.Context, nameSpace string, workId gtypes.WorkId, stage uint64) ([]string, map[string][]int64, error) {
+func (m *Minter) GetLogAndCr(ctx *context.Context, nameSpace string, workId gtypes.WorkId, now time.Time, stage uint32, isCache bool) ([]string, map[string][]int64, error) {
+	// 获取上次记录的时间
+	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	if isCache {
+		name = name + "-cache"
+	}
+	from, err := store.GetCacheId(name)
+	if err != nil {
+		if isCache {
+			stage = 9
+		}
+		from = now.Add(-6 * time.Second * time.Duration(stage)).Unix()
+	}
+
 	// 通过 K8s API 获取指定命名空间中的 Pod 列表
 	clientset := m.K8sClient
 	pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
@@ -481,7 +494,7 @@ func (m *Minter) GetLogAndCr(ctx *context.Context, nameSpace string, workId gtyp
 	fmt.Println("pods: ", pods.Items[0].Name)
 
 	// 获取指定 Pod 的日志和硬件资源使用量信息
-	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, stage)
+	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, from)
 
 	// 如果获取 log 和硬件资源使用量的过程中出现错误，则记录错误日志
 	if err != nil {
