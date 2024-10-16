@@ -19,11 +19,10 @@ func (m *Minter) DeploymentTEEWrap(deployment *appsv1.Deployment, version *gtype
 		KATAQUEMUSEV := "kata-qemu-sev"
 		deployment.Spec.Template.Spec.NodeSelector = map[string]string{"TEE": "CVM-SEV"}
 		deployment.Spec.Template.ObjectMeta.Annotations = map[string]string{
-			// "io.containerd.cri.runtime-handler":                KATAQUEMUSEV,
+			"io.containerd.cri.runtime-handler":                KATAQUEMUSEV,
 			"io.katacontainers.config.pre_attestation.enabled": "true",
 			"io.katacontainers.config.pre_attestation.uri":     "192.168.111.121:30005",
 		}
-
 		deployment.Spec.Template.Spec.RuntimeClassName = &KATAQUEMUSEV
 	}
 }
@@ -40,7 +39,7 @@ func (m *Minter) PodTEEWrap(pod *v1.Pod, version *gtypes.TEEVersion) {
 		KATAQUEMUSEV := "kata-qemu-sev"
 		pod.Spec.NodeSelector = map[string]string{"TEE": "CVM-SEV"}
 		pod.ObjectMeta.Annotations = map[string]string{
-			"io.containerd.cri.runtime-handler":                "kata-qemu-sev",
+			"io.containerd.cri.runtime-handler":                KATAQUEMUSEV,
 			"io.katacontainers.config.pre_attestation.enabled": "true",
 			"io.katacontainers.config.pre_attestation.uri":     "192.168.111.121:30005",
 		}
