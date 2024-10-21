@@ -1,13 +1,11 @@
-// Copyright 2025 Confidential Containers.
-// This file is part of Confidential Containers
-
-// Licensed under the Apache 2.0;
-//
-// https://github.com/confidential-containers/operator
-//
-
 
 #!/usr/bin/env bash
+# Copyright 2025 Confidential Containers.
+# This file is part of Confidential Containers
+# Licensed under the Apache 2.0;
+#
+# https://github.com/confidential-containers/operator
+#
 
 set -o errexit
 set -o pipefail
