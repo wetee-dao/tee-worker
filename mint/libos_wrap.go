@@ -13,18 +13,14 @@ func (m *Minter) WrapLibos(deployment *appsv1.Deployment, version *gtypes.TEEVer
 			deployment.Spec.Template.Spec.Containers[0].Env[0],
 		}
 
-		deployment.Spec.Template.Spec.Containers = append(deployment.Spec.Template.Spec.Containers, corev1.Container{
-			Name:  "libos",
-			Image: "registry.cn-hangzhou.aliyuncs.com/wetee_dao/cvm:2024-08-25-14_38",
-			Env:   envs,
-		})
-
-		// deployment.Spec.Template.Spec.InitContainers = []corev1.Container{
-		// 	{
-		// 		Name:  "libos",
-		// 		Image: "registry.cn-hangzhou.aliyuncs.com/wetee_dao/cvm:2024-08-25-14_38",
-		// 		Env:   envs,
-		// 	},
-		// }
+		var restartPolicy corev1.ContainerRestartPolicy = "Always"
+		deployment.Spec.Template.Spec.InitContainers = []corev1.Container{
+			{
+				Name:          "libos",
+				Image:         "registry.cn-hangzhou.aliyuncs.com/wetee_dao/cvm:2024-08-25-14_38",
+				Env:           envs,
+				RestartPolicy: &restartPolicy,
+			},
+		}
 	}
 }

@@ -4,6 +4,10 @@ metadata:
   name: nginx-pod
 spec:
   runtimeClassName: kata-clh
+  initContainers:
+    - name: init
+      image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/cvm:2024-08-25-14_38
+      restartPolicy: Always
   containers:
     - name: nginx
       image: nginx:latest
