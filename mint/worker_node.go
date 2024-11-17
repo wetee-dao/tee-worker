@@ -3,9 +3,9 @@ package mint
 import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	"github.com/wetee-dao/go-sdk/core"
+	"github.com/wetee-dao/go-sdk/pallet/dsecret"
 	"github.com/wetee-dao/go-sdk/pallet/types"
-	"github.com/wetee-dao/go-sdk/pallet/weteedsecret"
-	"github.com/wetee-dao/go-sdk/pallet/weteeworker"
+	"github.com/wetee-dao/go-sdk/pallet/worker"
 	"wetee.app/worker/util"
 )
 
@@ -15,7 +15,7 @@ func (c *Minter) RegisterNode(signer *core.Signer, pubkey []byte) error {
 	var bt [32]byte
 	copy(bt[:], pubkey)
 
-	call := weteedsecret.MakeRegisterNodeCall(bt)
+	call := dsecret.MakeRegisterNodeCall(bt)
 	return c.ChainClient.SignAndSubmit(signer, call, true)
 }
 
@@ -45,13 +45,13 @@ func (c *Minter) GetNodeList() ([][32]byte, error) {
 // 获取全网当前程序的代码版本
 // Get CodeSignature
 func (c *Minter) GetCodeSignature() ([]byte, error) {
-	return weteedsecret.GetCodeSignatureLatest(c.ChainClient.Api.RPC.State)
+	return dsecret.GetCodeSignatureLatest(c.ChainClient.Api.RPC.State)
 }
 
 // 获取全网当前程序的签名人
 // Get GetCodeSigner
 func (c *Minter) GetGetCodeSigner() ([]byte, error) {
-	return weteedsecret.GetCodeSignerLatest(c.ChainClient.Api.RPC.State)
+	return dsecret.GetCodeSignerLatest(c.ChainClient.Api.RPC.State)
 }
 
 func (c *Minter) GetWorkerList() ([]*types.K8sCluster, error) {
@@ -77,5 +77,5 @@ func (c *Minter) GetWorkerList() ([]*types.K8sCluster, error) {
 }
 
 func (c *Minter) GetBootPeers() ([]types.P2PAddr, error) {
-	return weteeworker.GetBootPeersLatest(c.ChainClient.Api.RPC.State)
+	return worker.GetBootPeersLatest(c.ChainClient.Api.RPC.State)
 }

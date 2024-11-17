@@ -16,8 +16,8 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 
 	// 处理任务消息
 	// Handling Worker Messages
-	if e.IsWeTEEWorker {
-		startEvent := e.AsWeTEEWorkerField0
+	if e.IsWorker {
+		startEvent := e.AsWorkerField0
 		if startEvent.IsWorkRuning {
 			workId := startEvent.AsWorkRuningWorkId1
 			user := startEvent.AsWorkRuningUser0
@@ -57,8 +57,8 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 
 	// 处理机密应用消息
 	// Handling App Messages
-	if e.IsWeTEEApp {
-		appEvent := e.AsWeTEEAppField0
+	if e.IsApp {
+		appEvent := e.AsAppField0
 		if appEvent.IsWorkStopped {
 			workId := appEvent.AsWorkStoppedWorkId1
 
@@ -81,8 +81,8 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 		}
 	}
 
-	if e.IsWeTEETask {
-		taskEvent := e.AsWeTEETaskField0
+	if e.IsTask {
+		taskEvent := e.AsTaskField0
 		if taskEvent.IsTaskStop {
 			taskID := taskEvent.AsTaskStopId1
 			workId := types.WorkId{Wtype: types.WorkType{
@@ -96,8 +96,8 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 
 	// 处理CPU应用消息
 	// Handling GPU App Messages
-	if e.IsWeTEEGpu {
-		appEvent := e.AsWeTEEGpuField0
+	if e.IsGpu {
+		appEvent := e.AsGpuField0
 		if appEvent.IsWorkStopped {
 			workId := appEvent.AsWorkStoppedWorkId1
 

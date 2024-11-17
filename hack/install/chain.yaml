@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wetee-node
+  name: wetee-dev
   namespace: worker-addon
 spec:
   selector:
     matchLabels:
-      app: wetee-node
+      app: wetee-dev
   replicas: 1
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: wetee-node
+        app: wetee-dev
     spec:
       containers:
-        - image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/wetee-node:dev.2024-06-20-11_42
+        - image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/wetee-node:dev.2024-11-16-21_32
           name: c1
           volumeMounts:
             - name: wetee-chain
@@ -29,7 +29,7 @@ spec:
           image: anolis-registry.cn-zhangjiakou.cr.aliyuncs.com/openanolis/nginx:1.14.1-8.6
           ports:
             - containerPort: 443
-              name: wetee-node-443
+              name: wetee-dev-443
               protocol: TCP
           volumeMounts:
             - name: wetee-proxy
@@ -38,7 +38,7 @@ spec:
         - name: wetee-chain
           hostPath:
             type: DirectoryOrCreate
-            path: /home/wetee/Soft/chain_db
+            path: /mnt/chain-dev/
         - name: wetee-proxy
           hostPath:
             type: DirectoryOrCreate

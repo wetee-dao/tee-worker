@@ -11,7 +11,7 @@ import (
 	"github.com/wetee-dao/go-sdk/core"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"github.com/wetee-dao/go-sdk/pallet/utility"
-	"github.com/wetee-dao/go-sdk/pallet/weteeworker"
+	"github.com/wetee-dao/go-sdk/pallet/worker"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
@@ -108,7 +108,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now
 		return nil, errors.New("report, crHash and logHash are all nil")
 	}
 
-	runtimeCall := weteeworker.MakeWorkProofUploadCall(
+	runtimeCall := worker.MakeWorkProofUploadCall(
 		wid,
 		gtypes.OptionTProofOfWork{
 			IsNone: !hasHash,

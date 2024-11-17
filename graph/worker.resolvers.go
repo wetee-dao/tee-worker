@@ -263,7 +263,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 
 	// 创建 P2P 节点 p2p boot nodes
 	// port := util.GetEnvInt("P2P_PORT", 8881)
-	// call := weteeworker.MakeSetBootPeersCall([]gtypes.P2PAddr{
+	// call := worker.MakeSetBootPeersCall([]gtypes.P2PAddr{
 	// 	{
 	// 		Ip: gtypes.Ip{
 	// 			Ipv4: gtypes.OptionTUint32{
@@ -300,7 +300,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 	// 	copy(a[:], k)
 
 	// 	// 创建 dsecret 节点
-	// 	call = weteedsecret.MakeRegisterNodeCall(a)
+	// 	call = dsecret.MakeRegisterNodeCall(a)
 	// 	err = client.SignAndSubmit(&signer, call, false)
 	// 	if err != nil {
 	// 		return false, errors.New("Chain call error:" + err.Error())

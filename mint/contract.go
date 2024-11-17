@@ -6,11 +6,11 @@ import (
 	"github.com/pkg/errors"
 	"wetee.app/worker/util"
 
+	"github.com/wetee-dao/go-sdk/pallet/app"
+	"github.com/wetee-dao/go-sdk/pallet/gpu"
+	"github.com/wetee-dao/go-sdk/pallet/task"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
-	"github.com/wetee-dao/go-sdk/pallet/weteeapp"
-	"github.com/wetee-dao/go-sdk/pallet/weteegpu"
-	"github.com/wetee-dao/go-sdk/pallet/weteetask"
-	"github.com/wetee-dao/go-sdk/pallet/weteeworker"
+	"github.com/wetee-dao/go-sdk/pallet/worker"
 )
 
 // 合约状态
@@ -92,7 +92,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 			workIds = append(workIds, cs.WorkId)
 
 			// 获取 work contract的key
-			key, err := weteeworker.MakeWorkContractStateStorageKey(cs.WorkId, clusterID)
+			key, err := worker.MakeWorkContractStateStorageKey(cs.WorkId, clusterID)
 			if err != nil {
 				continue
 			}
@@ -100,14 +100,14 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 
 			// 记录 app 相关参数
 			if cs.WorkId.Wtype.IsAPP {
-				akey, err := weteeapp.MakeTEEAppsStorageKey(cs.User, cs.WorkId.Id)
+				akey, err := app.MakeTEEAppsStorageKey(cs.User, cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
 
 				appKeys = append(appKeys, akey)
 				appIds = append(appIds, cs.WorkId)
-				vkey, err := weteeapp.MakeAppVersionStorageKey(cs.WorkId.Id)
+				vkey, err := app.MakeAppVersionStorageKey(cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -132,14 +132,14 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 
 			// 记录 task 相关参数
 			if cs.WorkId.Wtype.IsTASK {
-				tkey, err := weteetask.MakeTEETasksStorageKey(cs.User, cs.WorkId.Id)
+				tkey, err := task.MakeTEETasksStorageKey(cs.User, cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
 
 				tasKeys = append(tasKeys, tkey)
 				taskIds = append(taskIds, cs.WorkId)
-				vkey, err := weteetask.MakeTaskVersionStorageKey(cs.WorkId.Id)
+				vkey, err := task.MakeTaskVersionStorageKey(cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -164,14 +164,14 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 
 			// 记录 gpu 相关参数
 			if cs.WorkId.Wtype.IsGPU {
-				tkey, err := weteegpu.MakeGPUAppsStorageKey(cs.User, cs.WorkId.Id)
+				tkey, err := gpu.MakeGPUAppsStorageKey(cs.User, cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
 
 				gpuAppKeys = append(gpuAppKeys, tkey)
 				gpuAppIds = append(gpuAppIds, cs.WorkId)
-				vkey, err := weteegpu.MakeAppVersionStorageKey(cs.WorkId.Id)
+				vkey, err := gpu.MakeAppVersionStorageKey(cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
