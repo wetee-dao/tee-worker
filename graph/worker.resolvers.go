@@ -253,9 +253,15 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 
 	// 抵押集群
 	err = worker.ClusterMortgage(
-		clusterId, uint32(10000), uint32(10000),
-		uint32(1000000), uint32(10000), uint32(1000000),
-		uint32(10), uint64(1000000000000), false,
+		clusterId,
+		uint32(10000),
+		uint32(10000),
+		uint32(0),
+		uint32(0),
+		uint32(1000000),
+		uint32(0),
+		uint64(1000000000000),
+		false,
 	)
 	if err != nil {
 		return false, errors.New("Chain ClusterMortgage error:" + err.Error())

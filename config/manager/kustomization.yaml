@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: registry.cn-hangzhou.aliyuncs.com/wetee_dao/worker
-  newTag: 2024-10-27-22_52
+  newTag: 2024-11-17-10_49
