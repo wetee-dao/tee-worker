@@ -34,6 +34,12 @@ spec:
           volumeMounts:
             - name: wetee-proxy
               mountPath: /mnt/ssl-proxy
+        - sidecar:
+          name: sidecar
+          image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/substrate_sidecar:2024-11-26-15_26
+          env:
+            - name: SAS_EXPRESS_KEEP_ALIVE_TIMEOUT
+              value: 6000
       volumes:
         - name: wetee-chain
           hostPath:
