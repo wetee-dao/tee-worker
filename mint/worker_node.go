@@ -2,7 +2,7 @@ package mint
 
 import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
-	"github.com/wetee-dao/go-sdk/core"
+	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/pallet/dsecret"
 	"github.com/wetee-dao/go-sdk/pallet/types"
 	"github.com/wetee-dao/go-sdk/pallet/worker"
@@ -11,7 +11,7 @@ import (
 
 // RegisterNode register node
 // 注册节点
-func (c *Minter) RegisterNode(signer *core.Signer, pubkey []byte) error {
+func (c *Minter) RegisterNode(signer *chain.Signer, pubkey []byte) error {
 	var bt [32]byte
 	copy(bt[:], pubkey)
 

@@ -8,7 +8,6 @@ import (
 	chain "github.com/wetee-dao/go-sdk"
 	"golang.org/x/crypto/blake2b"
 
-	"github.com/wetee-dao/go-sdk/core"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"github.com/wetee-dao/go-sdk/pallet/utility"
 	"github.com/wetee-dao/go-sdk/pallet/worker"
@@ -129,7 +128,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now
 	return &runtimeCall, nil
 }
 
-func SubmitWorkProof(client *chain.ChainClient, signer *core.Signer, proof []gtypes.RuntimeCall) error {
+func SubmitWorkProof(client *chain.ChainClient, signer *chain.Signer, proof []gtypes.RuntimeCall) error {
 	call := utility.MakeBatchCall(proof)
 	return client.SignAndSubmit(signer, call, true)
 }

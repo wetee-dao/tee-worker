@@ -11,7 +11,7 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.11.0
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.30.0
-	github.com/wetee-dao/go-sdk v0.1.2-0.20241117015543-2b01ad1fa3d4
+	github.com/wetee-dao/go-sdk v0.1.2-0.20241227045835-b9c7ec6d587c
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
 	k8s.io/client-go v0.29.2

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/edgelesssys/ego/enclave"
-	"github.com/wetee-dao/go-sdk/core"
+	chain "github.com/wetee-dao/go-sdk"
 	"wetee.app/worker/util"
 )
 
@@ -29,7 +29,7 @@ var (
 // 获取远程报告
 // GetRemoteReport get remote report
 // return: report, time, err
-func GetRemoteReport(minter *core.Signer, data []byte) ([]byte, int64, error) {
+func GetRemoteReport(minter *chain.Signer, data []byte) ([]byte, int64, error) {
 	timestamp := time.Now().Unix()
 	if Report != nil && LastReport+30 > timestamp && (data == nil || len(data) == 0) {
 		return Report, LastReport, nil

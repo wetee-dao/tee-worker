@@ -16,7 +16,7 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"github.com/wetee-dao/go-sdk/core"
+	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/module"
 	"github.com/wetee-dao/go-sdk/pallet/balances"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
@@ -213,7 +213,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		AsIdField0: minter.AsID,
 	}
 	c := balances.MakeTransferKeepAliveCall(minterWrap, types.NewUCompact(bal))
-	signer, err := core.Sr25519PairFromSecret("//Alice", 42)
+	signer, err := chain.Sr25519PairFromSecret("//Alice", 42)
 	if err != nil {
 		return false, errors.New("Cant get signer:" + err.Error())
 	}

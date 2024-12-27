@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/wetee-dao/go-sdk/core"
+	chain "github.com/wetee-dao/go-sdk"
 	"go.dedis.ch/kyber/v3/suites"
 	"wetee.app/worker/internal/store"
 	types "wetee.app/worker/type"
@@ -13,7 +13,7 @@ import (
 
 // 获取挖矿密钥
 // GetKey get mint key
-func GetMintKey() (*core.Signer, *types.PrivKey, error) {
+func GetMintKey() (*chain.Signer, *types.PrivKey, error) {
 	key, err := store.GetMintId()
 	var mss []byte
 	var privateKey *types.PrivKey
