@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wetee-paseo
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: wetee-paseo
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: wetee-paseo
+    spec:
+      containers:
+        - name: c1
+          image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/wetee-node:paseo.2024-11-16-16_48
+          ports:
+            - containerPort: 9944
+              name: paseo-9944
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /chain-data
+              name: wetee-chain
+        - name: sidecar
+          image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/substrate_sidecar:2024-11-26-15_26
+          ports:
+            - containerPort: 8080
+              name: paseo-8080
+              protocol: TCP
+          env:
+            - name: SAS_EXPRESS_KEEP_ALIVE_TIMEOUT
+              value: "6000"
+      volumes:
+        - hostPath:
+            path: /mnt/ext1/paseo/
+            type: DirectoryOrCreate
+          name: wetee-chain
