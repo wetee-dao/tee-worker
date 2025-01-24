@@ -47,7 +47,7 @@ func (c *ContractStateWrap) GetStatus() byte {
 // 获取合约状态
 // Get Cluster Contracts
 func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtypes.WorkId]ContractStateWrap, error) {
-	var pallet, method = "WeTEEWorker", "ClusterContracts"
+	var pallet, method = "Worker", "ClusterContracts"
 	set, err := m.ChainClient.QueryDoubleMapAll(pallet, method, clusterID, at)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				}
 
 				appVersions = append(appVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeTEEApp", "Envs", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("App", "Envs", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -145,7 +145,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				}
 
 				taskVersions = append(taskVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeTEETask", "Envs", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("Task", "Envs", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -177,7 +177,7 @@ func (m *Minter) GetClusterContracts(clusterID uint64, at *types.Hash) (map[gtyp
 				}
 
 				gpuAppVersions = append(gpuAppVersions, vkey)
-				skey, err := m.ChainClient.GetDoubleMapPrefixKey("WeTEEGpu", "Envs", cs.WorkId.Id)
+				skey, err := m.ChainClient.GetDoubleMapPrefixKey("Gpu", "Envs", cs.WorkId.Id)
 				if err != nil {
 					continue
 				}
@@ -431,13 +431,13 @@ func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, d
 func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*gtypes.Env, error) {
 	var pallet, method string
 	if workId.Wtype.IsAPP {
-		pallet = "WeTEEApp"
+		pallet = "App"
 		method = "Envs"
 	} else if workId.Wtype.IsTASK {
-		pallet = "WeTEETask"
+		pallet = "Task"
 		method = "Envs"
 	} else if workId.Wtype.IsGPU {
-		pallet = "WeTEEGpu"
+		pallet = "Gpu"
 		method = "Envs"
 	} else {
 		return []*gtypes.Env{}, errors.New("work type error")

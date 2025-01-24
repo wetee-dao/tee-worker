@@ -102,6 +102,10 @@ func (m *Minter) StartP2P() error {
 	m.Nodes = nodes
 
 	peer.AddHandler("worker", m.HandleWorker)
+
+	// 启动节点
+	go peer.Start(context.Background())
+
 	return nil
 }
 
@@ -120,6 +124,11 @@ func (m *Minter) SendMessageToSecret(ctx context.Context, message *types.Message
 			nodes = append(nodes, n)
 		}
 	}
+
+	if len(nodes) == 0 {
+		return errors.New("no secret node")
+	}
+
 	// 随机选择一个节点
 	// Randomly select an index
 	randomIndex := rand.Intn(len(nodes))

@@ -19,10 +19,22 @@ func (c *Minter) RegisterNode(signer *chain.Signer, pubkey []byte) error {
 	return c.ChainClient.SignAndSubmit(signer, call, true)
 }
 
+// 获取全网当前程序的代码版本
+// Get CodeSignature
+func (c *Minter) GetCodeSignature() ([]byte, error) {
+	return dsecret.GetCodeSignatureLatest(c.ChainClient.Api.RPC.State)
+}
+
+// 获取全网当前程序的签名人
+// Get GetCodeSigner
+func (c *Minter) GetGetCodeSigner() ([]byte, error) {
+	return dsecret.GetCodeSignerLatest(c.ChainClient.Api.RPC.State)
+}
+
 // GetNodeList get node list
 // 获取节点列表
 func (c *Minter) GetNodeList() ([][32]byte, error) {
-	ret, err := c.ChainClient.QueryMapAll("WeTEEDsecret", "Nodes")
+	ret, err := c.ChainClient.QueryMapAll("DSecret", "Nodes")
 	if err != nil {
 		return nil, err
 	}
@@ -42,20 +54,10 @@ func (c *Minter) GetNodeList() ([][32]byte, error) {
 	return nodes, nil
 }
 
-// 获取全网当前程序的代码版本
-// Get CodeSignature
-func (c *Minter) GetCodeSignature() ([]byte, error) {
-	return dsecret.GetCodeSignatureLatest(c.ChainClient.Api.RPC.State)
-}
-
-// 获取全网当前程序的签名人
-// Get GetCodeSigner
-func (c *Minter) GetGetCodeSigner() ([]byte, error) {
-	return dsecret.GetCodeSignerLatest(c.ChainClient.Api.RPC.State)
-}
-
+// GetWorkerList get worker list
+// 获取矿工列表
 func (c *Minter) GetWorkerList() ([]*types.K8sCluster, error) {
-	ret, err := c.ChainClient.QueryMapAll("WeTEEWorker", "K8sClusters")
+	ret, err := c.ChainClient.QueryMapAll("Worker", "K8sClusters")
 	if err != nil {
 		return nil, err
 	}

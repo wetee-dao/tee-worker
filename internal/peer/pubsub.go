@@ -16,6 +16,7 @@ var _ pubsub.EventTracer = (*pubsubTracer)(nil)
 
 type pubsubTracer struct{}
 
+// 消息分流
 func (p *pubsubTracer) Trace(evt *pb.TraceEvent) {
 	switch evt.Type.String() {
 	case pb.TraceEvent_DELIVER_MESSAGE.String():
@@ -26,6 +27,7 @@ func (p *pubsubTracer) Trace(evt *pb.TraceEvent) {
 	}
 }
 
+// 发出消息
 func (p *Peer) Pub(ctx context.Context, topic string, data []byte) error {
 	t, err := p.join(topic)
 	if err != nil {
@@ -39,6 +41,7 @@ func (p *Peer) Pub(ctx context.Context, topic string, data []byte) error {
 	return nil
 }
 
+// 接收订阅消息
 func (p *Peer) Sub(ctx context.Context, topic string) (*pubsub.Subscription, error) {
 	t, err := p.join(topic)
 	if err != nil {
@@ -52,6 +55,7 @@ func (p *Peer) Sub(ctx context.Context, topic string) (*pubsub.Subscription, err
 	return sub, nil
 }
 
+// 订阅消息
 func (p *Peer) join(topic string) (*pubsub.Topic, error) {
 	p.topicsLock.Lock()
 	defer p.topicsLock.Unlock()

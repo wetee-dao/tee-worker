@@ -113,6 +113,7 @@ func NewP2PNetwork(ctx context.Context, priv *types.PrivKey, boots []string, nod
 	return peer, nil
 }
 
+// P2P 网络实例
 type Peer struct {
 	host.Host
 	privKey     libp2pCrypto.PrivKey
@@ -125,6 +126,7 @@ type Peer struct {
 	gater       *ChainConnectionGater
 }
 
+// Send 发送一个消息
 func (p *Peer) Send(ctx context.Context, node *types.Node, pid string, message *types.Message) error {
 	var err error
 	peerID := node.PeerID()
@@ -159,19 +161,23 @@ func (p *Peer) Send(ctx context.Context, node *types.Node, pid string, message *
 	return nil
 }
 
+// AddHandler 添加一个流处理器
 func (p *Peer) AddHandler(pid string, handler func(*types.Message) error) {
 	streamHandler := genStream(handler)
 	p.Host.SetStreamHandler(protocol.ID(pid), streamHandler)
 }
 
+// RemoveHandler 移除一个流处理器
 func (t *Peer) RemoveHandler(pid protocol.ID) {
 	t.Host.RemoveStreamHandler(pid)
 }
 
+// Close 关闭 P2P 网络实例
 func (p *Peer) Close() error {
 	return p.Host.Close()
 }
 
+// genStream 生成一个流处理器
 func genStream(handler func(*types.Message) error) func(network.Stream) {
 	return func(stream network.Stream) {
 		buf, err := io.ReadAll(stream)

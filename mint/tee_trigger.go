@@ -117,9 +117,9 @@ func (m *Minter) GetUsersFromCall(calls map[gtypes.WorkId][]types.StorageKey) (m
 	for w := range calls {
 		pallet := ""
 		if w.Wtype.IsAPP {
-			pallet = "WeTEEApp"
+			pallet = "App"
 		} else if w.Wtype.IsGPU {
-			pallet = "WeTEEApu"
+			pallet = "Gpu"
 		}
 
 		// create key prefix
@@ -172,7 +172,7 @@ func (m *Minter) GetUsersFromCall(calls map[gtypes.WorkId][]types.StorageKey) (m
 
 // list tee calls
 func (m *Minter) listTeeCalls(cid uint64) ([]*gtypes.TEECall, []types.StorageKey, error) {
-	var pallet, method = "WeTEEBridge", "TEECalls"
+	var pallet, method = "Bridge", "TEECalls"
 	set, err := m.ChainClient.QueryDoubleMapAll(pallet, method, cid, nil)
 	if err != nil {
 		return nil, nil, err

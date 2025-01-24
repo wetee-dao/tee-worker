@@ -78,9 +78,6 @@ func InitCluster(mgr manager.Manager) error {
 	MinterIns.PrivateKey = privateKey
 	lock.Unlock()
 
-	// 此处不捕获错误，因为如果初始化失败，程序可以继续运行
-	InitChainClient(DefaultChainUrl)
-
 	return err
 }
 
@@ -112,8 +109,13 @@ mintStart:
 	// 等待集群开启
 	// Waiting for cluster start
 	for {
+		chainUrl := DefaultChainUrl
+		url, err := store.GetChainUrl()
+		if err != nil {
+			chainUrl = url
+		}
 		// 此处不捕获错误，因为如果初始化失败，程序可以继续运行
-		InitChainClient(DefaultChainUrl)
+		InitChainClient(chainUrl)
 		if MinterIns.ChainClient == nil {
 			fmt.Println("Chain connect is not init")
 			time.Sleep(time.Second * 10)
@@ -122,12 +124,12 @@ mintStart:
 
 		// 启动p2p
 		// Start p2p
-		err := m.StartP2P()
+		err = m.StartP2P()
 		if m.P2Peer != nil {
 			m.P2Peer.Discover(context.Background())
 		}
 		if err != nil {
-			fmt.Println("worker.ClusterProofUpload => ", err)
+			fmt.Println("worker.StartP2P => ", err)
 			time.Sleep(time.Second * 10)
 			continue
 		}

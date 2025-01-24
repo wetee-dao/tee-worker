@@ -245,4 +245,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-// replace github.com/wetee-dao/go-sdk v1.0.0 => ../go-sdk
+replace github.com/wetee-dao/go-sdk v1.0.0 => ../go-sdk
