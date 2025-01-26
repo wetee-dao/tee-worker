@@ -32,8 +32,15 @@ func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.
 		return []corev1.EnvVar{}, err
 	}
 
+	chainUrl := DefaultChainUrl
+	url, err := store.GetChainUrl()
+	if err == nil {
+		chainUrl = url
+	}
+
 	envs := []corev1.EnvVar{
 		{Name: "APPID", Value: wid},
+		{Name: "CHAIN_ADDR", Value: chainUrl},
 	}
 
 	for _, setting := range settings {

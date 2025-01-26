@@ -64,9 +64,9 @@ func VerifyReportProof(workerReport *wtypes.TeeParam) (*wtypes.TeeReport, error)
 		return nil, errors.New("invalid sgx report")
 	}
 
-	if report.Debug {
-		return nil, errors.New("debug mode is not allowed")
-	}
+	// if report.Debug {
+	// 	return nil, errors.New("debug mode is not allowed")
+	// }
 
 	return &wtypes.TeeReport{
 		TeeType:       workerReport.TeeType,

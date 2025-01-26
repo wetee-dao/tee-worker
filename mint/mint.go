@@ -111,7 +111,7 @@ mintStart:
 	for {
 		chainUrl := DefaultChainUrl
 		url, err := store.GetChainUrl()
-		if err != nil {
+		if err == nil {
 			chainUrl = url
 		}
 		// 此处不捕获错误，因为如果初始化失败，程序可以继续运行

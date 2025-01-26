@@ -68,6 +68,8 @@ func loading(appID string, param *wtypes.TeeParam) (*wtypes.EnvWrap, error) {
 		return nil, errors.Wrap(err, "DCAP Report set error")
 	}
 
+	fmt.Println("loading from libos", wid)
+
 	// 上传TEE环境变量，设置当前的部署 Key
 	secret, err := mint.MinterIns.LaunchFromDsecret(wid, param)
 	if err != nil {
