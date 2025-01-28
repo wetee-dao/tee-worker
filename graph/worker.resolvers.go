@@ -202,7 +202,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 	}
 
 	// 1 unit of transfer
-	bal, ok := new(big.Int).SetString("50000000000000000", 10)
+	bal, ok := new(big.Int).SetString("100000000000000", 10)
 	if !ok {
 		panic(fmt.Errorf("failed to convert balance"))
 	}
