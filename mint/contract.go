@@ -23,7 +23,7 @@ type ContractStateWrap struct {
 	Task          *gtypes.TeeTask
 	GpuApp        *gtypes.GpuApp
 	Version       uint64
-	Envs          []*gtypes.Env
+	Envs          []*gtypes.Env1
 }
 
 // GetStatus 方法返回当前合同的状态
@@ -414,7 +414,7 @@ func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, d
 		for _, change := range elem.Changes {
 			var key = change.StorageKey
 			var workId = workId[IndexOf(wkeys, key)]
-			var wcs gtypes.Env
+			var wcs gtypes.Env1
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
 				util.LogError("codec.Decode", err)
 				continue
@@ -428,7 +428,7 @@ func (m *Minter) GetSettings(workId []gtypes.WorkId, wkeys []types.StorageKey, d
 	return nil
 }
 
-func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*gtypes.Env, error) {
+func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*gtypes.Env1, error) {
 	var pallet, method string
 	if workId.Wtype.IsAPP {
 		pallet = "App"
@@ -440,19 +440,19 @@ func (m *Minter) GetSettingsFromWork(workId gtypes.WorkId, at *types.Hash) ([]*g
 		pallet = "Gpu"
 		method = "Envs"
 	} else {
-		return []*gtypes.Env{}, errors.New("work type error")
+		return []*gtypes.Env1{}, errors.New("work type error")
 	}
 
 	sets, err := m.ChainClient.QueryDoubleMapAll(pallet, method, workId.Id, at)
 	if err != nil {
 		util.LogError("QueryDoubleMapAll", err)
-		return []*gtypes.Env{}, err
+		return []*gtypes.Env1{}, err
 	}
 
-	settings := make([]*gtypes.Env, 0, len(sets))
+	settings := make([]*gtypes.Env1, 0, len(sets))
 	for _, elem := range sets {
 		for _, change := range elem.Changes {
-			var wcs gtypes.Env
+			var wcs gtypes.Env1
 			if err := codec.Decode(change.StorageData, &wcs); err != nil {
 				util.LogError("codec.Decode", err)
 				continue

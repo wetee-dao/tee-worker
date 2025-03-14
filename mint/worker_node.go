@@ -5,7 +5,6 @@ import (
 	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/pallet/dsecret"
 	"github.com/wetee-dao/go-sdk/pallet/types"
-	"github.com/wetee-dao/go-sdk/pallet/worker"
 	"wetee.app/worker/util"
 )
 
@@ -79,5 +78,5 @@ func (c *Minter) GetWorkerList() ([]*types.K8sCluster, error) {
 }
 
 func (c *Minter) GetBootPeers() ([]types.P2PAddr, error) {
-	return worker.GetBootPeersLatest(c.ChainClient.Api.RPC.State)
+	return dsecret.GetBootPeersLatest(c.ChainClient.Api.RPC.State)
 }

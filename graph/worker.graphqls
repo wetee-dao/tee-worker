@@ -111,6 +111,10 @@ extend type Mutation {
     """
     gpu: Int!
     """
+    Asset id
+    """
+    assetId: Int64!
+    """
     Mortgage amount
     """
     deposit: Int64!

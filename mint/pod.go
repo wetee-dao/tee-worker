@@ -281,7 +281,7 @@ func (m *Minter) buildPodContainer(
 	workId gtypes.WorkId,
 	nameSpace, name string,
 	cs []gtypes.Container,
-	envs []*gtypes.Env,
+	envs []*gtypes.Env1,
 ) ([]v1.Container, error) {
 	ty := ""
 	if workId.Wtype.IsAPP {

@@ -87,7 +87,7 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, state ContractStateWrap) 
 }
 
 // create task
-func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeTask, envs []*gtypes.Env, version uint64) error {
+func (m *Minter) CreateTask(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.TeeTask, envs []*gtypes.Env1, version uint64) error {
 	saddress := AccountToSpace(user[:])
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {

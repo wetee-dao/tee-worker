@@ -99,7 +99,7 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.GpuApp, envs []*gtypes.Env, version uint64) error {
+func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.GpuApp, envs []*gtypes.Env1, version uint64) error {
 	saddress := AccountToSpace(user)
 	err := m.checkNameSpace(*ctx, saddress)
 	if err != nil {

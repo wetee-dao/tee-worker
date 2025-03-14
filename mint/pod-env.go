@@ -25,7 +25,7 @@ func (m *Minter) BuildEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
 
 // Build Envs
 // 获取配置文件
-func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Env) ([]corev1.EnvVar, error) {
+func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Env1) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
 	wid, err := store.SealAppID(workId)
 	if err != nil {
@@ -83,8 +83,8 @@ func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, nodeSers
 	return nil
 }
 
-func filterEnvs(envs []*gtypes.Env, index uint16) []*gtypes.Env {
-	var fenvs []*gtypes.Env
+func filterEnvs(envs []*gtypes.Env1, index uint16) []*gtypes.Env1 {
+	var fenvs []*gtypes.Env1
 	for i, env := range envs {
 		if env.Index == index {
 			fenvs = append(fenvs, envs[i])

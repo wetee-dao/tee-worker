@@ -11,7 +11,7 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.11.0
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.30.0
-	github.com/wetee-dao/go-sdk v0.1.2-0.20250124054825-aa0db97641fe
+	github.com/wetee-dao/go-sdk v0.1.2-0.20250304035120-9adc5458670e
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
 	k8s.io/client-go v0.29.2
@@ -245,4 +245,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/wetee-dao/go-sdk => ../go-sdk
+// replace github.com/wetee-dao/go-sdk => ../go-sdk

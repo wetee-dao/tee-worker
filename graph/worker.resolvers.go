@@ -80,7 +80,7 @@ func (r *mutationResolver) ClusterRegister(ctx context.Context, name string, ip 
 }
 
 // ClusterMortgage is the resolver for the cluster_mortgage field.
-func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int, cvmCPU int, cvmMem int, disk int, gpu int, deposit int64) (string, error) {
+func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int, cvmCPU int, cvmMem int, disk int, gpu int, assetID int64, deposit int64) (string, error) {
 	if mint.MinterIns.ChainClient == nil {
 		return "", gqlerror.Errorf("Invalid chain client")
 	}
@@ -99,7 +99,7 @@ func (r *mutationResolver) ClusterMortgage(ctx context.Context, cpu int, mem int
 	if err != nil {
 		return "", gqlerror.Errorf("Cant get cluster id:" + err.Error())
 	}
-	err = worker.ClusterMortgage(id, uint32(cpu), uint32(mem), uint32(cvmCPU), uint32(cvmMem), uint32(disk), uint32(gpu), uint64(deposit), false)
+	err = worker.ClusterMortgage(id, uint32(cpu), uint32(mem), uint32(cvmCPU), uint32(cvmMem), uint32(disk), uint32(gpu), uint64(assetID), uint64(deposit), false)
 	if err != nil {
 		return "", gqlerror.Errorf("Chain call error:" + err.Error())
 	}
@@ -261,6 +261,7 @@ func (r *mutationResolver) StartForTest(ctx context.Context) (bool, error) {
 		uint32(1000000),
 		uint32(0),
 		uint64(1000000000000),
+		0,
 		false,
 	)
 	if err != nil {
