@@ -11,7 +11,8 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.11.0
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.30.0
-	github.com/wetee-dao/go-sdk v0.1.2-0.20250304035120-9adc5458670e
+	github.com/wetee-dao/go-sdk v0.1.2-0.20250328115845-7d96af80b44d
+	go.dedis.ch/kyber/v4 v4.0.0-pre2.0.20250219110603-23debab3f61d
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
 	k8s.io/client-go v0.29.2
@@ -29,27 +30,16 @@ require (
 
 require (
 	github.com/cenkalti/backoff/v4 v4.2.1
-	github.com/consensys/gnark v0.10.0
-	github.com/consensys/gnark-crypto v0.12.2-0.20240215234832-d72fcb379d3e
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/go-resty/resty/v2 v2.14.0
 	github.com/nutsdb/nutsdb v1.0.3
 	github.com/pkg/errors v0.9.1
-	go.dedis.ch/kyber/v3 v3.1.0
 	golang.org/x/crypto v0.25.0
 )
 
 require (
-	github.com/bits-and-blooms/bitset v1.10.0 // indirect
-	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/consensys/bavard v0.1.13 // indirect
-	github.com/fxamacker/cbor/v2 v2.5.0 // indirect
-	github.com/ingonyama-zk/icicle v0.0.0-20230928131117-97f0079e5c71 // indirect
-	github.com/ingonyama-zk/iciclegnark v0.1.0 // indirect
-	github.com/mmcloughlin/addchain v0.4.0 // indirect
-	github.com/rs/zerolog v1.30.0 // indirect
-	github.com/x448/float16 v0.8.4 // indirect
-	rsc.io/tmplfunc v0.0.3 // indirect
+	github.com/cloudflare/circl v1.3.9 // indirect
+	github.com/kilic/bls12-381 v0.1.0 // indirect
 )
 
 require (
@@ -244,5 +234,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-// replace github.com/wetee-dao/go-sdk => ../go-sdk

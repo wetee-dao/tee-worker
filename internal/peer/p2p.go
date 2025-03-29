@@ -132,7 +132,7 @@ func (p *Peer) Send(ctx context.Context, node *types.Node, pid string, message *
 	peerID := node.PeerID()
 	protocolID := protocol.ConvertFromStrings([]string{pid})
 
-	util.LogSendmsg(">>>>>> P2P Send()", "to", peerID, "| type:", message.Type+", ProtocolID =", protocolID)
+	util.LogSendmsg(">>>>>> P2P Send()", "to", peerID, "| type:", pid+"."+message.Type)
 	var stream network.Stream
 	newStream := func() error {
 		stream, err = p.Host.NewStream(ctx, peerID, protocolID...)
@@ -209,7 +209,8 @@ func genStream(handler func(*types.Message) error) func(network.Stream) {
 			return
 		}
 
-		util.LogRevmsg("<<<<<< P2P  Rev()", "from ", stream.Conn().RemotePeer(), "| type:", data.Type+", ProtocolID =", protocolID)
+		pids := protocol.ConvertToStrings([]protocol.ID{protocolID})
+		util.LogRevmsg("<<<<<< P2P  Rev()", "from ", stream.Conn().RemotePeer(), "| type:", pids[0]+"."+data.Type)
 		err = handler(data)
 		if err != nil {
 			fmt.Printf("handle data: %s \n", err)

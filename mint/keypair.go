@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	chain "github.com/wetee-dao/go-sdk"
-	"go.dedis.ch/kyber/v3/suites"
+	"go.dedis.ch/kyber/v4/suites"
 	"wetee.app/worker/internal/store"
 	types "wetee.app/worker/type"
 )
