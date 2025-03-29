@@ -160,6 +160,12 @@ func BuildContainerPortFormService(name string, services []gtypes.Service) []cor
 		} else if ser.IsUdp {
 			protocol = corev1.ProtocolUDP
 			port = ser.AsUdpField0
+		} else if ser.IsHttp {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsHttpField0
+		} else if ser.IsHttps {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsHttpsField0
 		}
 		ports = append(ports, corev1.ContainerPort{
 			Name:          name + "-" + fmt.Sprint(port),
@@ -192,6 +198,12 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 		} else if ser.IsUdp {
 			protocol = corev1.ProtocolUDP
 			port = ser.AsUdpField0
+		} else if ser.IsHttp {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsHttpField0
+		} else if ser.IsHttps {
+			protocol = corev1.ProtocolTCP
+			port = ser.AsHttpsField0
 		}
 
 		if ser.IsTcp || ser.IsUdp {

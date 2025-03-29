@@ -79,6 +79,7 @@ EOF
 # 创建 pccs
 kubectl create -f ./hack/install/pccs.yaml
 kubectl create -f ./hack/install/pccs_headless.yaml
+kubectl create -f ./hack/install/pccs_nodeport.yaml
 
 # 创建区块连节点
 kubectl create -f ./hack/install/chain.yaml
