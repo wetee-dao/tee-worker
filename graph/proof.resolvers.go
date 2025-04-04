@@ -13,10 +13,10 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/wetee-dao/go-sdk/pallet/types"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/graph/model"
-	"wetee.app/worker/mint"
-	"wetee.app/worker/mint/proof"
+	"wetee.app/worker/internal/mint"
+	"wetee.app/worker/internal/mint/proof"
 	wtypes "wetee.app/worker/type"
 	"wetee.app/worker/util"
 )

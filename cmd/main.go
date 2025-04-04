@@ -40,9 +40,9 @@ import (
 	secretv1 "wetee.app/worker/api/v1"
 	"wetee.app/worker/graph"
 	"wetee.app/worker/internal/controller"
+	"wetee.app/worker/internal/mint"
+	"wetee.app/worker/internal/mint/libos"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/mint"
-	"wetee.app/worker/mint/libos"
 	"wetee.app/worker/util"
 	//+kubebuilder:scaffold:imports
 )

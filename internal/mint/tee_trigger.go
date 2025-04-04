@@ -8,10 +8,9 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	"github.com/go-resty/resty/v2"
 	chain "github.com/wetee-dao/go-sdk"
-	"github.com/wetee-dao/go-sdk/pallet/bridge"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 
-	"wetee.app/worker/mint/proof"
+	"wetee.app/worker/internal/mint/proof"
 	wtypes "wetee.app/worker/type"
 	"wetee.app/worker/util"
 )
@@ -194,16 +193,4 @@ func (m *Minter) listTeeCalls(cid uint64) ([]*gtypes.TEECall, []types.StorageKey
 	}
 
 	return list, keys, nil
-}
-
-// get tee call
-func (m *Minter) getTeeCall(cid uint64, callid types.U128) (*gtypes.TEECall, error) {
-	call, ok, err := bridge.GetTEECallsLatest(m.ChainClient.Api.RPC.State, cid, callid)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, fmt.Errorf("not found")
-	}
-	return &call, nil
 }

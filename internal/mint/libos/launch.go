@@ -9,8 +9,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/mint"
 	wtypes "wetee.app/worker/type"
 )
 

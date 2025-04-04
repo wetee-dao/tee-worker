@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"wetee.app/worker/mint"
-	"wetee.app/worker/mint/proof"
+	"wetee.app/worker/internal/mint"
+	"wetee.app/worker/internal/mint/proof"
 	wtypes "wetee.app/worker/type"
 )
 

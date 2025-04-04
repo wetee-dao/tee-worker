@@ -11,7 +11,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"wetee.app/worker/mint/proof"
+	"wetee.app/worker/internal/mint/proof"
 	"wetee.app/worker/util"
 )
 

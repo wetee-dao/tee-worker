@@ -8,7 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	"wetee.app/worker/mint/proof"
+	"wetee.app/worker/internal/mint/proof"
 	types "wetee.app/worker/type"
 )
 

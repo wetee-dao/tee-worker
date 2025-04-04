@@ -21,9 +21,9 @@ import (
 	"github.com/wetee-dao/go-sdk/pallet/balances"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"wetee.app/worker/graph/model"
+	"wetee.app/worker/internal/mint"
+	"wetee.app/worker/internal/mint/proof"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/mint"
-	"wetee.app/worker/mint/proof"
 	"wetee.app/worker/util"
 )
 

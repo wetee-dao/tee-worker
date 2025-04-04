@@ -7,7 +7,7 @@ import (
 	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/wetee-dao/go-sdk/module"
 	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
-	"wetee.app/worker/mint/proof"
+	"wetee.app/worker/internal/mint/proof"
 	types "wetee.app/worker/type"
 )
 

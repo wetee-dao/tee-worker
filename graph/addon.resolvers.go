@@ -10,10 +10,10 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"wetee.app/worker/mint"
+	"wetee.app/worker/internal/mint"
 )
 
 // StartLocalWetee is the resolver for the StartLocalWetee field.
