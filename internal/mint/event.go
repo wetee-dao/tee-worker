@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/go-sdk/module"
-	"github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/util"
 )
 

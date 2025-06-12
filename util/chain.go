@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/dsecret/type/pallet/types"
 )
 
 // work type to string

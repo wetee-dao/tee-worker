@@ -6,11 +6,11 @@ import (
 	"github.com/pkg/errors"
 	"wetee.app/worker/util"
 
-	"github.com/wetee-dao/go-sdk/pallet/app"
-	"github.com/wetee-dao/go-sdk/pallet/gpu"
-	"github.com/wetee-dao/go-sdk/pallet/task"
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
-	"github.com/wetee-dao/go-sdk/pallet/worker"
+	"wetee.app/dsecret/type/pallet/app"
+	"wetee.app/dsecret/type/pallet/gpu"
+	"wetee.app/dsecret/type/pallet/task"
+	gtypes "wetee.app/dsecret/type/pallet/types"
+	"wetee.app/dsecret/type/pallet/worker"
 )
 
 // 合约状态

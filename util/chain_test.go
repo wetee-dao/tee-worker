@@ -3,7 +3,7 @@ package util
 import (
 	"testing"
 
-	"github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/dsecret/type/pallet/types"
 )
 
 func TestGetWorkTypeStr(t *testing.T) {

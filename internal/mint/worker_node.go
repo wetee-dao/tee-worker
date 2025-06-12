@@ -3,8 +3,8 @@ package mint
 import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	chain "github.com/wetee-dao/go-sdk"
-	"github.com/wetee-dao/go-sdk/pallet/dsecret"
-	"github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/dsecret/type/pallet/dsecret"
+	"wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/util"
 )
 

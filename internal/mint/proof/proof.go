@@ -8,9 +8,9 @@ import (
 	chain "github.com/wetee-dao/go-sdk"
 	"golang.org/x/crypto/blake2b"
 
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
-	"github.com/wetee-dao/go-sdk/pallet/utility"
-	"github.com/wetee-dao/go-sdk/pallet/worker"
+	gtypes "wetee.app/dsecret/type/pallet/types"
+	"wetee.app/dsecret/type/pallet/utility"
+	"wetee.app/dsecret/type/pallet/worker"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )

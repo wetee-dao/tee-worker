@@ -8,10 +8,10 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	gtypes "wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/internal/mint/proof"
 	"wetee.app/worker/util"
 )
@@ -43,7 +43,7 @@ func (m *Minter) DoWithAppState(ctx *context.Context, c ContractStateWrap, stage
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
 	// App状态 0: created, 1: deploying, 2: stop, 3: deoloyed
-	if uint64(head.Number)-state.BlockNumber < uint64(stage) {
+	if uint32(head.Number)-state.BlockNumber < stage {
 		if (uint64(head.Number)+workId.Id)%10 != 0 {
 			return nil, nil
 		}

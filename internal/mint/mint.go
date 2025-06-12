@@ -14,8 +14,8 @@ import (
 
 	chain "github.com/wetee-dao/go-sdk"
 	"github.com/wetee-dao/go-sdk/module"
-	"github.com/wetee-dao/go-sdk/pallet/system"
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/dsecret/type/pallet/system"
+	gtypes "wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/internal/mint/proof"
 	"wetee.app/worker/internal/peer"
 	"wetee.app/worker/internal/store"

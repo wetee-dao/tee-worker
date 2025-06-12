@@ -8,7 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
+	gtypes "wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/internal/mint/proof"
 	types "wetee.app/worker/type"
 	"wetee.app/worker/util"

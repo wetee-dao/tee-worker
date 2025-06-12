@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	gtypes "wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )

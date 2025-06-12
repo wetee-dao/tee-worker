@@ -1,9 +1,9 @@
 package mint
 
 import (
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	gtypes "wetee.app/dsecret/type/pallet/types"
 )
 
 func (m *Minter) WrapLibos(deployment *appsv1.Deployment, version *gtypes.TEEVersion) {

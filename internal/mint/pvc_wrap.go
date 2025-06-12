@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	gtypes "wetee.app/dsecret/type/pallet/types"
 )
 
 func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name string, cs []gtypes.Container, deployment *appsv1.Deployment) error {

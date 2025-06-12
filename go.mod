@@ -11,7 +11,7 @@ require (
 	github.com/libp2p/go-libp2p-pubsub v0.11.0
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.30.0
-	github.com/wetee-dao/go-sdk v0.1.2-0.20250328115845-7d96af80b44d
+	github.com/wetee-dao/go-sdk v0.1.2-0.20250531075616-61265f7dc95a
 	go.dedis.ch/kyber/v4 v4.0.0-pre2.0.20250219110603-23debab3f61d
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
@@ -34,12 +34,13 @@ require (
 	github.com/go-resty/resty/v2 v2.14.0
 	github.com/nutsdb/nutsdb v1.0.3
 	github.com/pkg/errors v0.9.1
-	golang.org/x/crypto v0.25.0
+	golang.org/x/crypto v0.31.0
 )
 
 require (
 	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/kilic/bls12-381 v0.1.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 )
 
 require (
@@ -139,7 +140,7 @@ require (
 	go.uber.org/dig v1.17.1 // indirect
 	go.uber.org/fx v1.22.1 // indirect
 	go.uber.org/mock v0.4.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
 	gonum.org/v1/gonum v0.13.0 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
 )
@@ -213,9 +214,9 @@ require (
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect

@@ -5,7 +5,7 @@ import (
 
 	"wetee.app/worker/internal/store"
 
-	"github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/dsecret/type/pallet/types"
 )
 
 func TestLoading(t *testing.T) {

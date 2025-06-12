@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/nutsdb/nutsdb"
-	"github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/dsecret/type/pallet/types"
 )
 
 func Test(t *testing.T) {

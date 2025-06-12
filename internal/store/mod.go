@@ -11,7 +11,7 @@ import (
 
 	"github.com/edgelesssys/ego/ecrypto"
 	"github.com/nutsdb/nutsdb"
-	"github.com/wetee-dao/go-sdk/pallet/types"
+	"wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/util"
 )
 

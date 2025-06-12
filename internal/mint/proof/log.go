@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	gtypes "github.com/wetee-dao/go-sdk/pallet/types"
 	"golang.org/x/crypto/blake2b"
+	gtypes "wetee.app/dsecret/type/pallet/types"
 
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
