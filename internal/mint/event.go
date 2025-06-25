@@ -1,17 +1,12 @@
 package mint
 
 import (
-	"context"
-
-	"github.com/pkg/errors"
-	"github.com/wetee-dao/go-sdk/module"
-	"wetee.app/dsecret/type/pallet/types"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 	"wetee.app/worker/util"
 )
 
 func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 	e := event.Event
-	ctx := context.Background()
 	var err error
 
 	// 处理任务消息
@@ -19,39 +14,39 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 	if e.IsWorker {
 		startEvent := e.AsWorkerField0
 		if startEvent.IsWorkRuning {
-			workId := startEvent.AsWorkRuningWorkId1
-			user := startEvent.AsWorkRuningUser0
-			cid := startEvent.AsWorkRuningClusterId2
-			if cid == clusterId {
-				version, _ := module.GetVersion(m.ChainClient, workId)
-				settings, err := m.GetSettingsFromWork(workId, nil)
-				if err != nil {
-					return errors.Wrap(err, "GetSettingsFromWork error")
-				}
+			// workId := startEvent.AsWorkRuningWorkId1
+			// user := startEvent.AsWorkRuningUser0
+			// cid := startEvent.AsWorkRuningClusterId2
+			// if cid == clusterId {
+			// 	version, _ := module.GetVersion(m.ChainClient, workId)
+			// 	settings, err := m.GetSettingsFromWork(workId, nil)
+			// 	if err != nil {
+			// 		return errors.Wrap(err, "GetSettingsFromWork error")
+			// 	}
 
-				if workId.Wtype.IsAPP {
-					appIns := module.App{
-						Client: m.ChainClient,
-					}
-					app, _ := appIns.GetApp(user[:], workId.Id)
-					err = m.CreateApp(&ctx, user[:], workId, app, settings, version)
-					util.LogError("===========================================CreateOrUpdateApp error: ", err)
-				} else if workId.Wtype.IsGPU {
-					gpuIns := module.GpuApp{
-						Client: m.ChainClient,
-					}
-					gpu, _ := gpuIns.GetApp(user[:], workId.Id)
-					err = m.CreateGpuApp(&ctx, user[:], workId, gpu, settings, version)
-					util.LogError("===========================================CreateOrUpdateGpuApp error: ", err)
-				} else {
-					taskIns := module.Task{
-						Client: m.ChainClient,
-					}
-					task, _ := taskIns.GetTask(user[:], workId.Id)
-					err = m.CreateTask(&ctx, user[:], workId, task, settings, version)
-					util.LogError("===========================================CreateOrUpdateTask error: ", err)
-				}
-			}
+			// 	if workId.Wtype.IsAPP {
+			// 		appIns := module.App{
+			// 			Client: m.ChainClient,
+			// 		}
+			// 		app, _ := appIns.GetApp(user[:], workId.Id)
+			// 		err = m.CreateApp(&ctx, user[:], workId, app, settings, version)
+			// 		util.LogError("===========================================CreateOrUpdateApp error: ", err)
+			// 	} else if workId.Wtype.IsGPU {
+			// 		gpuIns := module.GpuApp{
+			// 			Client: m.ChainClient,
+			// 		}
+			// 		gpu, _ := gpuIns.GetApp(user[:], workId.Id)
+			// 		err = m.CreateGpuApp(&ctx, user[:], workId, gpu, settings, version)
+			// 		util.LogError("===========================================CreateOrUpdateGpuApp error: ", err)
+			// 	} else {
+			// 		taskIns := module.Task{
+			// 			Client: m.ChainClient,
+			// 		}
+			// 		task, _ := taskIns.GetTask(user[:], workId.Id)
+			// 		err = m.CreateTask(&ctx, user[:], workId, task, settings, version)
+			// 		util.LogError("===========================================CreateOrUpdateTask error: ", err)
+			// 	}
+			// }
 		}
 	}
 
@@ -65,20 +60,20 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			err = m.StopApp(workId, "")
 			util.LogError("===========================================APP StopPod error: ", err)
 		}
-		if appEvent.IsWorkUpdated {
-			workId := appEvent.AsWorkUpdatedWorkId1
-			user := appEvent.AsWorkUpdatedUser0
+		// if appEvent.IsWorkUpdated {
+		// 	workId := appEvent.AsWorkUpdatedWorkId1
+		// 	user := appEvent.AsWorkUpdatedUser0
 
-			util.LogError("===========================================APP WorkUpdated: ", workId)
-			version, _ := module.GetVersion(m.ChainClient, workId)
-			appIns := module.App{
-				Client: m.ChainClient,
-			}
-			app, _ := appIns.GetApp(user[:], workId.Id)
-			envs, _ := m.BuildEnvs(workId)
-			err = m.UpdateApp(&ctx, user[:], workId, app, envs, version)
-			util.LogError("===========================================APP CreateOrUpdatePod error: ", err)
-		}
+		// 	util.LogError("===========================================APP WorkUpdated: ", workId)
+		// 	version, _ := module.GetVersion(m.ChainClient, workId)
+		// 	appIns := module.App{
+		// 		Client: m.ChainClient,
+		// 	}
+		// 	app, _ := appIns.GetApp(user[:], workId.Id)
+		// 	envs, _ := m.BuildEnvs(workId)
+		// 	err = m.UpdateApp(&ctx, user[:], workId, app, envs, version)
+		// 	util.LogError("===========================================APP CreateOrUpdatePod error: ", err)
+		// }
 	}
 
 	if e.IsTask {
@@ -104,20 +99,20 @@ func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {
 			err = m.StopApp(workId, "")
 			util.LogError("===========================================GPU StopPod error: ", err)
 		}
-		if appEvent.IsWorkUpdated {
-			workId := appEvent.AsWorkUpdatedWorkId1
-			user := appEvent.AsWorkUpdatedUser0
+		// if appEvent.IsWorkUpdated {
+		// 	workId := appEvent.AsWorkUpdatedWorkId1
+		// 	user := appEvent.AsWorkUpdatedUser0
 
-			util.LogError("===========================================GPU WorkUpdated: ", workId)
-			version, _ := module.GetVersion(m.ChainClient, workId)
-			appIns := module.GpuApp{
-				Client: m.ChainClient,
-			}
-			app, _ := appIns.GetApp(user[:], workId.Id)
-			envs, _ := m.BuildEnvs(workId)
-			err = m.UpdateGpuApp(&ctx, user[:], workId, app, envs, version)
-			util.LogError("===========================================GPU CreateOrUpdatePod error: ", err)
-		}
+		// 	util.LogError("===========================================GPU WorkUpdated: ", workId)
+		// 	version, _ := module.GetVersion(m.ChainClient, workId)
+		// 	appIns := module.GpuApp{
+		// 		Client: m.ChainClient,
+		// 	}
+		// 	app, _ := appIns.GetApp(user[:], workId.Id)
+		// 	envs, _ := m.BuildEnvs(workId)
+		// 	err = m.UpdateGpuApp(&ctx, user[:], workId, app, envs, version)
+		// 	util.LogError("===========================================GPU CreateOrUpdatePod error: ", err)
+		// }
 	}
 
 	return err

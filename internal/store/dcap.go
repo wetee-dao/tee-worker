@@ -3,7 +3,8 @@ package store
 import (
 	"fmt"
 
-	"wetee.app/dsecret/type/pallet/types"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/util"
 )
 
@@ -15,7 +16,7 @@ func SetWorkDcapReport(WorkID types.WorkId, val []byte) error {
 	key := util.GetWorkTypeStr(WorkID) + "-" + fmt.Sprint(WorkID.Id) + "_dcap_report"
 
 	// 将值保存到指定的键
-	return SealSave(DcapBucket, []byte(key), val)
+	return model.SetKey(DcapBucket, key, val)
 }
 
 // GetWorkDcapReport 根据工作 ID 获取对应的 DCAP 报告
@@ -24,7 +25,7 @@ func GetWorkDcapReport(WorkID types.WorkId) ([]byte, error) {
 	key := util.GetWorkTypeStr(WorkID) + "-" + fmt.Sprint(WorkID.Id) + "_dcap_report"
 
 	// 使用生成的键在 DcapBucket 中获取相应的报告数据
-	val, err := SealGet(DcapBucket, []byte(key))
+	val, err := model.GetKey(DcapBucket, key)
 	if err != nil {
 		// 如果在获取过程中发生错误，返回错误信息
 		return nil, err

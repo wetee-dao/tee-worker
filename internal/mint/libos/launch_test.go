@@ -3,13 +3,12 @@ package libos
 import (
 	"testing"
 
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 	"wetee.app/worker/internal/store"
-
-	"wetee.app/dsecret/type/pallet/types"
 )
 
 func TestLoading(t *testing.T) {
-	store.DBInit("bin/testdb")
+	store.DBInit()
 	defer store.DBClose()
 
 	workId := types.WorkId{

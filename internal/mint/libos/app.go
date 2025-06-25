@@ -7,9 +7,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/pkg/errors"
-	"github.com/wetee-dao/go-sdk/module"
-	"wetee.app/worker/internal/mint"
 	wtypes "wetee.app/worker/type"
 )
 
@@ -54,15 +51,16 @@ func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 // get app info
 func GetAppInfo(appID string, param *wtypes.TeeParam) (map[string]string, error) {
 	// 验证 report
-	wid, err := VerifyLibOs(appID, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "VerifyLibOs error")
-	}
+	// wid, err := VerifyLibOs(appID, nil)
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "VerifyLibOs error")
+	// }
 
-	user, err := module.GetAccount(mint.MinterIns.ChainClient, *wid)
-	if err != nil {
-		return nil, err
-	}
+	// user, err := module.GetAccount(mint.MinterIns.ChainClient, *wid)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	user := []byte{}
 
 	return map[string]string{
 		"user": hex.EncodeToString(user),

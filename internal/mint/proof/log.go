@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
-	gtypes "wetee.app/dsecret/type/pallet/types"
 
-	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
 
@@ -28,7 +28,8 @@ func ListLogsById(id gtypes.WorkId, page int, size int, isCache bool) ([]WorkLog
 	if isCache {
 		name = name + "_cache"
 	}
-	res, err := store.GetList(LogBucket, name, page, size)
+
+	res, err := model.GetList(LogBucket, name, page, size)
 	if err != nil {
 		return nil, err
 	}

@@ -7,12 +7,9 @@ import (
 )
 
 func TestGetMintKey(t *testing.T) {
-	store.DBInit("bin/testdb")
+	store.DBInit()
 	defer store.DBClose()
 
-	k, _, err := GetMintKey()
-	if err != nil {
-		t.Error(err)
-	}
+	k, _ := GetMintKey()
 	t.Log(k)
 }

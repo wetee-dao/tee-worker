@@ -10,16 +10,6 @@ extend type Mutation {
   ): Boolean!
 
   """
-  Link to wetee node
-  """
-  link_wetee(
-    """
-    wetee node url or 'local'
-    """
-    url: String!
-  ): Boolean!
-
-  """
   Start a sgx pccs node
   """
   start_sgx_pccs(

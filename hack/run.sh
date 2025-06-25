@@ -12,5 +12,9 @@ sudo chmod 777 /etc/rancher/k3s/k3s.yaml
 sudo mkdir /opt/wetee-worker
 sudo chmod 777 /opt/wetee-worker
 
+export SIDE_CHAIN_PORT=60000
+export GQL_PORT=60005
+export CHAIN_ADDR=ws://127.0.0.1:9944
+
 echo $KUBE_CONFIG_PATH
 make run

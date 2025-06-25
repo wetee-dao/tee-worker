@@ -3,6 +3,7 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -86,7 +87,7 @@ func (e Role) String() string {
 	return string(e)
 }
 
-func (e *Role) UnmarshalGQL(v interface{}) error {
+func (e *Role) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
@@ -101,6 +102,20 @@ func (e *Role) UnmarshalGQL(v interface{}) error {
 
 func (e Role) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *Role) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e Role) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 // Work type
@@ -130,7 +145,7 @@ func (e WorkType) String() string {
 	return string(e)
 }
 
-func (e *WorkType) UnmarshalGQL(v interface{}) error {
+func (e *WorkType) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
@@ -145,4 +160,18 @@ func (e *WorkType) UnmarshalGQL(v interface{}) error {
 
 func (e WorkType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *WorkType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e WorkType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

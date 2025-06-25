@@ -12,21 +12,20 @@ import (
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	chain "github.com/wetee-dao/go-sdk"
-	"github.com/wetee-dao/go-sdk/module"
-	"wetee.app/dsecret/type/pallet/system"
-	gtypes "wetee.app/dsecret/type/pallet/types"
+	chain "github.com/wetee-dao/ink.go"
+	chains "github.com/wetee-dao/tee-dsecret/chains"
+	module "github.com/wetee-dao/tee-dsecret/chains/pallets"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/system"
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/mint/proof"
-	"wetee.app/worker/internal/peer"
+
 	"wetee.app/worker/internal/store"
-	types "wetee.app/worker/type"
 	"wetee.app/worker/util"
 )
 
 var (
-	lock            sync.Mutex
-	MinterIns       *Minter
-	DefaultChainUrl string = "ws://wetee-node.worker-addon.svc.cluster.local:9944"
+	MinterIns *Minter
 )
 
 // Minter
@@ -35,18 +34,17 @@ type Minter struct {
 	K8sClient     *kubernetes.Clientset
 	MetricsClient *versioned.Clientset
 	ChainClient   *chain.ChainClient
-	P2Peer        *peer.Peer
-	Nodes         []*types.Node
-	PrivateKey    *types.PrivKey
+	PrivateKey    *model.PrivKey
 	HostDomain    string
 	mu            sync.RWMutex
+
 	// preRecerve is the channel to receive SendEncryptedSecretRequest
-	preRecerve map[string]chan interface{}
+	preRecerve map[string]chan any
 }
 
 // InitCluster
 // 初始化矿工
-func InitCluster(mgr manager.Manager) error {
+func InitCluster(mgr manager.Manager, privateKey *model.PrivKey) error {
 	// 创建K8s Client
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
 	if err != nil {
@@ -59,8 +57,6 @@ func InitCluster(mgr manager.Manager) error {
 		return err
 	}
 
-	// 初始化minter
-	lock.Lock()
 	MinterIns = &Minter{
 		K8sClient:     clientset,
 		MetricsClient: metricsClient,
@@ -68,31 +64,9 @@ func InitCluster(mgr manager.Manager) error {
 		HostDomain:    "",
 		preRecerve:    make(map[string]chan interface{}),
 	}
-
-	// 获取签名账户
-	_, privateKey, err := GetMintKey()
-	if err != nil {
-		return err
-	}
-
 	MinterIns.PrivateKey = privateKey
-	lock.Unlock()
 
 	return err
-}
-
-func InitChainClient(url string) error {
-	if MinterIns.ChainClient != nil {
-		return nil
-	}
-	client, err := chain.ClientInit(url, true)
-	if err != nil {
-		return err
-	}
-	MinterIns.ChainClient = client
-	store.SetChainUrl(url)
-
-	return nil
 }
 
 // start mint
@@ -100,6 +74,7 @@ func InitChainClient(url string) error {
 func (m *Minter) StartMint() {
 	signer, _ := m.PrivateKey.ToSigner()
 	fmt.Println("MintKey => ", signer.Address)
+	m.ChainClient = chains.MainChain.GetClient()
 
 	// 挖矿开始
 mintStart:
@@ -109,31 +84,6 @@ mintStart:
 	// 等待集群开启
 	// Waiting for cluster start
 	for {
-		chainUrl := DefaultChainUrl
-		url, err := store.GetChainUrl()
-		if err == nil {
-			chainUrl = url
-		}
-		// 此处不捕获错误，因为如果初始化失败，程序可以继续运行
-		InitChainClient(chainUrl)
-		if MinterIns.ChainClient == nil {
-			fmt.Println("Chain connect is not init")
-			time.Sleep(time.Second * 10)
-			continue
-		}
-
-		// 启动p2p
-		// Start p2p
-		err = m.StartP2P()
-		if m.P2Peer != nil {
-			m.P2Peer.Discover(context.Background())
-		}
-		if err != nil {
-			fmt.Println("worker.StartP2P => ", err)
-			time.Sleep(time.Second * 10)
-			continue
-		}
-
 		// 初始化worker对象
 		// Initialize the worker object
 		worker = module.Worker{
@@ -193,13 +143,6 @@ mintStart:
 		head := <-sub.Chan()
 		util.LogError("Chain is at block: #", fmt.Sprint(head.Number))
 		blockHash, _ := chainAPI.RPC.Chain.GetBlockHash(uint64(head.Number))
-
-		// P2P 节点发现 10个区块刷新一次
-		// P2P node discovery
-		if uint64(head.Number)%10 == 0 {
-			m.P2Peer.Discover(context.Background())
-			fmt.Println("Peer len:", len(m.P2Peer.Network().Peers()))
-		}
 
 		err := client.CheckMetadata()
 		if err != nil {

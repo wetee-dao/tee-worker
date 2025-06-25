@@ -51,7 +51,7 @@ func (m *Minter) UploadClusterProof() ([]byte, error) {
 	// Lock the mutex to ensure thread safety
 	m.mu.Lock()
 	// Initialize a channel for the message ID
-	m.preRecerve[msgId] = make(chan interface{})
+	m.preRecerve[msgId] = make(chan any)
 	// Unlock the mutex
 	m.mu.Unlock()
 

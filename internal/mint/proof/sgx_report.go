@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/edgelesssys/ego/enclave"
-	chain "github.com/wetee-dao/go-sdk"
+	chain "github.com/wetee-dao/ink.go"
 	"wetee.app/worker/util"
 )
 

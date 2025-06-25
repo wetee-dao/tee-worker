@@ -16,7 +16,7 @@ import (
 // 启动GraphQL服务器
 // StartServer starts the GraphQL server.
 func StartServer() {
-	port := util.GetEnvInt("PORT", 8880)
+	port := util.GetEnvInt("GQL_PORT", 8880)
 
 	// 创建路由
 	router := chi.NewRouter()
@@ -36,7 +36,7 @@ func StartServer() {
 
 	// graphql playground
 	router.Handle("/", playground.Handler("WeTEE-WORKER", "/gql"))
-	srv := handler.NewDefaultServer(NewExecutableSchema(Config{
+	srv := handler.New(NewExecutableSchema(Config{
 		Resolvers:  &Resolver{},
 		Directives: NewDirectiveRoot(),
 	}))

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"wetee.app/dsecret/type/pallet/types"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 )
 
 func GetUrlFromIp(ip types.Ip) string {

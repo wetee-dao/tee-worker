@@ -4,13 +4,13 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	"github.com/pkg/errors"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/app"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/gpu"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/task"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/worker"
 	"wetee.app/worker/util"
 
-	"wetee.app/dsecret/type/pallet/app"
-	"wetee.app/dsecret/type/pallet/gpu"
-	"wetee.app/dsecret/type/pallet/task"
-	gtypes "wetee.app/dsecret/type/pallet/types"
-	"wetee.app/dsecret/type/pallet/worker"
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 )
 
 // 合约状态

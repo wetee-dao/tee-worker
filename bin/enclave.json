@@ -15,7 +15,7 @@
         },
         {
             "source": "/opt/wetee-worker",
-            "target": "/opt/wetee-worker",
+            "target": "/chain_data",
             "type": "hostfs",
             "readOnly": false
         }
@@ -34,7 +34,23 @@
             "fromHost": true
         },
         {
-            "name": "P2P_PORT",
+            "name": "SIDE_CHAIN_PORT",
+            "fromHost": true
+        },
+        {
+            "name": "SIDE_CHAIN_ADDR",
+            "fromHost": true
+        },
+        {
+            "name": "GQL_PORT",
+            "fromHost": true
+        },
+        {
+            "name": "CHAIN_ADDR",
+            "fromHost": true
+        },
+        {
+            "name": "PASSWORD",
             "fromHost": true
         }
     ],

@@ -19,16 +19,19 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
+	sidechain "github.com/wetee-dao/tee-dsecret/side-chain"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
+	chain "github.com/wetee-dao/tee-dsecret/chains"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -38,18 +41,17 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	secretv1 "wetee.app/worker/api/v1"
-	"wetee.app/worker/graph"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/internal/mint"
-	"wetee.app/worker/internal/mint/libos"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 	//+kubebuilder:scaffold:imports
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme                 = runtime.NewScheme()
+	setupLog               = ctrl.Log.WithName("setup")
+	DefaultChainUrl string = "ws://wetee-node.worker-addon.svc.cluster.local:9944"
 )
 
 func init() {
@@ -110,26 +112,60 @@ func main() {
 		os.Exit(1)
 	}
 
+	chainAddr := util.GetEnv("CHAIN_ADDR", DefaultChainUrl)
+	chainPort := util.GetEnvInt("SIDE_CHAIN_PORT", 60000)
+
 	// 初始化数据库
-	err = store.DBInit(util.WORK_DIR + "/db")
+	_, err = store.DBInit()
 	if err != nil {
 		setupLog.Error(err, "unable to start database")
 		os.Exit(1)
 	}
 
+	_, nodePriv := mint.GetMintKey()
+
+	// Link to polkadot
+	mainChain, err := chain.ConnectMainChain(chainAddr, nodePriv)
+	if err != nil {
+		fmt.Println("Connect to chain error:", err)
+		os.Exit(1)
+	}
+
+	// Init node
+	node, sideChain, dkgReactor, err := sidechain.InitSideChain(chainPort, mainChain, func() {
+		fmt.Println()
+		util.LogWithYellow("Main Chain", chainAddr)
+		util.LogWithYellow("Node Key", nodePriv.GetPublic().SS58())
+	})
+	if err != nil {
+		log.Fatalf("failed to init node: %v", err)
+		os.Exit(1)
+	}
+
+	// Start BFT node
+	if err := node.Start(); err != nil {
+		log.Fatalf("failed to start BFT node: %v", err)
+		os.Exit(1)
+	}
+	defer func() {
+		_ = node.Stop()
+		node.Wait()
+	}()
+
+	fmt.Println(sideChain)
+	fmt.Println(dkgReactor)
+
 	// 开启 mint 主线程
-	err = mint.InitCluster(mgr)
+	err = mint.InitCluster(mgr, nodePriv)
 	if err != nil {
 		setupLog.Error(err, "unable to start mint")
 		os.Exit(1)
 	}
 
-	signer, _ := mint.MinterIns.PrivateKey.ToSigner()
-	go libos.StartSecretServerInCluster(signer.Address)
-	go mint.MinterIns.StartMint()
-
-	// 开启 http 服务器
-	go graph.StartServer()
+	// signer, _ := mint.MinterIns.PrivateKey.ToSigner()
+	// go libos.StartSecretServerInCluster(signer.Address)
+	// go mint.MinterIns.StartMint()
+	// go graph.StartServer()
 
 	if err = (&controller.AppReconciler{
 		Client: mgr.GetClient(),

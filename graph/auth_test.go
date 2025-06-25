@@ -12,7 +12,7 @@ import (
 )
 
 func TestDecodeToken(t *testing.T) {
-	store.DBInit("bin/testdb")
+	store.DBInit()
 	defer store.DBClose()
 
 	prikey, err := sr25519.Scheme{}.Generate()

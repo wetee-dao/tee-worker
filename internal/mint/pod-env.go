@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	gtypes "wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
@@ -32,15 +32,8 @@ func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.
 		return []corev1.EnvVar{}, err
 	}
 
-	chainUrl := DefaultChainUrl
-	url, err := store.GetChainUrl()
-	if err == nil {
-		chainUrl = url
-	}
-
 	envs := []corev1.EnvVar{
 		{Name: "APPID", Value: wid},
-		{Name: "CHAIN_ADDR", Value: chainUrl},
 	}
 
 	for _, setting := range settings {

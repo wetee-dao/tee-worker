@@ -1,5 +1,9 @@
 package types
 
+import (
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
+)
+
 // P2P 请求 Message 消息体
 type Message struct {
 	// 消息ID
@@ -25,7 +29,7 @@ type ReencryptSecretRequest struct {
 	// 密文ID
 	SecretId string `json:"secret_id,omitempty"`
 	// 密文接收者公钥
-	RdrPk *PubKey `json:"rdr_pk,omitempty"`
+	RdrPk *model.PubKey `json:"rdr_pk,omitempty"`
 }
 
 // ReencryptSecret 函数处理重新加密的结果

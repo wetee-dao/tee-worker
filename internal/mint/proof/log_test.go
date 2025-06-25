@@ -7,15 +7,16 @@ import (
 	"testing"
 	"time"
 
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
-	gtypes "wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
 
 // TestListLogsById tests the ListLogsById function
 func TestListLogsById(t *testing.T) {
-	store.DBInit("bin/testdb")
+	store.DBInit()
 	defer store.DBClose()
 
 	// Test case 1: Valid input
@@ -29,7 +30,7 @@ func TestListLogsById(t *testing.T) {
 	}
 
 	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
-	store.AddToList(LogBucket, name, bt)
+	model.AddToList(LogBucket, name, bt)
 
 	logs, err := ListLogsById(id, page, size, false)
 	if err != nil {
@@ -53,7 +54,7 @@ func TestListLogsById(t *testing.T) {
 }
 
 func TestGetWorkLogHash(t *testing.T) {
-	store.DBInit("bin/testdb")
+	store.DBInit()
 	defer store.DBClose()
 
 	var blockNumber uint64 = 1

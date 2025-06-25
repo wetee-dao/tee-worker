@@ -1,45 +1,34 @@
 package mint
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
+	"os"
 
-	chain "github.com/wetee-dao/go-sdk"
-	"go.dedis.ch/kyber/v4/suites"
-	"wetee.app/worker/internal/store"
-	types "wetee.app/worker/type"
+	"github.com/cometbft/cometbft/p2p"
+	chain "github.com/wetee-dao/ink.go"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 )
 
 // 获取挖矿密钥
 // GetKey get mint key
-func GetMintKey() (*chain.Signer, *types.PrivKey, error) {
-	key, err := store.GetMintId()
-	var mss []byte
-	var privateKey *types.PrivKey
+func GetMintKey() (*chain.Signer, *model.PrivKey) {
+	// init sidechain node key
+	nodeKey, err := p2p.LoadNodeKey("./chain_data/config/node_key.json")
 	if err != nil {
-		suite := suites.MustFind("Ed25519")
-		privateKey, _, err = types.GenerateKeyPair(suite, rand.Reader)
-		if err != nil {
-			return nil, nil, err
-		}
-		bt, err := hex.DecodeString(privateKey.String())
-		if err != nil {
-			return nil, nil, err
-		}
-		mss = bt
-	} else {
-		keyString := hex.EncodeToString(key)
-		privateKey, err = types.PrivateKeyFromLibp2pHex(keyString)
-		if err != nil {
-			fmt.Println("Marshal PKG_PK error:", err)
-			return nil, nil, err
-		}
-		mss = key
+		fmt.Println("failed to load node key:", err)
+		os.Exit(1)
 	}
 
-	store.SetMintId(mss)
+	privateKey, err := model.PrivateKeyFromOed25519(nodeKey.PrivKey.Bytes())
+	if err != nil {
+		fmt.Println("Marshal PKG_PK error:", err)
+		os.Exit(1)
+	}
 
 	kr, err := privateKey.ToSigner()
-	return kr, privateKey, nil
+	if err != nil {
+		fmt.Println("ToSigner error:", err)
+		os.Exit(1)
+	}
+	return kr, privateKey
 }

@@ -1,39 +1,17 @@
 package util
 
-import (
-	"fmt"
-
-	"github.com/fatih/color"
-)
-
 func LogError(tag string, a ...interface{}) {
-	red := color.New(color.FgHiRed).SprintFunc()
-	b := make([]interface{}, 0, len(a)+1)
-	b = append(b, red(tag+":"))
-	b = append(b, a...)
-	fmt.Println(b...)
+	LogWithRed(tag, a...)
 }
 
 func LogOk(tag string, a ...interface{}) {
-	red := color.New(color.FgHiGreen).SprintFunc()
-	b := make([]interface{}, 0, len(a)+1)
-	b = append(b, red(tag+":"))
-	b = append(b, a...)
-	fmt.Println(b...)
+	LogWithGreen(tag, a...)
 }
 
 func LogSendmsg(tag string, a ...interface{}) {
-	red := color.New(color.FgHiCyan).SprintFunc()
-	b := make([]interface{}, 0, len(a)+1)
-	b = append(b, red(tag+":"))
-	b = append(b, a...)
-	fmt.Println(b...)
+	LogWithCyan(tag, a...)
 }
 
 func LogRevmsg(tag string, a ...interface{}) {
-	red := color.New(color.FgHiMagenta).SprintFunc()
-	b := make([]interface{}, 0, len(a)+1)
-	b = append(b, red(tag+":"))
-	b = append(b, a...)
-	fmt.Println(b...)
+	LogWithPurple(tag, a...)
 }

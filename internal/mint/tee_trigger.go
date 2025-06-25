@@ -7,8 +7,8 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	"github.com/go-resty/resty/v2"
-	chain "github.com/wetee-dao/go-sdk"
-	gtypes "wetee.app/dsecret/type/pallet/types"
+	chain "github.com/wetee-dao/ink.go"
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 
 	"wetee.app/worker/internal/mint/proof"
 	wtypes "wetee.app/worker/type"

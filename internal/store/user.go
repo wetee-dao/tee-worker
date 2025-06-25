@@ -3,18 +3,20 @@ package store
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 )
 
 const UserBucket = "user"
 
 func SetClusterId(id uint64) error {
-	key := []byte("clusterId")
+	key := "clusterId"
 	val := []byte(fmt.Sprint(id))
-	return SealSave(UserBucket, key, val)
+	return model.SetKey(UserBucket, key, val)
 }
 
 func GetClusterId() (uint64, error) {
-	val, err := SealGet(UserBucket, []byte("clusterId"))
+	val, err := model.GetKey(UserBucket, "clusterId")
 	if err != nil {
 		return 0, err
 	}
@@ -22,13 +24,13 @@ func GetClusterId() (uint64, error) {
 }
 
 func SetMintId(id []byte) error {
-	key := []byte("MinterId")
+	key := "MinterId"
 	val := id
-	return SealSave(UserBucket, key, val)
+	return model.SetKey(UserBucket, key, val)
 }
 
 func GetMintId() ([]byte, error) {
-	val, err := SealGet(UserBucket, []byte("MinterId"))
+	val, err := model.GetKey(UserBucket, "MinterId")
 	if err != nil {
 		return nil, err
 	}

@@ -7,15 +7,16 @@ import (
 	"testing"
 	"time"
 
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
-	gtypes "wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
 
 // TestListMonitoringsById tests the ListMonitoringsById function
 func TestListMonitoringsById(t *testing.T) {
-	store.DBInit("bin/testdb")
+	store.DBInit()
 	defer store.DBClose()
 
 	id := gtypes.WorkId{Id: uint64(time.Now().Unix() + 1)}
@@ -30,7 +31,7 @@ func TestListMonitoringsById(t *testing.T) {
 	}
 
 	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
-	store.AddToList(CrBucket, name, bt)
+	model.AddToList(CrBucket, name, bt)
 
 	crs, err := ListMonitoringsById(id, page, size, false)
 	if err != nil {
@@ -53,7 +54,7 @@ func TestListMonitoringsById(t *testing.T) {
 }
 
 func TestGetGetWorkCrHash(t *testing.T) {
-	store.DBInit("bin/testdb")
+	store.DBInit()
 	defer store.DBClose()
 
 	var blockNumber uint64 = 1

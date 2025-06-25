@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"wetee.app/dsecret/type/pallet/types"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 )
 
 // work type to string

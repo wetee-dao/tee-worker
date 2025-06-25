@@ -8,14 +8,15 @@ import (
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	gtypes "wetee.app/dsecret/type/pallet/types"
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/mint/proof"
 	types "wetee.app/worker/type"
 	"wetee.app/worker/util"
 )
 
 // ReencryptSecretRequest 函数用于生成重新加密的请求，并处理返回结果
-func (m *Minter) ReencryptSecretRequest(secretId string, rdrPk *types.PubKey) (*types.ReencryptSecret, error) {
+func (m *Minter) ReencryptSecretRequest(secretId string, rdrPk *model.PubKey) (*types.ReencryptSecret, error) {
 	req := types.ReencryptSecretRequest{
 		SecretId: secretId,
 		RdrPk:    rdrPk,
@@ -44,7 +45,7 @@ func (m *Minter) ReencryptSecretRequest(secretId string, rdrPk *types.PubKey) (*
 	// Lock the mutex to ensure thread safety
 	m.mu.Lock()
 	// Initialize a channel for the message ID
-	m.preRecerve[msgId] = make(chan interface{})
+	m.preRecerve[msgId] = make(chan any)
 	// Unlock the mutex
 	m.mu.Unlock()
 
@@ -141,7 +142,7 @@ func (m *Minter) LaunchFromDsecret(wid *gtypes.WorkId, libosReport *types.TeePar
 	// Lock the mutex to ensure thread safety
 	m.mu.Lock()
 	// Initialize a channel for the message ID
-	m.preRecerve[msgId] = make(chan interface{})
+	m.preRecerve[msgId] = make(chan any)
 	// Unlock the mutex
 	m.mu.Unlock()
 

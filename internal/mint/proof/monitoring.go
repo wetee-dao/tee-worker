@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
-	gtypes "wetee.app/dsecret/type/pallet/types"
-	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
 
@@ -26,7 +26,7 @@ func ListMonitoringsById(id gtypes.WorkId, page int, size int, isCache bool) ([]
 	if isCache {
 		name = name + "_cache"
 	}
-	res, err := store.GetList(CrBucket, name, page, size)
+	res, err := model.GetList(CrBucket, name, page, size)
 	if err != nil {
 		return nil, err
 	}

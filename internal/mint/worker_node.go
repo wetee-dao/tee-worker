@@ -2,20 +2,21 @@ package mint
 
 import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
-	chain "github.com/wetee-dao/go-sdk"
-	"wetee.app/dsecret/type/pallet/dsecret"
-	"wetee.app/dsecret/type/pallet/types"
+	chain "github.com/wetee-dao/ink.go"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/dsecret"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 	"wetee.app/worker/util"
 )
 
 // RegisterNode register node
 // 注册节点
 func (c *Minter) RegisterNode(signer *chain.Signer, pubkey []byte) error {
-	var bt [32]byte
-	copy(bt[:], pubkey)
+	// var bt [32]byte
+	// copy(bt[:], pubkey)
 
-	call := dsecret.MakeRegisterNodeCall(bt)
-	return c.ChainClient.SignAndSubmit(signer, call, true)
+	// call := dsecret.MakeRegisterNodeCall(bt)
+	// return c.ChainClient.SignAndSubmit(signer, call, true)
+	return nil
 }
 
 // 获取全网当前程序的代码版本

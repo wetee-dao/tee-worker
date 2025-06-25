@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	chain "github.com/wetee-dao/go-sdk"
+	chain "github.com/wetee-dao/ink.go"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/utility"
+	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/worker"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
 
-	gtypes "wetee.app/dsecret/type/pallet/types"
-	"wetee.app/dsecret/type/pallet/utility"
-	"wetee.app/dsecret/type/pallet/worker"
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
@@ -30,7 +31,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now
 		return nil, err
 	}
 
-	err = store.DeleteList(LogBucket, name+"_cache")
+	err = model.DeleteList(LogBucket, name+"_cache")
 	if err != nil {
 		util.LogError("DeleteLog", err)
 		return nil, err
@@ -44,14 +45,14 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now
 			util.LogError("getWorkLogHash", err)
 			return nil, err
 		}
-		err = store.AddToList(LogBucket, name, bt)
+		err = model.AddToList(LogBucket, name, bt)
 		if err != nil {
 			util.LogError("Addlog", err)
 			return nil, err
 		}
 	}
 
-	err = store.DeleteList(CrBucket, name+"_cache")
+	err = model.DeleteList(CrBucket, name+"_cache")
 	if err != nil {
 		util.LogError("DeleteLog", err)
 		return nil, err
@@ -65,7 +66,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now
 			util.LogError("getWorkCrHash", err)
 			return nil, err
 		}
-		err := store.AddToList(CrBucket, name, bt)
+		err := model.AddToList(CrBucket, name, bt)
 		if err != nil {
 			util.LogError("AddCr", err)
 			return nil, err
@@ -129,7 +130,8 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now
 }
 
 func SubmitWorkProof(client *chain.ChainClient, signer *chain.Signer, proof []gtypes.RuntimeCall) error {
-	call := utility.MakeBatchCall(proof)
+	runtimeCall := utility.MakeBatchCall(proof)
+	call, _ := (runtimeCall).AsCall()
 	return client.SignAndSubmit(signer, call, true)
 }
 
@@ -154,7 +156,7 @@ func CacheWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, no
 			util.LogError("getWorkLogHash", err)
 			return err
 		}
-		err = store.AddToList(LogBucket, name+"_cache", bt)
+		err = model.AddToList(LogBucket, name+"_cache", bt)
 		if err != nil {
 			util.LogError("Addlog", err)
 			return err
@@ -170,7 +172,7 @@ func CacheWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, no
 			util.LogError("getWorkCrHash", err)
 			return err
 		}
-		err := store.AddToList(CrBucket, name+"_cache", bt)
+		err := model.AddToList(CrBucket, name+"_cache", bt)
 		if err != nil {
 			util.LogError("AddCr", err)
 			return err

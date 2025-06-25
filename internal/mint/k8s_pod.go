@@ -11,13 +11,12 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/wetee-dao/go-sdk/module"
+	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	gtypes "wetee.app/dsecret/type/pallet/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )
@@ -107,11 +106,11 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 	ctx := context.Background()
 
 	if space == "" {
-		user, err := module.GetAccount(m.ChainClient, workId)
-		if err != nil {
-			return err
-		}
-		space = AccountToSpace(user[:])
+		// user, err := module.GetAccount(m.ChainClient, workId)
+		// if err != nil {
+		// 	return err
+		// }
+		// space = AccountToSpace(user[:])
 	}
 
 	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)

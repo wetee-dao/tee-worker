@@ -1,15 +1,17 @@
 package store
 
+import "github.com/wetee-dao/tee-dsecret/pkg/model"
+
 const WorkerBucket = "worker"
 
 func SetRootUser(address string) error {
-	key := []byte("rootUser")
+	key := "rootUser"
 	val := []byte(address)
-	return SealSave(WorkerBucket, key, val)
+	return model.SetKey(WorkerBucket, key, val)
 }
 
 func GetRootUser() (string, error) {
-	val, err := SealGet(WorkerBucket, []byte("rootUser"))
+	val, err := model.GetKey(WorkerBucket, "rootUser")
 	if err != nil {
 		return "", err
 	}
@@ -17,13 +19,13 @@ func GetRootUser() (string, error) {
 }
 
 func SetChainUrl(id string) error {
-	key := []byte("ChainUrl")
+	key := "ChainUrl"
 	val := []byte(id)
-	return SealSave(WorkerBucket, key, val)
+	return model.SetKey(WorkerBucket, key, val)
 }
 
 func GetChainUrl() (string, error) {
-	val, err := SealGet(WorkerBucket, []byte("ChainUrl"))
+	val, err := model.GetKey(WorkerBucket, "ChainUrl")
 	if err != nil {
 		return "", err
 	}
