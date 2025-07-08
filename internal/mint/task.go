@@ -7,7 +7,7 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
-	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

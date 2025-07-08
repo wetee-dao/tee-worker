@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

@@ -3,7 +3,7 @@ package libos
 import (
 	"testing"
 
-	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"wetee.app/worker/internal/store"
 )
 

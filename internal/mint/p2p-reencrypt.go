@@ -8,7 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/mint/proof"
 	types "wetee.app/worker/type"

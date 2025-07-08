@@ -9,6 +9,7 @@ import (
 
 const SecretBucket = "secret"
 
+// RuningCache 运行时缓存数据结构
 type RuningCache struct {
 	NameSpace string
 	Status    string

@@ -1,7 +1,7 @@
 {
     "exe": "./manager",
     "key": "./keys/private.pem",
-    "debug": false,
+    "debug": true,
     "heapSize": 512,
     "executableHeap": false,
     "productID": 1,

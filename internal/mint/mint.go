@@ -13,10 +13,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	chain "github.com/wetee-dao/ink.go"
-	chains "github.com/wetee-dao/tee-dsecret/chains"
-	module "github.com/wetee-dao/tee-dsecret/chains/pallets"
-	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/system"
-	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	chains "github.com/wetee-dao/tee-dsecret/pkg/chains"
+	module "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/system"
+	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/mint/proof"
 

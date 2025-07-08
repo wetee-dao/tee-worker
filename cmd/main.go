@@ -31,7 +31,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	chain "github.com/wetee-dao/tee-dsecret/chains"
+	chain "github.com/wetee-dao/tee-dsecret/pkg/chains"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -113,7 +113,7 @@ func main() {
 	}
 
 	chainAddr := util.GetEnv("CHAIN_ADDR", DefaultChainUrl)
-	chainPort := util.GetEnvInt("SIDE_CHAIN_PORT", 60000)
+	chainPort := util.GetEnvInt("SIDE_CHAIN_PORT", 10000)
 
 	// 初始化数据库
 	_, err = store.DBInit()

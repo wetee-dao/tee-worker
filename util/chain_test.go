@@ -3,7 +3,7 @@ package util
 import (
 	"testing"
 
-	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 )
 
 func TestGetWorkTypeStr(t *testing.T) {

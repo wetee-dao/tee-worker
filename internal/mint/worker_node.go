@@ -3,8 +3,8 @@ package mint
 import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	chain "github.com/wetee-dao/ink.go"
-	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/dsecret"
-	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/dsecret"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"wetee.app/worker/util"
 )
 

@@ -6,12 +6,12 @@ import (
 	"time"
 
 	chain "github.com/wetee-dao/ink.go"
-	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/utility"
-	"github.com/wetee-dao/tee-dsecret/chains/pallets/generated/worker"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/utility"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/worker"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
 
-	gtypes "github.com/wetee-dao/tee-dsecret/chains/pallets/generated/types"
+	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/util"
 )

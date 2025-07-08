@@ -11,7 +11,7 @@ const UserBucket = "user"
 
 func SetClusterId(id uint64) error {
 	key := "clusterId"
-	val := []byte(fmt.Sprint(id))
+	val := fmt.Append(nil, id)
 	return model.SetKey(UserBucket, key, val)
 }
 
