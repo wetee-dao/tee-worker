@@ -9,7 +9,7 @@ import (
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
 
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 // 日志证明

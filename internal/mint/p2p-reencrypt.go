@@ -11,8 +11,8 @@ import (
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/mint/proof"
-	types "wetee.app/worker/type"
-	"wetee.app/worker/util"
+	types "wetee.app/worker/internal/model"
+	"wetee.app/worker/internal/util"
 )
 
 // ReencryptSecretRequest 函数用于生成重新加密的请求，并处理返回结果

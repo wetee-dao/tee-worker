@@ -12,7 +12,7 @@ import (
 
 	"github.com/edgelesssys/ego/enclave"
 	chain "github.com/wetee-dao/ink.go"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 var (

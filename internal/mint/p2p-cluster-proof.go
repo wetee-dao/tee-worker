@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"wetee.app/worker/internal/mint/proof"
-	types "wetee.app/worker/type"
+	types "wetee.app/worker/internal/model"
 )
 
 // UploadClusterProof is a function used to upload cluster verification information

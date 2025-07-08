@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"wetee.app/worker/internal/mint"
+	wtypes "wetee.app/worker/internal/model"
 	"wetee.app/worker/internal/store"
-	wtypes "wetee.app/worker/type"
 )
 
 // 加载应用加密文件，加密环境变量

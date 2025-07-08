@@ -2,7 +2,7 @@ package mint
 
 import (
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 func (m *Minter) DoWithEvent(event types.EventRecord, clusterId uint64) error {

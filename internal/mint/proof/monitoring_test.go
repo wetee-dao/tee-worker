@@ -11,7 +11,7 @@ import (
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 // TestListMonitoringsById tests the ListMonitoringsById function

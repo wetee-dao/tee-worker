@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/mint/proof"
-	wtypes "wetee.app/worker/type"
+	wtypes "wetee.app/worker/internal/model"
 )
 
 // 启动InCluster服务器

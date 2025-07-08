@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 // 启动GraphQL服务器

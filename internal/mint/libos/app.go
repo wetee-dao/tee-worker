@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	wtypes "wetee.app/worker/type"
+	wtypes "wetee.app/worker/internal/model"
 )
 
 // load app info

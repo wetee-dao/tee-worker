@@ -5,7 +5,7 @@ import (
 	chain "github.com/wetee-dao/ink.go"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/dsecret"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 // RegisterNode register node

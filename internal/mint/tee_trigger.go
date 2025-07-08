@@ -11,8 +11,8 @@ import (
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 
 	"wetee.app/worker/internal/mint/proof"
-	wtypes "wetee.app/worker/type"
-	"wetee.app/worker/util"
+	wtypes "wetee.app/worker/internal/model"
+	"wetee.app/worker/internal/util"
 )
 
 // trigger 函数负责处理和触发TEE（可信执行环境）调用相关的一系列操作

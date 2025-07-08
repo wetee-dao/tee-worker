@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/internal/mint/proof"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 func (m *Minter) DoWithTaskState(ctx *context.Context, c ContractStateWrap, stage uint32, head types.Header) (*gtypes.RuntimeCall, error) {

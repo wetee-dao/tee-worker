@@ -3,7 +3,7 @@ package mint
 import (
 	"context"
 
-	types "wetee.app/worker/type"
+	types "wetee.app/worker/internal/model"
 )
 
 // SendMessageToSecret Sends a message to a randomly selected node of type 1 within the context, while adding OrgId information

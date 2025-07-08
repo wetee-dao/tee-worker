@@ -5,7 +5,7 @@ import (
 
 	"github.com/vedhavyas/go-subkey/v2"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
-	types "wetee.app/worker/type"
+	types "wetee.app/worker/internal/model"
 )
 
 // VerifyWorker 函数验证工人报告并返回签名者或错误

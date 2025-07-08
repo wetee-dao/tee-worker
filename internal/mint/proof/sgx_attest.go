@@ -11,9 +11,9 @@ import (
 	"github.com/edgelesssys/ego/enclave"
 	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/ed25519"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 
-	wtypes "wetee.app/worker/type"
+	wtypes "wetee.app/worker/internal/model"
 )
 
 func VerifyReportProof(workerReport *wtypes.TeeParam) (*wtypes.TeeReport, error) {

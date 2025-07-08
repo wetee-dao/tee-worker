@@ -8,7 +8,7 @@ import (
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/gpu"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/task"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/worker"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 )

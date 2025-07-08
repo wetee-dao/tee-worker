@@ -13,7 +13,7 @@ import (
 
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now time.Time, BlockNumber uint64) (*gtypes.RuntimeCall, error) {

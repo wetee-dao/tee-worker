@@ -24,7 +24,7 @@ import (
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/mint/proof"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 // ClusterRegister is the resolver for the cluster_register field.

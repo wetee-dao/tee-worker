@@ -5,7 +5,7 @@ import (
 
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 const DcapBucket = "dcap"

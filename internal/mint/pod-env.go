@@ -9,7 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 // Get Envs from Work

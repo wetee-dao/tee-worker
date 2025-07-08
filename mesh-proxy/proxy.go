@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 var version = "0.0.1"

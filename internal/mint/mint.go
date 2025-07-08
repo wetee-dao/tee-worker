@@ -21,7 +21,7 @@ import (
 	"wetee.app/worker/internal/mint/proof"
 
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 var (

@@ -44,7 +44,7 @@ import (
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -132,7 +132,7 @@ func main() {
 	}
 
 	// Init node
-	node, sideChain, dkgReactor, err := sidechain.InitSideChain(chainPort, mainChain, func() {
+	node, _, _, err := sidechain.InitSideChain(chainPort, mainChain, func() {
 		fmt.Println()
 		util.LogWithYellow("Main Chain", chainAddr)
 		util.LogWithYellow("Node Key", nodePriv.GetPublic().SS58())
@@ -151,9 +151,6 @@ func main() {
 		_ = node.Stop()
 		node.Wait()
 	}()
-
-	fmt.Println(sideChain)
-	fmt.Println(dkgReactor)
 
 	// 开启 mint 主线程
 	err = mint.InitCluster(mgr, nodePriv)

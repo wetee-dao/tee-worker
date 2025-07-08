@@ -17,8 +17,8 @@ import (
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/mint/proof"
-	wtypes "wetee.app/worker/type"
-	"wetee.app/worker/util"
+	wtypes "wetee.app/worker/internal/model"
+	"wetee.app/worker/internal/util"
 )
 
 // WorkLoglist is the resolver for the work_loglist field.

@@ -8,7 +8,7 @@ import (
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
-	"wetee.app/worker/util"
+	"wetee.app/worker/internal/util"
 )
 
 // 硬件资源证明
