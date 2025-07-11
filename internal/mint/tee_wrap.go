@@ -1,20 +1,20 @@
 package mint
 
 import (
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // 为 Deployment 节点添加机密设置
-func (m *Minter) DeploymentTEEWrap(deployment *appsv1.Deployment, version *gtypes.TEEVersion) {
-	if version.IsSGX {
+func (m *Minter) DeploymentTEEWrap(deployment *appsv1.Deployment, version model.TEEType) {
+	if version.SGX != nil {
 		for i := 0; i < len(deployment.Spec.Template.Spec.Containers); i++ {
 			deployment.Spec.Template.Spec.Containers[i].Resources.Limits["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)
 			deployment.Spec.Template.Spec.Containers[i].Resources.Requests["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)
 		}
-	} else if version.IsCVM {
+	} else if version.CVM != nil {
 		// TODO add TDX
 		KATAQUEMUSEV := "kata-clh"
 		// deployment.Spec.Template.Spec.NodeSelector = map[string]string{"TEE": "CVM-SEV"}
@@ -28,13 +28,13 @@ func (m *Minter) DeploymentTEEWrap(deployment *appsv1.Deployment, version *gtype
 }
 
 // 为 Pod 节点添加机密设置
-func (m *Minter) PodTEEWrap(pod *v1.Pod, version *gtypes.TEEVersion) {
-	if version.IsSGX {
+func (m *Minter) PodTEEWrap(pod *v1.Pod, version model.TEEType) {
+	if version.SGX != nil {
 		for i := 0; i < len(pod.Spec.Containers); i++ {
 			pod.Spec.Containers[i].Resources.Limits["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)
 			pod.Spec.Containers[i].Resources.Requests["alibabacloud.com/sgx_epc_MiB"] = *resource.NewQuantity(int64(10), resource.DecimalExponent)
 		}
-	} else if version.IsCVM {
+	} else if version.CVM != nil {
 		// TODO add TDX
 		KATAQUEMUSEV := "kata-clh"
 		// pod.Spec.NodeSelector = map[string]string{"TEE": "CVM-SEV"}

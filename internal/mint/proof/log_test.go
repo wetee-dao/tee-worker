@@ -7,11 +7,9 @@ import (
 	"testing"
 	"time"
 
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/internal/util"
 )
 
 // TestListLogsById tests the ListLogsById function
@@ -20,7 +18,7 @@ func TestListLogsById(t *testing.T) {
 	defer store.DBClose()
 
 	// Test case 1: Valid input
-	id := gtypes.WorkId{Id: uint64(time.Now().Unix())}
+	id := uint64(time.Now().Unix())
 	page := 1
 	size := 2
 
@@ -29,7 +27,7 @@ func TestListLogsById(t *testing.T) {
 		t.Errorf("GetWorkLogHash Expected no error, got %v", err)
 	}
 
-	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
+	name := fmt.Sprint(id)
 	model.AddToList(LogBucket, name, bt)
 
 	logs, err := ListLogsById(id, page, size, false)

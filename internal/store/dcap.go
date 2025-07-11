@@ -3,26 +3,24 @@ package store
 import (
 	"fmt"
 
-	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
-	"wetee.app/worker/internal/util"
 )
 
 const DcapBucket = "dcap"
 
 // SetWorkDcapReport 将指定的工作的 DCAP 报告设置为特定的值
-func SetWorkDcapReport(WorkID types.WorkId, val []byte) error {
+func SetWorkDcapReport(podId uint64, val []byte) error {
 	// 获取基于 WorkID 的键
-	key := util.GetWorkTypeStr(WorkID) + "-" + fmt.Sprint(WorkID.Id) + "_dcap_report"
+	key := fmt.Sprint(podId) + "_dcap_report"
 
 	// 将值保存到指定的键
 	return model.SetKey(DcapBucket, key, val)
 }
 
 // GetWorkDcapReport 根据工作 ID 获取对应的 DCAP 报告
-func GetWorkDcapReport(WorkID types.WorkId) ([]byte, error) {
+func GetWorkDcapReport(podId uint64) ([]byte, error) {
 	// 生成用于获取 DCAP 报告的键
-	key := util.GetWorkTypeStr(WorkID) + "-" + fmt.Sprint(WorkID.Id) + "_dcap_report"
+	key := fmt.Sprint(podId) + "_dcap_report"
 
 	// 使用生成的键在 DcapBucket 中获取相应的报告数据
 	val, err := model.GetKey(DcapBucket, key)

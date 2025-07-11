@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
-	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"wetee.app/worker/internal/mint"
 	wtypes "wetee.app/worker/internal/model"
 	"wetee.app/worker/internal/store"
@@ -63,7 +62,7 @@ func loading(appID string, param *wtypes.TeeParam) (*wtypes.EnvWrap, error) {
 
 	// 存入 Work DCAP 信息
 	bt, _ := json.Marshal(param)
-	err = store.SetWorkDcapReport(*wid, bt)
+	err = store.SetWorkDcapReport(wid, bt)
 	if err != nil {
 		return nil, errors.Wrap(err, "DCAP Report set error")
 	}
@@ -86,21 +85,21 @@ func loading(appID string, param *wtypes.TeeParam) (*wtypes.EnvWrap, error) {
 }
 
 // VerifyLibOs 函数验证应用程序标识和报告，并返回工作标识或错误
-func VerifyLibOs(appID string, report *wtypes.TeeParam) (*types.WorkId, error) {
+func VerifyLibOs(appID string, report *wtypes.TeeParam) (uint64, error) {
 	// 解包应用程序标识
-	wid, err := store.UnSealAppID(appID)
+	id, err := store.UnSealAppID(appID)
 	if err != nil {
 		// 如果解包过程中出现错误，则返回错误信息
-		return nil, errors.Wrap(err, "AppID error")
+		return 0, errors.Wrap(err, "AppID error")
 	}
 
 	// 验证工作标识和报告
-	_, err = mint.MinterIns.VerifyWorkLibos(wid, report)
+	_, err = mint.MinterIns.VerifyWorkLibos(id, report)
 	if err != nil {
 		// 如果验证过程中出现错误，则返回错误信息
-		return nil, errors.Wrap(err, "VerifyWorkLibos error")
+		return 0, errors.Wrap(err, "VerifyWorkLibos error")
 	}
 
 	// 返回解包后的工作标识
-	return &wid, nil
+	return id, nil
 }

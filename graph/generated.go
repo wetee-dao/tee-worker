@@ -55,23 +55,17 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		ClusterMortgage   func(childComplexity int, cpu int, mem int, cvmCPU int, cvmMem int, disk int, gpu int, assetID int64, deposit int64) int
-		ClusterRegister   func(childComplexity int, name string, ip string, domain string, port int, level int) int
-		ClusterStop       func(childComplexity int) int
-		ClusterUnmortgage func(childComplexity int, id int64) int
-		ClusterWithdrawal func(childComplexity int, id int64, ty model.WorkType, val int64) int
-		Login             func(childComplexity int, input model.LoginContent, signature string) int
-		LoginAsRoot       func(childComplexity int, input model.LoginContent, signature string) int
-		StartForTest      func(childComplexity int) int
-		StartLocalWetee   func(childComplexity int, imageVersion string) int
-		StartSgxPccs      func(childComplexity int, imageVersion string, apiKey string) int
+		Login           func(childComplexity int, input model.LoginContent, signature string) int
+		LoginAsRoot     func(childComplexity int, input model.LoginContent, signature string) int
+		StartLocalWetee func(childComplexity int, imageVersion string) int
+		StartSgxPccs    func(childComplexity int, imageVersion string, apiKey string) int
 	}
 
 	Query struct {
 		AttestationReportVerify func(childComplexity int, report string) int
-		WorkLoglist             func(childComplexity int, workType string, workID int, page int, size int) int
-		WorkServicelist         func(childComplexity int, projectID string, workType string, workID int) int
-		WorkWetriclist          func(childComplexity int, workType string, workID int, page int, size int) int
+		WorkLoglist             func(childComplexity int, podID uint64, page int, size int) int
+		WorkServicelist         func(childComplexity int, projectID string, podID uint64) int
+		WorkWetriclist          func(childComplexity int, podID uint64, page int, size int) int
 		Worker                  func(childComplexity int) int
 		WorkerInfo              func(childComplexity int) int
 	}
@@ -106,17 +100,11 @@ type MutationResolver interface {
 	StartSgxPccs(ctx context.Context, imageVersion string, apiKey string) (bool, error)
 	LoginAsRoot(ctx context.Context, input model.LoginContent, signature string) (string, error)
 	Login(ctx context.Context, input model.LoginContent, signature string) (string, error)
-	ClusterRegister(ctx context.Context, name string, ip string, domain string, port int, level int) (string, error)
-	ClusterMortgage(ctx context.Context, cpu int, mem int, cvmCPU int, cvmMem int, disk int, gpu int, assetID int64, deposit int64) (string, error)
-	ClusterUnmortgage(ctx context.Context, id int64) (string, error)
-	ClusterWithdrawal(ctx context.Context, id int64, ty model.WorkType, val int64) (string, error)
-	ClusterStop(ctx context.Context) (string, error)
-	StartForTest(ctx context.Context) (bool, error)
 }
 type QueryResolver interface {
-	WorkLoglist(ctx context.Context, workType string, workID int, page int, size int) (string, error)
-	WorkWetriclist(ctx context.Context, workType string, workID int, page int, size int) (string, error)
-	WorkServicelist(ctx context.Context, projectID string, workType string, workID int) ([]*model.Service, error)
+	WorkLoglist(ctx context.Context, podID uint64, page int, size int) (string, error)
+	WorkWetriclist(ctx context.Context, podID uint64, page int, size int) (string, error)
+	WorkServicelist(ctx context.Context, projectID string, podID uint64) ([]*model.Service, error)
 	AttestationReportVerify(ctx context.Context, report string) (bool, error)
 	WorkerInfo(ctx context.Context) (*model.WorkerInfo, error)
 	Worker(ctx context.Context) ([]*model.Contract, error)
@@ -162,61 +150,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Contract.WorkID(childComplexity), true
 
-	case "Mutation.cluster_mortgage":
-		if e.complexity.Mutation.ClusterMortgage == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_cluster_mortgage_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClusterMortgage(childComplexity, args["cpu"].(int), args["mem"].(int), args["cvm_cpu"].(int), args["cvm_mem"].(int), args["disk"].(int), args["gpu"].(int), args["assetId"].(int64), args["deposit"].(int64)), true
-
-	case "Mutation.cluster_register":
-		if e.complexity.Mutation.ClusterRegister == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_cluster_register_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClusterRegister(childComplexity, args["name"].(string), args["ip"].(string), args["domain"].(string), args["port"].(int), args["level"].(int)), true
-
-	case "Mutation.cluster_stop":
-		if e.complexity.Mutation.ClusterStop == nil {
-			break
-		}
-
-		return e.complexity.Mutation.ClusterStop(childComplexity), true
-
-	case "Mutation.cluster_unmortgage":
-		if e.complexity.Mutation.ClusterUnmortgage == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_cluster_unmortgage_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClusterUnmortgage(childComplexity, args["id"].(int64)), true
-
-	case "Mutation.cluster_withdrawal":
-		if e.complexity.Mutation.ClusterWithdrawal == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_cluster_withdrawal_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ClusterWithdrawal(childComplexity, args["id"].(int64), args["ty"].(model.WorkType), args["val"].(int64)), true
-
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
 			break
@@ -240,13 +173,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.LoginAsRoot(childComplexity, args["input"].(model.LoginContent), args["signature"].(string)), true
-
-	case "Mutation.start_for_test":
-		if e.complexity.Mutation.StartForTest == nil {
-			break
-		}
-
-		return e.complexity.Mutation.StartForTest(childComplexity), true
 
 	case "Mutation.start_local_wetee":
 		if e.complexity.Mutation.StartLocalWetee == nil {
@@ -294,7 +220,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkLoglist(childComplexity, args["work_type"].(string), args["work_id"].(int), args["page"].(int), args["size"].(int)), true
+		return e.complexity.Query.WorkLoglist(childComplexity, args["pod_id"].(uint64), args["page"].(int), args["size"].(int)), true
 
 	case "Query.work_servicelist":
 		if e.complexity.Query.WorkServicelist == nil {
@@ -306,7 +232,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkServicelist(childComplexity, args["project_id"].(string), args["work_type"].(string), args["work_id"].(int)), true
+		return e.complexity.Query.WorkServicelist(childComplexity, args["project_id"].(string), args["pod_id"].(uint64)), true
 
 	case "Query.work_wetriclist":
 		if e.complexity.Query.WorkWetriclist == nil {
@@ -318,7 +244,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkWetriclist(childComplexity, args["work_type"].(string), args["work_id"].(int), args["page"].(int), args["size"].(int)), true
+		return e.complexity.Query.WorkWetriclist(childComplexity, args["pod_id"].(uint64), args["page"].(int), args["size"].(int)), true
 
 	case "Query.worker":
 		if e.complexity.Query.Worker == nil {
@@ -578,417 +504,6 @@ func (ec *executionContext) dir_AuthCheck_argsRole(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_cluster_mortgage_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_cluster_mortgage_argsCPU(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["cpu"] = arg0
-	arg1, err := ec.field_Mutation_cluster_mortgage_argsMem(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["mem"] = arg1
-	arg2, err := ec.field_Mutation_cluster_mortgage_argsCvmCPU(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["cvm_cpu"] = arg2
-	arg3, err := ec.field_Mutation_cluster_mortgage_argsCvmMem(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["cvm_mem"] = arg3
-	arg4, err := ec.field_Mutation_cluster_mortgage_argsDisk(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["disk"] = arg4
-	arg5, err := ec.field_Mutation_cluster_mortgage_argsGpu(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["gpu"] = arg5
-	arg6, err := ec.field_Mutation_cluster_mortgage_argsAssetID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["assetId"] = arg6
-	arg7, err := ec.field_Mutation_cluster_mortgage_argsDeposit(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["deposit"] = arg7
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_cluster_mortgage_argsCPU(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["cpu"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cpu"))
-	if tmp, ok := rawArgs["cpu"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_mortgage_argsMem(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["mem"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("mem"))
-	if tmp, ok := rawArgs["mem"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_mortgage_argsCvmCPU(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["cvm_cpu"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cvm_cpu"))
-	if tmp, ok := rawArgs["cvm_cpu"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_mortgage_argsCvmMem(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["cvm_mem"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("cvm_mem"))
-	if tmp, ok := rawArgs["cvm_mem"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_mortgage_argsDisk(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["disk"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("disk"))
-	if tmp, ok := rawArgs["disk"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_mortgage_argsGpu(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["gpu"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("gpu"))
-	if tmp, ok := rawArgs["gpu"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_mortgage_argsAssetID(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int64, error) {
-	if _, ok := rawArgs["assetId"]; !ok {
-		var zeroVal int64
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("assetId"))
-	if tmp, ok := rawArgs["assetId"]; ok {
-		return ec.unmarshalNInt642int64(ctx, tmp)
-	}
-
-	var zeroVal int64
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_mortgage_argsDeposit(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int64, error) {
-	if _, ok := rawArgs["deposit"]; !ok {
-		var zeroVal int64
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("deposit"))
-	if tmp, ok := rawArgs["deposit"]; ok {
-		return ec.unmarshalNInt642int64(ctx, tmp)
-	}
-
-	var zeroVal int64
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_register_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_cluster_register_argsName(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["name"] = arg0
-	arg1, err := ec.field_Mutation_cluster_register_argsIP(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["ip"] = arg1
-	arg2, err := ec.field_Mutation_cluster_register_argsDomain(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["domain"] = arg2
-	arg3, err := ec.field_Mutation_cluster_register_argsPort(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["port"] = arg3
-	arg4, err := ec.field_Mutation_cluster_register_argsLevel(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["level"] = arg4
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_cluster_register_argsName(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["name"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-	if tmp, ok := rawArgs["name"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_register_argsIP(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["ip"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("ip"))
-	if tmp, ok := rawArgs["ip"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_register_argsDomain(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["domain"]; !ok {
-		var zeroVal string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
-	if tmp, ok := rawArgs["domain"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_register_argsPort(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["port"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
-	if tmp, ok := rawArgs["port"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_register_argsLevel(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["level"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("level"))
-	if tmp, ok := rawArgs["level"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_unmortgage_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_cluster_unmortgage_argsID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_cluster_unmortgage_argsID(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int64, error) {
-	if _, ok := rawArgs["id"]; !ok {
-		var zeroVal int64
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNInt642int64(ctx, tmp)
-	}
-
-	var zeroVal int64
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_withdrawal_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_cluster_withdrawal_argsID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg0
-	arg1, err := ec.field_Mutation_cluster_withdrawal_argsTy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["ty"] = arg1
-	arg2, err := ec.field_Mutation_cluster_withdrawal_argsVal(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["val"] = arg2
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_cluster_withdrawal_argsID(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int64, error) {
-	if _, ok := rawArgs["id"]; !ok {
-		var zeroVal int64
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNInt642int64(ctx, tmp)
-	}
-
-	var zeroVal int64
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_withdrawal_argsTy(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (model.WorkType, error) {
-	if _, ok := rawArgs["ty"]; !ok {
-		var zeroVal model.WorkType
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("ty"))
-	if tmp, ok := rawArgs["ty"]; ok {
-		return ec.unmarshalNWorkType2weteeᚗappᚋworkerᚋgraphᚋmodelᚐWorkType(ctx, tmp)
-	}
-
-	var zeroVal model.WorkType
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_cluster_withdrawal_argsVal(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int64, error) {
-	if _, ok := rawArgs["val"]; !ok {
-		var zeroVal int64
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("val"))
-	if tmp, ok := rawArgs["val"]; ok {
-		return ec.unmarshalNInt642int64(ctx, tmp)
-	}
-
-	var zeroVal int64
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1229,61 +744,38 @@ func (ec *executionContext) field_Query_attestation_report_verify_argsReport(
 func (ec *executionContext) field_Query_work_loglist_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Query_work_loglist_argsWorkType(ctx, rawArgs)
+	arg0, err := ec.field_Query_work_loglist_argsPodID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["work_type"] = arg0
-	arg1, err := ec.field_Query_work_loglist_argsWorkID(ctx, rawArgs)
+	args["pod_id"] = arg0
+	arg1, err := ec.field_Query_work_loglist_argsPage(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["work_id"] = arg1
-	arg2, err := ec.field_Query_work_loglist_argsPage(ctx, rawArgs)
+	args["page"] = arg1
+	arg2, err := ec.field_Query_work_loglist_argsSize(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["page"] = arg2
-	arg3, err := ec.field_Query_work_loglist_argsSize(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["size"] = arg3
+	args["size"] = arg2
 	return args, nil
 }
-func (ec *executionContext) field_Query_work_loglist_argsWorkType(
+func (ec *executionContext) field_Query_work_loglist_argsPodID(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["work_type"]; !ok {
-		var zeroVal string
+) (uint64, error) {
+	if _, ok := rawArgs["pod_id"]; !ok {
+		var zeroVal uint64
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
-	if tmp, ok := rawArgs["work_type"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pod_id"))
+	if tmp, ok := rawArgs["pod_id"]; ok {
+		return ec.unmarshalNUint642uint64(ctx, tmp)
 	}
 
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_work_loglist_argsWorkID(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["work_id"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
-	if tmp, ok := rawArgs["work_id"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
+	var zeroVal uint64
 	return zeroVal, nil
 }
 
@@ -1331,16 +823,11 @@ func (ec *executionContext) field_Query_work_servicelist_args(ctx context.Contex
 		return nil, err
 	}
 	args["project_id"] = arg0
-	arg1, err := ec.field_Query_work_servicelist_argsWorkType(ctx, rawArgs)
+	arg1, err := ec.field_Query_work_servicelist_argsPodID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["work_type"] = arg1
-	arg2, err := ec.field_Query_work_servicelist_argsWorkID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["work_id"] = arg2
+	args["pod_id"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Query_work_servicelist_argsProjectID(
@@ -1361,100 +848,59 @@ func (ec *executionContext) field_Query_work_servicelist_argsProjectID(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_work_servicelist_argsWorkType(
+func (ec *executionContext) field_Query_work_servicelist_argsPodID(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["work_type"]; !ok {
-		var zeroVal string
+) (uint64, error) {
+	if _, ok := rawArgs["pod_id"]; !ok {
+		var zeroVal uint64
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
-	if tmp, ok := rawArgs["work_type"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pod_id"))
+	if tmp, ok := rawArgs["pod_id"]; ok {
+		return ec.unmarshalNUint642uint64(ctx, tmp)
 	}
 
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_work_servicelist_argsWorkID(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["work_id"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
-	if tmp, ok := rawArgs["work_id"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
+	var zeroVal uint64
 	return zeroVal, nil
 }
 
 func (ec *executionContext) field_Query_work_wetriclist_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Query_work_wetriclist_argsWorkType(ctx, rawArgs)
+	arg0, err := ec.field_Query_work_wetriclist_argsPodID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["work_type"] = arg0
-	arg1, err := ec.field_Query_work_wetriclist_argsWorkID(ctx, rawArgs)
+	args["pod_id"] = arg0
+	arg1, err := ec.field_Query_work_wetriclist_argsPage(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["work_id"] = arg1
-	arg2, err := ec.field_Query_work_wetriclist_argsPage(ctx, rawArgs)
+	args["page"] = arg1
+	arg2, err := ec.field_Query_work_wetriclist_argsSize(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["page"] = arg2
-	arg3, err := ec.field_Query_work_wetriclist_argsSize(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["size"] = arg3
+	args["size"] = arg2
 	return args, nil
 }
-func (ec *executionContext) field_Query_work_wetriclist_argsWorkType(
+func (ec *executionContext) field_Query_work_wetriclist_argsPodID(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (string, error) {
-	if _, ok := rawArgs["work_type"]; !ok {
-		var zeroVal string
+) (uint64, error) {
+	if _, ok := rawArgs["pod_id"]; !ok {
+		var zeroVal uint64
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("work_type"))
-	if tmp, ok := rawArgs["work_type"]; ok {
-		return ec.unmarshalNString2string(ctx, tmp)
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("pod_id"))
+	if tmp, ok := rawArgs["pod_id"]; ok {
+		return ec.unmarshalNUint642uint64(ctx, tmp)
 	}
 
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_work_wetriclist_argsWorkID(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["work_id"]; !ok {
-		var zeroVal int
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("work_id"))
-	if tmp, ok := rawArgs["work_id"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
-	}
-
-	var zeroVal int
+	var zeroVal uint64
 	return zeroVal, nil
 }
 
@@ -2032,449 +1478,6 @@ func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_cluster_register(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_cluster_register(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		directive0 := func(rctx context.Context) (any, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterRegister(rctx, fc.Args["name"].(string), fc.Args["ip"].(string), fc.Args["domain"].(string), fc.Args["port"].(int), fc.Args["level"].(int))
-		}
-
-		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
-			if err != nil {
-				var zeroVal string
-				return zeroVal, err
-			}
-			if ec.directives.AuthCheck == nil {
-				var zeroVal string
-				return zeroVal, errors.New("directive AuthCheck is not implemented")
-			}
-			return ec.directives.AuthCheck(ctx, nil, directive0, role)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_cluster_register(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_cluster_register_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_cluster_mortgage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_cluster_mortgage(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		directive0 := func(rctx context.Context) (any, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterMortgage(rctx, fc.Args["cpu"].(int), fc.Args["mem"].(int), fc.Args["cvm_cpu"].(int), fc.Args["cvm_mem"].(int), fc.Args["disk"].(int), fc.Args["gpu"].(int), fc.Args["assetId"].(int64), fc.Args["deposit"].(int64))
-		}
-
-		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
-			if err != nil {
-				var zeroVal string
-				return zeroVal, err
-			}
-			if ec.directives.AuthCheck == nil {
-				var zeroVal string
-				return zeroVal, errors.New("directive AuthCheck is not implemented")
-			}
-			return ec.directives.AuthCheck(ctx, nil, directive0, role)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_cluster_mortgage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_cluster_mortgage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_cluster_unmortgage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_cluster_unmortgage(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		directive0 := func(rctx context.Context) (any, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterUnmortgage(rctx, fc.Args["id"].(int64))
-		}
-
-		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
-			if err != nil {
-				var zeroVal string
-				return zeroVal, err
-			}
-			if ec.directives.AuthCheck == nil {
-				var zeroVal string
-				return zeroVal, errors.New("directive AuthCheck is not implemented")
-			}
-			return ec.directives.AuthCheck(ctx, nil, directive0, role)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_cluster_unmortgage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_cluster_unmortgage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_cluster_withdrawal(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_cluster_withdrawal(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		directive0 := func(rctx context.Context) (any, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterWithdrawal(rctx, fc.Args["id"].(int64), fc.Args["ty"].(model.WorkType), fc.Args["val"].(int64))
-		}
-
-		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
-			if err != nil {
-				var zeroVal string
-				return zeroVal, err
-			}
-			if ec.directives.AuthCheck == nil {
-				var zeroVal string
-				return zeroVal, errors.New("directive AuthCheck is not implemented")
-			}
-			return ec.directives.AuthCheck(ctx, nil, directive0, role)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_cluster_withdrawal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_cluster_withdrawal_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_cluster_stop(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_cluster_stop(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		directive0 := func(rctx context.Context) (any, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().ClusterStop(rctx)
-		}
-
-		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx, "ADMIN")
-			if err != nil {
-				var zeroVal string
-				return zeroVal, err
-			}
-			if ec.directives.AuthCheck == nil {
-				var zeroVal string
-				return zeroVal, errors.New("directive AuthCheck is not implemented")
-			}
-			return ec.directives.AuthCheck(ctx, nil, directive0, role)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_cluster_stop(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_start_for_test(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_start_for_test(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().StartForTest(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_start_for_test(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_work_loglist(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_work_loglist(ctx, field)
 	if err != nil {
@@ -2489,7 +1492,7 @@ func (ec *executionContext) _Query_work_loglist(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkLoglist(rctx, fc.Args["work_type"].(string), fc.Args["work_id"].(int), fc.Args["page"].(int), fc.Args["size"].(int))
+		return ec.resolvers.Query().WorkLoglist(rctx, fc.Args["pod_id"].(uint64), fc.Args["page"].(int), fc.Args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2544,7 +1547,7 @@ func (ec *executionContext) _Query_work_wetriclist(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkWetriclist(rctx, fc.Args["work_type"].(string), fc.Args["work_id"].(int), fc.Args["page"].(int), fc.Args["size"].(int))
+		return ec.resolvers.Query().WorkWetriclist(rctx, fc.Args["pod_id"].(uint64), fc.Args["page"].(int), fc.Args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2599,7 +1602,7 @@ func (ec *executionContext) _Query_work_servicelist(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkServicelist(rctx, fc.Args["project_id"].(string), fc.Args["work_type"].(string), fc.Args["work_id"].(int))
+		return ec.resolvers.Query().WorkServicelist(rctx, fc.Args["project_id"].(string), fc.Args["pod_id"].(uint64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5590,48 +4593,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "cluster_register":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_cluster_register(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "cluster_mortgage":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_cluster_mortgage(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "cluster_unmortgage":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_cluster_unmortgage(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "cluster_withdrawal":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_cluster_withdrawal(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "cluster_stop":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_cluster_stop(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "start_for_test":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_start_for_test(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6625,14 +5586,20 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNWorkType2weteeᚗappᚋworkerᚋgraphᚋmodelᚐWorkType(ctx context.Context, v any) (model.WorkType, error) {
-	var res model.WorkType
-	err := res.UnmarshalGQL(v)
+func (ec *executionContext) unmarshalNUint642uint64(ctx context.Context, v any) (uint64, error) {
+	res, err := graphql.UnmarshalUint64(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNWorkType2weteeᚗappᚋworkerᚋgraphᚋmodelᚐWorkType(ctx context.Context, sel ast.SelectionSet, v model.WorkType) graphql.Marshaler {
-	return v
+func (ec *executionContext) marshalNUint642uint64(ctx context.Context, sel ast.SelectionSet, v uint64) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalUint64(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNWorkerInfo2weteeᚗappᚋworkerᚋgraphᚋmodelᚐWorkerInfo(ctx context.Context, sel ast.SelectionSet, v model.WorkerInfo) graphql.Marshaler {

@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/vedhavyas/go-subkey/v2"
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	types "wetee.app/worker/internal/model"
 )
 
@@ -71,7 +70,7 @@ func (m *Minter) VerifyDsecret(reportData *types.TeeParam) ([]byte, error) {
 }
 
 // VerifyWorker 函数验证工人报告并返回签名者或错误
-func (m *Minter) VerifyWorkLibos(wid gtypes.WorkId, reportData *types.TeeParam) ([]byte, error) {
+func (m *Minter) VerifyWorkLibos(podid uint64, reportData *types.TeeParam) ([]byte, error) {
 	// 解码地址
 	_, signer, err := subkey.SS58Decode(reportData.Address)
 	if err != nil {

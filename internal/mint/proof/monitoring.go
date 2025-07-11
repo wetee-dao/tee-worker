@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
-	"wetee.app/worker/internal/util"
 )
 
 // 硬件资源证明
@@ -21,8 +19,8 @@ type WorkCrProof struct {
 var CrBucket = "cr"
 
 // 工作量证明资源占用列表
-func ListMonitoringsById(id gtypes.WorkId, page int, size int, isCache bool) ([]WorkCrProof, error) {
-	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
+func ListMonitoringsById(id uint64, page int, size int, isCache bool) ([]WorkCrProof, error) {
+	name := fmt.Sprint(id)
 	if isCache {
 		name = name + "_cache"
 	}

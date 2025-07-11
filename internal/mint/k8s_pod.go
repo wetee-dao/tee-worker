@@ -12,6 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -22,7 +23,7 @@ import (
 )
 
 // 获取容器的资源信息和日志
-func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace, name string, form int64) ([]string, map[string][]int64, error) {
+func (m *Minter) getMetricInfo(ctx context.Context, wid model.Pod, nameSpace, name string, form int64) ([]string, map[string][]int64, error) {
 	podLogOpts := &corev1.PodLogOptions{
 		SinceTime: &metav1.Time{
 			Time: time.Unix(form, 0),
@@ -30,7 +31,7 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 	}
 
 	// 如果是不是TASK类型，则获取c0容器的日志
-	if !wid.Wtype.IsTASK {
+	if wid.Ptype.Script == nil {
 		podLogOpts.Container = "c0"
 	}
 
@@ -63,7 +64,7 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 	// Gets the memory usage of the Pod
 	podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses(nameSpace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		if wid.Wtype.IsAPP {
+		if wid.Ptype.CpuService != nil {
 			return nil, nil, err
 		} else {
 			use["d"] = []int64{0, 0, 0}
@@ -84,27 +85,27 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid gtypes.WorkId, nameSpace
 
 // BuildCommand
 // 构建启动命令
-func (m *Minter) BuildCommand(cmd *gtypes.Command) []string {
-	if cmd.IsNONE {
+func (m *Minter) BuildCommand(cmd *model.Command) []string {
+	if cmd.NONE != nil {
 		return []string{}
 	}
-	if cmd.IsBASH {
-		return []string{"bash", "-c", string(cmd.AsBASHField0)}
+	if cmd.BASH != nil {
+		return []string{"bash", "-c", string(*cmd.BASH)}
 	}
-	if cmd.IsSH {
-		return []string{"/bin/sh", "-c", string(cmd.AsSHField0)}
+	if cmd.SH != nil {
+		return []string{"/bin/sh", "-c", string(*cmd.SH)}
 	}
-	if cmd.IsZSH {
-		return []string{"/bin/zsh", "-c", string(cmd.AsZSHField0)}
+	if cmd.ZSH != nil {
+		return []string{"/bin/zsh", "-c", string(*cmd.ZSH)}
 	}
 	return []string{}
 }
 
 // StopApp
 // 停止应用
-func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
+func (m *Minter) StopApp(p model.Pod) error {
 	ctx := context.Background()
-
+	space := AccountToSpace(p.Owner[:])
 	if space == "" {
 		// user, err := module.GetAccount(m.ChainClient, workId)
 		// if err != nil {
@@ -113,7 +114,7 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 		// space = AccountToSpace(user[:])
 	}
 
-	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	name := GetPodName(p.PodId)
 	util.LogError("StopApp: ", name)
 
 	ServiceSpace := m.K8sClient.CoreV1().Services(space)
@@ -130,7 +131,7 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 		}
 	}
 
-	if workId.Wtype.IsAPP || workId.Wtype.IsGPU {
+	if p.Ptype.CpuService != nil || p.Ptype.GpuService != nil {
 		nameSpace := m.K8sClient.AppsV1().Deployments(space)
 
 		return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
@@ -142,30 +143,33 @@ func (m *Minter) StopApp(workId gtypes.WorkId, space string) error {
 
 // Get Container Port From Service
 // 获取容器服务端口
-func BuildContainerPortFormService(name string, services []gtypes.Service) []corev1.ContainerPort {
+func BuildContainerPortFormService(name string, services []model.Service) []corev1.ContainerPort {
 	ports := []corev1.ContainerPort{}
 	for _, ser := range services {
 		protocol := corev1.ProtocolTCP
-		port := ser.AsTcpField0
-		if ser.IsProjectUdp {
+		var port uint16
+
+		// 获取服务端口
+		if ser.ProjectUdp != nil {
 			protocol = corev1.ProtocolUDP
-			port = ser.AsProjectUdpField0
-		} else if ser.IsProjectTcp {
+			port = *ser.ProjectUdp
+		} else if ser.ProjectTcp != nil {
 			protocol = corev1.ProtocolTCP
-			port = ser.AsProjectTcpField0
-		} else if ser.IsTcp {
-			protocol = corev1.ProtocolSCTP
-			port = ser.AsTcpField0
-		} else if ser.IsUdp {
+			port = *ser.ProjectTcp
+		} else if ser.Tcp != nil {
+			protocol = corev1.ProtocolTCP
+			port = *ser.Tcp
+		} else if ser.Udp != nil {
 			protocol = corev1.ProtocolUDP
-			port = ser.AsUdpField0
-		} else if ser.IsHttp {
+			port = *ser.Udp
+		} else if ser.Http != nil {
 			protocol = corev1.ProtocolTCP
-			port = ser.AsHttpField0
-		} else if ser.IsHttps {
+			port = *ser.Http
+		} else if ser.Https != nil {
 			protocol = corev1.ProtocolTCP
-			port = ser.AsHttpsField0
+			port = *ser.Https
 		}
+
 		ports = append(ports, corev1.ContainerPort{
 			Name:          name + "-" + fmt.Sprint(port),
 			ContainerPort: int32(port),
@@ -177,7 +181,7 @@ func BuildContainerPortFormService(name string, services []gtypes.Service) []cor
 
 // Get Service Port From Service
 // 获取对外服务端口
-func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Service) ([]corev1.ServicePort, []corev1.ServicePort) {
+func (m *Minter) BuildServicePortFormService(name string, services []model.Service) ([]corev1.ServicePort, []corev1.ServicePort) {
 	nodePorts := []corev1.ServicePort{}
 	headlessPorts := []corev1.ServicePort{}
 	for i, ser := range services {
@@ -185,27 +189,27 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 		var port uint16
 
 		// 获取服务端口
-		if ser.IsProjectUdp {
+		if ser.ProjectUdp != nil {
 			protocol = corev1.ProtocolUDP
-			port = ser.AsProjectUdpField0
-		} else if ser.IsProjectTcp {
+			port = *ser.ProjectUdp
+		} else if ser.ProjectTcp != nil {
 			protocol = corev1.ProtocolTCP
-			port = ser.AsProjectTcpField0
-		} else if ser.IsTcp {
+			port = *ser.ProjectTcp
+		} else if ser.Tcp != nil {
 			protocol = corev1.ProtocolTCP
-			port = ser.AsTcpField0
-		} else if ser.IsUdp {
+			port = *ser.Tcp
+		} else if ser.Udp != nil {
 			protocol = corev1.ProtocolUDP
-			port = ser.AsUdpField0
-		} else if ser.IsHttp {
+			port = *ser.Udp
+		} else if ser.Http != nil {
 			protocol = corev1.ProtocolTCP
-			port = ser.AsHttpField0
-		} else if ser.IsHttps {
+			port = *ser.Http
+		} else if ser.Https != nil {
 			protocol = corev1.ProtocolTCP
-			port = ser.AsHttpsField0
+			port = *ser.Https
 		}
 
-		if ser.IsTcp || ser.IsUdp {
+		if ser.Tcp != nil || ser.Udp != nil {
 			if port != 0 {
 				nodePorts = append(nodePorts, corev1.ServicePort{
 					Name:       name + "-" + fmt.Sprint(i) + "-" + fmt.Sprint(port) + "-nodeport",
@@ -215,11 +219,11 @@ func (m *Minter) BuildServicePortFormService(name string, services []gtypes.Serv
 				})
 			} else {
 				nodePort := m.randNodeport()
-				if ser.IsTcp {
-					services[i].AsTcpField0 = nodePort
+				if ser.Tcp != nil {
+					services[i].Tcp = &nodePort
 				}
-				if ser.IsUdp {
-					services[i].AsUdpField0 = nodePort
+				if ser.Udp != nil {
+					services[i].Udp = &nodePort
 				}
 				nodePorts = append(nodePorts, corev1.ServicePort{
 					Name:       name + "-" + fmt.Sprint(i) + "-" + fmt.Sprint(nodePort) + "-nodeport",
@@ -289,18 +293,11 @@ func renderTemplate(templateString string, data map[string]string) (string, erro
 // Build Pod Container
 func (m *Minter) buildPodContainer(
 	ctx *context.Context,
-	workId gtypes.WorkId,
+	pod model.Pod,
 	nameSpace, name string,
-	cs []gtypes.Container,
+	cs []model.Container,
 	envs []*gtypes.Env1,
 ) ([]v1.Container, error) {
-	ty := ""
-	if workId.Wtype.IsAPP {
-		ty = "app"
-	} else if workId.Wtype.IsGPU {
-		ty = "gpu"
-	}
-
 	podContainers := make([]v1.Container, 0, len(cs))
 
 	serviceSpace := m.K8sClient.CoreV1().Services(nameSpace)
@@ -330,7 +327,7 @@ func (m *Minter) buildPodContainer(
 			Labels: map[string]string{"service": name},
 		},
 		Spec: v1.ServiceSpec{
-			Selector: map[string]string{ty: name},
+			Selector: map[string]string{"tee_pod": name},
 			Type:     "NodePort",
 			Ports:    nodeports,
 		},
@@ -349,7 +346,7 @@ func (m *Minter) buildPodContainer(
 			Labels: map[string]string{"service": name},
 		},
 		Spec: v1.ServiceSpec{
-			Selector:  map[string]string{ty: name},
+			Selector:  map[string]string{"tee_pod": name},
 			ClusterIP: "None",
 			Ports:     projectPorts,
 		},
@@ -371,7 +368,7 @@ func (m *Minter) buildPodContainer(
 		// 	})
 		// }
 
-		cnevs, err := m.BuildEnvsFromSettings(workId, filterEnvs(envs, uint16(i)))
+		cnevs, err := m.BuildEnvsFromSettings(pod.PodId, filterEnvs(envs, uint16(i)))
 		if err != nil {
 			return nil, err
 		}
@@ -405,9 +402,9 @@ func (m *Minter) buildPodContainer(
 }
 
 // 获取工作日志和硬件资源使用量
-func (m *Minter) GetLogAndCr(ctx *context.Context, nameSpace string, workId gtypes.WorkId, now time.Time, stage uint32, isCache bool) ([]string, map[string][]int64, error) {
+func (m *Minter) GetLogAndCr(ctx *context.Context, nameSpace string, work model.Pod, now time.Time, stage uint32, isCache bool) ([]string, map[string][]int64, error) {
 	// 获取上次记录的时间
-	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	name := "TEE-" + fmt.Sprint(work.PodId)
 	if isCache {
 		name = name + "-cache"
 	}
@@ -422,7 +419,7 @@ func (m *Minter) GetLogAndCr(ctx *context.Context, nameSpace string, workId gtyp
 	// 通过 K8s API 获取指定命名空间中的 Pod 列表
 	clientset := m.K8sClient
 	pods, err := clientset.CoreV1().Pods(nameSpace).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: getLabelSelector(workId),
+		LabelSelector: getLabelSelector(work.PodId),
 	})
 	if err != nil {
 		util.LogError("getPod", err)
@@ -440,7 +437,7 @@ func (m *Minter) GetLogAndCr(ctx *context.Context, nameSpace string, workId gtyp
 	fmt.Println("pods: ", pods.Items[0].Name)
 
 	// 获取指定 Pod 的日志和硬件资源使用量信息
-	logs, crs, err := m.getMetricInfo(*ctx, workId, nameSpace, pods.Items[0].Name, from)
+	logs, crs, err := m.getMetricInfo(*ctx, work, nameSpace, pods.Items[0].Name, from)
 
 	// 如果获取 log 和硬件资源使用量的过程中出现错误，则记录错误日志
 	if err != nil {
@@ -460,15 +457,12 @@ func contains(s []int32, e int32) bool {
 	return false
 }
 
-func getLabelSelector(workId gtypes.WorkId) string {
-	t := ""
-	if workId.Wtype.IsAPP {
-		t = "app"
-	} else if workId.Wtype.IsGPU {
-		t = "gpu"
-	}
-
+func getLabelSelector(popId uint64) string {
 	// 获取工作类型字符串表示
-	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
-	return t + "=" + name
+	name := "TEE-" + fmt.Sprint(popId)
+	return name
+}
+
+func GetPodName(pid uint64) string {
+	return "tee-" + fmt.Sprint(pid)
 }

@@ -12,27 +12,21 @@ import (
 	"strings"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	"github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/mint/proof"
 	wtypes "wetee.app/worker/internal/model"
-	"wetee.app/worker/internal/util"
 )
 
 // WorkLoglist is the resolver for the work_loglist field.
-func (r *queryResolver) WorkLoglist(ctx context.Context, workType string, workID int, page int, size int) (string, error) {
-	wid := types.WorkId{
-		Id:    uint64(workID),
-		Wtype: util.GetWorkType(workType),
-	}
-	list, err := proof.ListLogsById(wid, page, size, false)
+func (r *queryResolver) WorkLoglist(ctx context.Context, podID uint64, page int, size int) (string, error) {
+	list, err := proof.ListLogsById(podID, page, size, false)
 	if err != nil && err.Error() != "the list not found" {
 		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
 
-	listCache, err := proof.ListLogsById(wid, page, 200, true)
+	listCache, err := proof.ListLogsById(podID, page, 200, true)
 	if err != nil && err.Error() != "the list not found" {
 		return "", gqlerror.Errorf("WorkLogCacheList:" + err.Error())
 	}
@@ -47,17 +41,13 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, workType string, workID
 }
 
 // WorkWetriclist is the resolver for the work_wetriclist field.
-func (r *queryResolver) WorkWetriclist(ctx context.Context, workType string, workID int, page int, size int) (string, error) {
-	wid := types.WorkId{
-		Id:    uint64(workID),
-		Wtype: util.GetWorkType(workType),
-	}
-	list, err := proof.ListMonitoringsById(wid, page, size, false)
+func (r *queryResolver) WorkWetriclist(ctx context.Context, podID uint64, page int, size int) (string, error) {
+	list, err := proof.ListMonitoringsById(podID, page, size, false)
 	if err != nil && err.Error() != "the list not found" {
 		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
 
-	listCache, err := proof.ListMonitoringsById(wid, page, 200, true)
+	listCache, err := proof.ListMonitoringsById(podID, page, 200, true)
 	if err != nil && err.Error() != "the list not found" {
 		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
@@ -72,16 +62,8 @@ func (r *queryResolver) WorkWetriclist(ctx context.Context, workType string, wor
 }
 
 // WorkServicelist is the resolver for the work_servicelist field.
-func (r *queryResolver) WorkServicelist(ctx context.Context, projectID string, workType string, workID int) ([]*model.Service, error) {
-	if mint.MinterIns.ChainClient == nil {
-		return nil, gqlerror.Errorf("Invalid chain client")
-	}
-
-	wid := types.WorkId{
-		Id:    uint64(workID),
-		Wtype: util.GetWorkType(workType),
-	}
-	name := util.GetWorkTypeStr(wid) + "-" + fmt.Sprint(wid.Id)
+func (r *queryResolver) WorkServicelist(ctx context.Context, projectID string, podID uint64) ([]*model.Service, error) {
+	name := mint.GetPodName(podID)
 
 	client := mint.MinterIns.K8sClient
 	ServiceSpace := client.CoreV1().Services(mint.HexStringToSpace(projectID))

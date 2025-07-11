@@ -1,4 +1,5 @@
 scalar Int64
+scalar Uint64
 
 enum Role {
   """

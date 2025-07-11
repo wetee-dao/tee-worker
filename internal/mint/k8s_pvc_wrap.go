@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name string, cs []gtypes.Container, deployment *appsv1.Deployment) error {
+func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name string, cs []model.Container, deployment *appsv1.Deployment) error {
 	// 查询所有id所对应的pvc
 	pvcList, err := m.K8sClient.CoreV1().PersistentVolumeClaims(nameSpace).List(*ctx, metav1.ListOptions{})
 	if err != nil {
@@ -66,7 +66,7 @@ func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name 
 			// 挂载到容器
 			deployment.Spec.Template.Spec.Containers[cindex].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[cindex].VolumeMounts, corev1.VolumeMount{
 				Name:      name + "-store-" + fmt.Sprint(cindex) + "-" + fmt.Sprint(i),
-				MountPath: string(cdisk.Path.AsSSDField0),
+				MountPath: string(*cdisk.Path.SSD),
 			})
 		}
 	}
@@ -75,8 +75,8 @@ func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name 
 }
 
 // 查询数组中是否存在目标元素
-func findPvc(name string, arr []corev1.PersistentVolumeClaim, cindex int, target gtypes.Disk) (string, *corev1.PersistentVolumeClaim) {
-	pvcName := name + "-pvc-" + fmt.Sprint(cindex) + "-" + strings.ReplaceAll(string(target.Path.AsSSDField0), "/", "-")
+func findPvc(name string, arr []corev1.PersistentVolumeClaim, cindex int, target model.Disk) (string, *corev1.PersistentVolumeClaim) {
+	pvcName := name + "-pvc-" + fmt.Sprint(cindex) + "-" + strings.ReplaceAll(string(*target.Path.SSD), "/", "-")
 	for _, value := range arr {
 		if value.ObjectMeta.Name == pvcName {
 			return pvcName, &value

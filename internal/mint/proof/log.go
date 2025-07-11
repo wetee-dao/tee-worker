@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
-
-	"wetee.app/worker/internal/util"
 )
 
 // 日志证明
@@ -23,8 +20,8 @@ var LogBucket = "log"
 
 // 工作量日志列表
 // Work Log List
-func ListLogsById(id gtypes.WorkId, page int, size int, isCache bool) ([]WorkLogProof, error) {
-	name := util.GetWorkTypeStr(id) + "-" + fmt.Sprint(id.Id)
+func ListLogsById(podId uint64, page int, size int, isCache bool) ([]WorkLogProof, error) {
+	name := fmt.Sprint(podId)
 	if isCache {
 		name = name + "_cache"
 	}

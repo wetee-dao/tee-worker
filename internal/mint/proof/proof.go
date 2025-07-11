@@ -16,8 +16,8 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now time.Time, BlockNumber uint64) (*gtypes.RuntimeCall, error) {
-	name := util.GetWorkTypeStr(wid) + "-" + fmt.Sprint(wid.Id)
+func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now time.Time, BlockNumber uint64) (*gtypes.RuntimeCall, error) {
+	name := fmt.Sprint(pod.PodId)
 
 	// 获取log和硬件资源使用量
 	var logHash = []byte{}
@@ -87,7 +87,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now
 	// 获取工作证明
 	// Get report of work
 	report := []byte{}
-	reportData, err := store.GetWorkDcapReport(wid)
+	reportData, err := store.GetWorkDcapReport(pod.PodId)
 	if err != nil {
 		util.LogError("GetWorkDcapReport", err)
 		report = []byte{}
@@ -109,7 +109,7 @@ func MakeWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now
 	}
 
 	runtimeCall := worker.MakeWorkProofUploadCall(
-		wid,
+		gtypes.WorkId{},
 		gtypes.OptionTProofOfWork{
 			IsNone: !hasHash,
 			IsSome: hasHash,
@@ -135,8 +135,8 @@ func SubmitWorkProof(client *chain.ChainClient, signer *chain.Signer, proof []gt
 	return client.SignAndSubmit(signer, call, true)
 }
 
-func CacheWorkProof(wid gtypes.WorkId, logs []string, crs map[string][]int64, now time.Time, BlockNumber uint64) error {
-	name := util.GetWorkTypeStr(wid) + "-" + fmt.Sprint(wid.Id)
+func CacheWorkProof(podId uint64, logs []string, crs map[string][]int64, now time.Time, BlockNumber uint64) error {
+	name := fmt.Sprint(podId)
 
 	// 获取log和硬件资源使用量
 	var err error

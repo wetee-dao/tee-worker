@@ -1,13 +1,13 @@
 package mint
 
 import (
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (m *Minter) WrapLibos(deployment *appsv1.Deployment, version *gtypes.TEEVersion) {
-	if version.IsCVM {
+func (m *Minter) WrapLibos(deployment *appsv1.Deployment, version model.TEEType) {
+	if version.CVM != nil {
 		// 获取APPID
 		envs := []corev1.EnvVar{
 			deployment.Spec.Template.Spec.Containers[0].Env[0],

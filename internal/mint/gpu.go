@@ -7,9 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
-	"github.com/pkg/errors"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -18,15 +17,8 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func (m *Minter) DoWithGpuAppState(ctx *context.Context, c ContractStateWrap, stage uint32, head types.Header) (*gtypes.RuntimeCall, error) {
-	if c.GpuApp == nil || c.WorkState == nil {
-		return nil, errors.New("app is nil")
-	}
-
-	app := c.GpuApp
-	state := c.WorkState
-
-	_, err := m.CheckGpuAppStatus(ctx, c)
+func (m *Minter) DoWithGpuAppState(ctx *context.Context, app model.Pod, stage uint32, blockNumber uint32) (*gtypes.RuntimeCall, error) {
+	_, err := m.CheckGpuAppStatus(ctx, app)
 	if err != nil {
 		util.LogError("checkPodStatus", err)
 		return nil, err
@@ -36,55 +28,51 @@ func (m *Minter) DoWithGpuAppState(ctx *context.Context, c ContractStateWrap, st
 		return nil, nil
 	}
 
-	workId := c.ContractState.WorkId
-	nameSpace := AccountToSpace(c.ContractState.User[:])
+	nameSpace := AccountToSpace(app.Owner[:])
 	now := time.Now()
 
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
 	// App状态 0: created, 1: deploying, 2: stop, 3: deoloyed
-	if uint32(head.Number)-state.BlockNumber < stage {
-		if (uint64(head.Number)+workId.Id)%10 != 0 {
+	if uint32(blockNumber)-app.LastMintBlockNumber < stage {
+		if (uint64(blockNumber)+app.PodId)%10 != 0 {
 			return nil, nil
 		}
 		// 如果当前区块高度小于当前工作高度+阶段高度则不上传工作证明 但是保存工作证明到本地
-		logs, crs, err := m.GetLogAndCr(ctx, nameSpace, workId, now, stage, true)
+		logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, true)
 		if err != nil {
 			util.LogError("getMetricInfo", err)
 			return nil, err
 		}
-		return nil, proof.CacheWorkProof(workId, logs, crs, now, uint64(head.Number))
+		return nil, proof.CacheWorkProof(app.PodId, logs, crs, now, uint64(blockNumber))
 	}
 
 	util.LogError("=========================================== WorkProofUpload GPU")
 
-	logs, crs, err := m.GetLogAndCr(ctx, nameSpace, workId, now, stage, false)
+	logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, false)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
 		return nil, err
 	}
 
-	return proof.MakeWorkProof(workId, logs, crs, now, uint64(state.BlockNumber))
+	return proof.MakeWorkProof(app, logs, crs, now, uint64(app.LastMintBlockNumber))
 }
 
 // checkAppStatus check app status
 // 校对应用状态
-func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap) (*appsv1.Deployment, error) {
-	address := AccountToSpace(state.ContractState.User[:])
+func (m *Minter) CheckGpuAppStatus(ctx *context.Context, app model.Pod) (*appsv1.Deployment, error) {
+	address := AccountToSpace(app.Owner[:])
 	nameSpace := m.K8sClient.AppsV1().Deployments(address)
-	workId := state.ContractState.WorkId
-	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	name := GetPodName(app.PodId)
 
-	app := state.GpuApp
 	deployment, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
-	version := state.Version
 	if err != nil {
 		if !strings.Contains(err.Error(), "not found") {
 			return nil, err
 		}
 
 		// 重新创建
-		err = m.CreateGpuApp(ctx, state.ContractState.User[:], workId, app, state.Envs, version)
+		err = m.CreateGpuApp(ctx, app.Owner[:], app, []*gtypes.Env1{}, uint64(app.Version))
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +87,7 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, state ContractStateWrap
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.GpuApp, envs []*gtypes.Env1, version uint64) error {
+func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, app model.Pod, envs []*gtypes.Env1, version uint64) error {
 	saddress := AccountToSpace(user)
 	err := m.checkNameSpace(*ctx, saddress)
 	if err != nil {
@@ -107,29 +95,19 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	}
 
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
-	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	name := GetPodName(app.PodId)
 
 	// 构建容器
-	main := gtypes.Container{
-		Image:   app.Image,
-		Command: app.Command,
-		Port:    app.Port,
-		Cr:      app.Cr,
-	}
-	cs := append([]gtypes.Container{main}, app.SideContainer...)
-
 	// 构建容器端口
-	pContainers, err := m.buildPodContainer(ctx, workId, saddress, name, cs, envs)
+	pContainers, err := m.buildPodContainer(ctx, app, saddress, name, app.Containers, envs)
 	if err != nil {
 		return err
 	}
 
 	// 添加gpu资源
-	pContainers[0].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent)
-	pContainers[0].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Cr.Gpu), resource.DecimalExponent)
-	for i := 1; i < len(pContainers); i++ {
-		pContainers[i].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.SideContainer[i-1].Cr.Gpu), resource.DecimalExponent)
-		pContainers[i].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.SideContainer[i-1].Cr.Gpu), resource.DecimalExponent)
+	for i := 0; i < len(pContainers); i++ {
+		pContainers[i].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Containers[i-1].Cr.Gpu), resource.DecimalExponent)
+		pContainers[i].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Containers[i-1].Cr.Gpu), resource.DecimalExponent)
 	}
 
 	nvidiaClass := "nvidia"
@@ -158,10 +136,10 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	}
 
 	// 添加模型
-	m.WrapAiModel(app, &deployment)
+	m.WrapAiModel(&app, &deployment)
 
 	// ADD Libos
-	m.WrapLibos(&deployment, &app.TeeVersion)
+	m.WrapLibos(&deployment, app.TeeType)
 
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
 	if err != nil {
@@ -174,7 +152,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 func (m *Minter) UpdateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.GpuApp, envs []v1.EnvVar, version uint64) error {
 	saddress := AccountToSpace(user)
 	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
-	name := util.GetWorkTypeStr(workId) + "-" + fmt.Sprint(workId.Id)
+	name := GetPodName(workId.Id)
 
 	existing, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err == nil {
@@ -192,7 +170,7 @@ func (m *Minter) UpdateGpuApp(ctx *context.Context, user []byte, workId gtypes.W
 	return err
 }
 
-func (m *Minter) WrapAiModel(app *gtypes.GpuApp, deployment *appsv1.Deployment) {
+func (m *Minter) WrapAiModel(app *model.Pod, deployment *appsv1.Deployment) {
 	meta := map[string]string{}
 	json.Unmarshal([]byte(app.Meta), &meta)
 	if meta["ai-model"] == "sd" {

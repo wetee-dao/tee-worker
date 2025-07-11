@@ -82,10 +82,10 @@ kubectl create -f ./hack/install/pccs_headless.yaml
 kubectl create -f ./hack/install/pccs_nodeport.yaml
 
 # 创建区块连节点
-kubectl create -f ./hack/install/chain.yaml
-sudo cp ./hack/install/chain_proxy/* /mnt/ssl-proxy/
-kubectl create -f ./hack/install/chain_nodeport.yaml
-kubectl create -f ./hack/install/chain_headless.yaml
+# kubectl create -f ./hack/install/chain.yaml
+# sudo cp ./hack/install/chain_proxy/* /mnt/ssl-proxy/
+# kubectl create -f ./hack/install/chain_nodeport.yaml
+# kubectl create -f ./hack/install/chain_headless.yaml
 
 kubectl create -f ./hack/install/nvidia_runtime.yaml
 kubectl create -f ./hack/install/nvidia_device_plugin.yml

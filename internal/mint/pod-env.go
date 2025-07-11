@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -14,20 +13,21 @@ import (
 
 // Get Envs from Work
 // 获取环境变量
-func (m *Minter) BuildEnvs(workId gtypes.WorkId) ([]corev1.EnvVar, error) {
-	settings, err := m.GetSettingsFromWork(workId, nil)
-	if err != nil {
-		return []corev1.EnvVar{}, errors.Wrap(err, "GetSettingsFromWork error")
-	}
+func (m *Minter) BuildEnvs(podId uint64) ([]corev1.EnvVar, error) {
+	// settings, err := m.GetSettingsFromWork(workId, nil)
+	// if err != nil {
+	// 	return []corev1.EnvVar{}, errors.Wrap(err, "GetSettingsFromWork error")
+	// }
+	settings := []*gtypes.Env1{}
 
-	return m.BuildEnvsFromSettings(workId, settings)
+	return m.BuildEnvsFromSettings(podId, settings)
 }
 
 // Build Envs
 // 获取配置文件
-func (m *Minter) BuildEnvsFromSettings(workId gtypes.WorkId, settings []*gtypes.Env1) ([]corev1.EnvVar, error) {
+func (m *Minter) BuildEnvsFromSettings(podId uint64, settings []*gtypes.Env1) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
-	wid, err := store.SealAppID(workId)
+	wid, err := store.SealAppID(podId)
 	if err != nil {
 		return []corev1.EnvVar{}, err
 	}

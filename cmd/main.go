@@ -41,6 +41,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	secretv1 "wetee.app/worker/api/v1"
+	"wetee.app/worker/graph"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/store"
@@ -161,8 +162,8 @@ func main() {
 
 	// signer, _ := mint.MinterIns.PrivateKey.ToSigner()
 	// go libos.StartSecretServerInCluster(signer.Address)
-	// go mint.MinterIns.StartMint()
-	// go graph.StartServer()
+	go mint.MinterIns.StartMint()
+	go graph.StartServer()
 
 	if err = (&controller.AppReconciler{
 		Client: mgr.GetClient(),

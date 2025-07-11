@@ -8,11 +8,9 @@ import (
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/mint/proof"
 	types "wetee.app/worker/internal/model"
-	"wetee.app/worker/internal/util"
 )
 
 // ReencryptSecretRequest 函数用于生成重新加密的请求，并处理返回结果
@@ -95,7 +93,7 @@ func (m *Minter) ReencryptSecretReply(data []byte, err string, msgID string, Org
 }
 
 // LaunchFromDsecret 函数处理重新加密的秘密回复
-func (m *Minter) LaunchFromDsecret(wid *gtypes.WorkId, libosReport *types.TeeParam) (*types.ReencryptSecret, error) {
+func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *types.TeeParam) (*types.ReencryptSecret, error) {
 	signer, _ := m.PrivateKey.ToSigner()
 
 	// 获取 TEE 根证书
@@ -119,7 +117,7 @@ func (m *Minter) LaunchFromDsecret(wid *gtypes.WorkId, libosReport *types.TeePar
 	// 构造启动请求
 	// make launch request
 	req := types.LaunchRequest{
-		WorkID:  util.GetWorkIdFromWorkType(*wid),
+		WorkID:  fmt.Sprint(pid),
 		Libos:   libosReport,
 		Cluster: &clusterReport,
 	}
