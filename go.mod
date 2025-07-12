@@ -175,3 +175,5 @@ require (
 )
 
 replace github.com/wetee-dao/tee-dsecret => ../tee-dsecret
+
+replace github.com/wetee-dao/ink.go => ../ink.go

@@ -72,7 +72,7 @@ func (m *Minter) StartMint() {
 	// Waiting for cluster start
 	for {
 		// 获取clusterId
-		clusterId, err := chains.MainChain.GetWorkerId(signer.AccountID())
+		cluster, err := chains.MainChain.GetMintWorker(signer.AccountID())
 		if err != nil {
 			fmt.Println("ClusterId => clusterId not found, mint not started")
 			time.Sleep(time.Second * 10)
@@ -86,14 +86,6 @@ func (m *Minter) StartMint() {
 		// 	continue
 		// }
 
-		// 获取集群域名
-		cluster, err := chains.MainChain.GetWorker(clusterId)
-		if err != nil {
-			fmt.Println("chains.MainChain.GetWorker => ", err)
-			time.Sleep(time.Second * 10)
-			continue
-		}
-
 		if cluster.Ip.Domain.IsSome() {
 			MinterIns.HostDomain = string(cluster.Ip.Domain.V)
 		} else {
@@ -101,7 +93,7 @@ func (m *Minter) StartMint() {
 		}
 
 		// 保存clusterId
-		store.SetClusterId(clusterId)
+		store.SetClusterId(cluster.Id)
 
 		break
 	}
@@ -134,8 +126,8 @@ func (m *Minter) StartMint() {
 			sleepFrom(start, time.Second*6)
 			continue
 		}
-		util.PrintJson(added)
-		util.PrintJson(updated)
+		// util.PrintJson(added)
+		// util.PrintJson(updated)
 
 		// 删除过期的合约
 		// Delete expired contracts
@@ -163,15 +155,14 @@ func (m *Minter) StartMint() {
 		// }
 		var stage uint32 = 30
 
-		fmt.Println("===========================================contract pods: ", len(podVersions))
-		proofs := make([]gtypes.RuntimeCall, 0, 20)
-
+		util.LogWithPurple("COONTRACT:", len(podVersions))
 		todoList, err := chains.MainChain.GetPodsByIds(ids)
 		if err != nil {
 			util.LogError("GetPodsByIds", err)
 			sleepFrom(start, time.Second*6)
 			continue
 		}
+		util.LogWithBlue("     TODO:", len(todoList))
 
 		// 触发TEE调用
 		// Trigger TEE calls
@@ -179,6 +170,7 @@ func (m *Minter) StartMint() {
 
 		// 校对合约状态
 		// Check contract status
+		calls := make([]gtypes.RuntimeCall, 0, 20)
 		for _, p := range todoList {
 			ctx := context.Background()
 
@@ -188,9 +180,10 @@ func (m *Minter) StartMint() {
 				call, err := m.DoWithAppState(&ctx, p, stage, uint32(head))
 				if err != nil {
 					util.LogError("DoWithAppState", err)
+					continue
 				}
 				if call != nil {
-					proofs = append(proofs, *call)
+					calls = append(calls, *call)
 				}
 			} else if p.Ptype.Script != nil {
 				// 如果是TASK类型，检查Pod状态，Pod如果执行完成，则上传日志和结果
@@ -198,20 +191,24 @@ func (m *Minter) StartMint() {
 				call, err := m.DoWithTaskState(&ctx, p, stage, uint32(head))
 				if err != nil {
 					util.LogError("DoWithTaskState", err)
+					continue
 				}
 				if call != nil {
-					proofs = append(proofs, *call)
+					calls = append(calls, *call)
 				}
 			} else if p.Ptype.GpuService != nil {
 				// 如果是GPU类型，检查Pod状态，检查是否需要上传工作证明
 				call, err := m.DoWithGpuAppState(&ctx, p, stage, uint32(head))
 				if err != nil {
 					util.LogError("DoWithGpuAppState", err)
+					continue
 				}
 				if call != nil {
-					proofs = append(proofs, *call)
+					calls = append(calls, *call)
 				}
 			}
+
+			store.SetPod(p)
 		}
 		sleepFrom(start, time.Second*6)
 
@@ -231,7 +228,7 @@ func (m *Minter) StartMint() {
 }
 
 func CalcPodVersionFromCache(newArr []model.PodVersion) (added, updated []model.PodVersion, deleted []model.Pod, e error) {
-	// 获取缓存
+	// get data from cache
 	oldArr, err := store.GetPods()
 	if err != nil {
 		return nil, nil, nil, err
@@ -247,19 +244,19 @@ func CalcPodVersionFromCache(newArr []model.PodVersion) (added, updated []model.
 		newMap[v.PodId] = v
 	}
 
-	// 查找新增和版本变化
+	// find add and update
 	for id, newVal := range newMap {
 		oldVal, exists := oldMap[id]
 		if !exists {
-			// 新增项
+			// add
 			added = append(added, newVal)
 		} else if oldVal.Version != newVal.Version {
-			// 版本变化项
+			// update
 			updated = append(updated, newVal)
 		}
 	}
 
-	// 查找删除项
+	// find deleted
 	for id, oldVal := range oldMap {
 		if _, exists := newMap[id]; !exists {
 			deleted = append(deleted, oldVal)

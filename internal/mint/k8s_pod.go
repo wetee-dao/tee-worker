@@ -13,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +23,7 @@ import (
 
 // 获取容器的资源信息和日志
 func (m *Minter) getMetricInfo(ctx context.Context, wid model.Pod, nameSpace, name string, form int64) ([]string, map[string][]int64, error) {
-	podLogOpts := &corev1.PodLogOptions{
+	podLogOpts := &v1.PodLogOptions{
 		SinceTime: &metav1.Time{
 			Time: time.Unix(form, 0),
 		},
@@ -143,34 +142,34 @@ func (m *Minter) StopApp(p model.Pod) error {
 
 // Get Container Port From Service
 // 获取容器服务端口
-func BuildContainerPortFormService(name string, services []model.Service) []corev1.ContainerPort {
-	ports := []corev1.ContainerPort{}
+func BuildContainerPortFormService(name string, services []model.Service) []v1.ContainerPort {
+	ports := []v1.ContainerPort{}
 	for _, ser := range services {
-		protocol := corev1.ProtocolTCP
+		protocol := v1.ProtocolTCP
 		var port uint16
 
 		// 获取服务端口
 		if ser.ProjectUdp != nil {
-			protocol = corev1.ProtocolUDP
+			protocol = v1.ProtocolUDP
 			port = *ser.ProjectUdp
 		} else if ser.ProjectTcp != nil {
-			protocol = corev1.ProtocolTCP
+			protocol = v1.ProtocolTCP
 			port = *ser.ProjectTcp
 		} else if ser.Tcp != nil {
-			protocol = corev1.ProtocolTCP
+			protocol = v1.ProtocolTCP
 			port = *ser.Tcp
 		} else if ser.Udp != nil {
-			protocol = corev1.ProtocolUDP
+			protocol = v1.ProtocolUDP
 			port = *ser.Udp
 		} else if ser.Http != nil {
-			protocol = corev1.ProtocolTCP
+			protocol = v1.ProtocolTCP
 			port = *ser.Http
 		} else if ser.Https != nil {
-			protocol = corev1.ProtocolTCP
+			protocol = v1.ProtocolTCP
 			port = *ser.Https
 		}
 
-		ports = append(ports, corev1.ContainerPort{
+		ports = append(ports, v1.ContainerPort{
 			Name:          name + "-" + fmt.Sprint(port),
 			ContainerPort: int32(port),
 			Protocol:      protocol,
@@ -181,37 +180,37 @@ func BuildContainerPortFormService(name string, services []model.Service) []core
 
 // Get Service Port From Service
 // 获取对外服务端口
-func (m *Minter) BuildServicePortFormService(name string, services []model.Service) ([]corev1.ServicePort, []corev1.ServicePort) {
-	nodePorts := []corev1.ServicePort{}
-	headlessPorts := []corev1.ServicePort{}
+func (m *Minter) BuildServicePortFormService(name string, services []model.Service) ([]v1.ServicePort, []v1.ServicePort) {
+	nodePorts := []v1.ServicePort{}
+	headlessPorts := []v1.ServicePort{}
 	for i, ser := range services {
-		var protocol corev1.Protocol
+		var protocol v1.Protocol
 		var port uint16
 
 		// 获取服务端口
 		if ser.ProjectUdp != nil {
-			protocol = corev1.ProtocolUDP
+			protocol = v1.ProtocolUDP
 			port = *ser.ProjectUdp
 		} else if ser.ProjectTcp != nil {
-			protocol = corev1.ProtocolTCP
+			protocol = v1.ProtocolTCP
 			port = *ser.ProjectTcp
 		} else if ser.Tcp != nil {
-			protocol = corev1.ProtocolTCP
+			protocol = v1.ProtocolTCP
 			port = *ser.Tcp
 		} else if ser.Udp != nil {
-			protocol = corev1.ProtocolUDP
+			protocol = v1.ProtocolUDP
 			port = *ser.Udp
 		} else if ser.Http != nil {
-			protocol = corev1.ProtocolTCP
+			protocol = v1.ProtocolTCP
 			port = *ser.Http
 		} else if ser.Https != nil {
-			protocol = corev1.ProtocolTCP
+			protocol = v1.ProtocolTCP
 			port = *ser.Https
 		}
 
 		if ser.Tcp != nil || ser.Udp != nil {
 			if port != 0 {
-				nodePorts = append(nodePorts, corev1.ServicePort{
+				nodePorts = append(nodePorts, v1.ServicePort{
 					Name:       name + "-" + fmt.Sprint(i) + "-" + fmt.Sprint(port) + "-nodeport",
 					Port:       int32(port),
 					TargetPort: intstr.FromInt(int(port)),
@@ -225,7 +224,7 @@ func (m *Minter) BuildServicePortFormService(name string, services []model.Servi
 				if ser.Udp != nil {
 					services[i].Udp = &nodePort
 				}
-				nodePorts = append(nodePorts, corev1.ServicePort{
+				nodePorts = append(nodePorts, v1.ServicePort{
 					Name:       name + "-" + fmt.Sprint(i) + "-" + fmt.Sprint(nodePort) + "-nodeport",
 					Port:       int32(nodePort),
 					TargetPort: intstr.FromInt(int(nodePort)),
@@ -234,7 +233,7 @@ func (m *Minter) BuildServicePortFormService(name string, services []model.Servi
 				})
 			}
 		} else {
-			headlessPorts = append(headlessPorts, corev1.ServicePort{
+			headlessPorts = append(headlessPorts, v1.ServicePort{
 				Name:       name + "-" + fmt.Sprint(i) + "-" + fmt.Sprint(port) + "-headless",
 				Port:       int32(port),
 				TargetPort: intstr.FromInt(int(port)),
@@ -301,7 +300,7 @@ func (m *Minter) buildPodContainer(
 	podContainers := make([]v1.Container, 0, len(cs))
 
 	serviceSpace := m.K8sClient.CoreV1().Services(nameSpace)
-	nodeports, projectPorts := []corev1.ServicePort{}, []corev1.ServicePort{}
+	nodeports, projectPorts := []v1.ServicePort{}, []v1.ServicePort{}
 
 	// 计算所有的服务端口
 	for _, container := range cs {
