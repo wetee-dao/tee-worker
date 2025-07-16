@@ -11,6 +11,7 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	module "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets"
+	dmodel "github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/mint/proof"
@@ -25,7 +26,7 @@ func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, erro
 		root = ""
 	}
 	var maddress = ""
-	minter, _ := mint.GetMintKey()
+	minter, _, _ := dmodel.GetP2PKey()
 	if err == nil {
 		maddress = minter.Address
 	}

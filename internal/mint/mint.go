@@ -11,9 +11,10 @@ import (
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	chains "github.com/wetee-dao/tee-dsecret/pkg/chains"
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
+	sidechain "github.com/wetee-dao/tee-dsecret/side-chain"
 
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/internal/util"
@@ -126,8 +127,6 @@ func (m *Minter) StartMint() {
 			sleepFrom(start, time.Second*6)
 			continue
 		}
-		// util.PrintJson(added)
-		// util.PrintJson(updated)
 
 		// 删除过期的合约
 		// Delete expired contracts
@@ -155,14 +154,14 @@ func (m *Minter) StartMint() {
 		// }
 		var stage uint32 = 30
 
-		util.LogWithPurple("COONTRACT:", len(podVersions))
+		util.LogWithGray("POD ALL", ">", len(podVersions))
 		todoList, err := chains.MainChain.GetPodsByIds(ids)
 		if err != nil {
 			util.LogError("GetPodsByIds", err)
 			sleepFrom(start, time.Second*6)
 			continue
 		}
-		util.LogWithBlue("     TODO:", len(todoList))
+		util.LogWithCyan("TODO   ", ">", len(todoList))
 
 		// 触发TEE调用
 		// Trigger TEE calls
@@ -170,60 +169,71 @@ func (m *Minter) StartMint() {
 
 		// 校对合约状态
 		// Check contract status
-		calls := make([]gtypes.RuntimeCall, 0, 20)
+		calls := make([]*model.IndexCall, 0, 20)
 		for _, p := range todoList {
 			ctx := context.Background()
 
-			if p.Ptype.CpuService != nil {
+			if p.Ptype.CPU != nil {
 				// 如果是APP类型，检查Pod状态，检查是否需要上传工作证明
 				// If it is APP type, check Pod status, check if it needs to upload work proof
-				call, err := m.DoWithAppState(&ctx, p, stage, uint32(head))
+				call, t, err := m.DoWithAppState(&ctx, p, stage, uint32(head))
 				if err != nil {
 					util.LogError("DoWithAppState", err)
 					continue
 				}
 				if call != nil {
-					calls = append(calls, *call)
+					bt, _ := codec.Encode(call)
+					calls = append(calls, &model.IndexCall{
+						Index: t,
+						Call:  bt,
+					})
 				}
-			} else if p.Ptype.Script != nil {
+			} else if p.Ptype.SCRIPT != nil {
 				// 如果是TASK类型，检查Pod状态，Pod如果执行完成，则上传日志和结果
 				// If it is TASK type, check Pod status, Pod if it is executed, upload logs and results
-				call, err := m.DoWithTaskState(&ctx, p, stage, uint32(head))
+				call, t, err := m.DoWithTaskState(&ctx, p, stage, uint32(head))
 				if err != nil {
 					util.LogError("DoWithTaskState", err)
 					continue
 				}
 				if call != nil {
-					calls = append(calls, *call)
+					bt, _ := codec.Encode(call)
+					calls = append(calls, &model.IndexCall{
+						Index: t,
+						Call:  bt,
+					})
 				}
-			} else if p.Ptype.GpuService != nil {
+			} else if p.Ptype.GPU != nil {
 				// 如果是GPU类型，检查Pod状态，检查是否需要上传工作证明
-				call, err := m.DoWithGpuAppState(&ctx, p, stage, uint32(head))
+				call, t, err := m.DoWithGpuAppState(&ctx, p, stage, uint32(head))
 				if err != nil {
 					util.LogError("DoWithGpuAppState", err)
 					continue
 				}
 				if call != nil {
-					calls = append(calls, *call)
+					bt, _ := codec.Encode(call)
+					calls = append(calls, &model.IndexCall{
+						Index: t,
+						Call:  bt,
+					})
 				}
 			}
 
 			store.SetPod(p)
 		}
-		sleepFrom(start, time.Second*6)
 
-		// if len(proofs) > 0 {
-		// 	// 上传工作证明
-		// 	// Upload work proof
-		// 	go func(b uint64) {
-		// 		err = proof.SubmitWorkProof(client, worker.Signer, proofs)
-		// 		if err != nil {
-		// 			util.LogError("WorkProofUpload", err)
-		// 		} else {
-		// 			fmt.Println("Proof.SubmitWorkProof blocknumber =>", b, "success")
-		// 		}
-		// 	}(uint64(head.Number))
-		// }
+		if len(calls) > 0 {
+			_, err := sidechain.SubmitTx(&model.Tx{
+				Payload: &model.Tx_HubCall{
+					HubCall: &model.HubCall{
+						Call: calls,
+					},
+				},
+			})
+			fmt.Println("submit tx", err)
+		}
+
+		sleepFrom(start, time.Second*6)
 	}
 }
 

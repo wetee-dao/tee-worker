@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
@@ -17,18 +18,17 @@ import (
 
 // DoWithAppState
 // 获取app状态
-func (m *Minter) DoWithAppState(ctx *context.Context, app model.Pod, stage uint32, blockNumber uint32) (*gtypes.RuntimeCall, error) {
+func (m *Minter) DoWithAppState(ctx *context.Context, app model.Pod, stage uint32, blockNumber uint32) (*types.Call, int64, error) {
 	_, err := m.CheckAppStatus(ctx, app)
 	if err != nil {
 		util.LogError("checkPodStatus", err)
-		return nil, err
+		return nil, 0, err
 	}
 
-	if app.Status != 3 {
-		return nil, nil
-	}
+	// if app.Status != 3 {
+	// 	return nil, 0, nil
+	// }
 
-	workId := app.PodId
 	nameSpace := AccountToSpace(app.Owner[:])
 	now := time.Now()
 
@@ -36,26 +36,26 @@ func (m *Minter) DoWithAppState(ctx *context.Context, app model.Pod, stage uint3
 	// Check if work proof needs to be uploaded
 	// App状态 0: created, 1: deploying, 2: stop, 3: deoloyed
 	if blockNumber-app.LastMintBlockNumber < stage {
-		if (uint64(blockNumber)+workId)%10 != 0 {
-			return nil, nil
-		}
+		// if (uint64(blockNumber)+app.PodId)%10 != 0 {
+		// 	return nil, 0, nil
+		// }
 
 		// 如果当前区块高度小于当前工作高度+阶段高度则不上传工作证明 但是保存工作证明到本地
-		logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, true)
-		if err != nil {
-			util.LogError("getMetricInfo", err)
-			return nil, err
-		}
-		return nil, proof.CacheWorkProof(workId, logs, crs, now, uint64(blockNumber))
+		// logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, true)
+		// if err != nil {
+		// 	util.LogError("getMetricInfo", err)
+		// 	return nil, 0, err
+		// }
+		// return nil, 0, proof.CacheWorkProof(app.PodId, logs, crs, now, uint64(blockNumber))
 	}
 
 	util.LogError("=========================================== WorkProofUpload APP")
 
 	logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, false)
-	if err != nil {
-		util.LogError("getMetricInfo", err)
-		return nil, err
-	}
+	// if err != nil {
+	// 	util.LogError("GetLogAndCr", err)
+	// 	return nil, 0, err
+	// }
 
 	return proof.MakeWorkProof(app, logs, crs, now, uint64(app.LastMintBlockNumber))
 }
@@ -84,6 +84,8 @@ func (m *Minter) CheckAppStatus(ctx *context.Context, app model.Pod) (*appsv1.De
 		if err != nil {
 			return nil, err
 		}
+	} else {
+
 	}
 
 	return deployment, err

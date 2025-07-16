@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
@@ -17,15 +18,15 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func (m *Minter) DoWithGpuAppState(ctx *context.Context, app model.Pod, stage uint32, blockNumber uint32) (*gtypes.RuntimeCall, error) {
+func (m *Minter) DoWithGpuAppState(ctx *context.Context, app model.Pod, stage uint32, blockNumber uint32) (*types.Call, int64, error) {
 	_, err := m.CheckGpuAppStatus(ctx, app)
 	if err != nil {
 		util.LogError("checkPodStatus", err)
-		return nil, err
+		return nil, 0, err
 	}
 
 	if app.Status != 3 {
-		return nil, nil
+		return nil, 0, nil
 	}
 
 	nameSpace := AccountToSpace(app.Owner[:])
@@ -36,15 +37,15 @@ func (m *Minter) DoWithGpuAppState(ctx *context.Context, app model.Pod, stage ui
 	// App状态 0: created, 1: deploying, 2: stop, 3: deoloyed
 	if uint32(blockNumber)-app.LastMintBlockNumber < stage {
 		if (uint64(blockNumber)+app.PodId)%10 != 0 {
-			return nil, nil
+			return nil, 0, nil
 		}
 		// 如果当前区块高度小于当前工作高度+阶段高度则不上传工作证明 但是保存工作证明到本地
 		logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, true)
 		if err != nil {
 			util.LogError("getMetricInfo", err)
-			return nil, err
+			return nil, 0, err
 		}
-		return nil, proof.CacheWorkProof(app.PodId, logs, crs, now, uint64(blockNumber))
+		return nil, 0, proof.CacheWorkProof(app.PodId, logs, crs, now, uint64(blockNumber))
 	}
 
 	util.LogError("=========================================== WorkProofUpload GPU")
@@ -52,7 +53,7 @@ func (m *Minter) DoWithGpuAppState(ctx *context.Context, app model.Pod, stage ui
 	logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, false)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
-		return nil, err
+		return nil, 0, err
 	}
 
 	return proof.MakeWorkProof(app, logs, crs, now, uint64(app.LastMintBlockNumber))

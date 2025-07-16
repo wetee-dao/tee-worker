@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	v1 "k8s.io/api/core/v1"
@@ -14,22 +15,22 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func (m *Minter) DoWithTaskState(ctx *context.Context, app model.Pod, stage uint32, blockNumber uint32) (*gtypes.RuntimeCall, error) {
+func (m *Minter) DoWithTaskState(ctx *context.Context, app model.Pod, stage uint32, blockNumber uint32) (*types.Call, int64, error) {
 	// 处于调度状态，不处理
 	if uint64(app.Status) == 4 {
-		return nil, nil
+		return nil, 0, nil
 	}
 
 	pod, err := m.CheckTaskStatus(ctx, app)
 	if err != nil {
 		util.LogError("checkTaskStatus", err)
-		return nil, err
+		return nil, 0, err
 	}
 
 	// 判断是否上传工作证明
 	// Determine whether to upload proof of employment
 	if pod.Status.Phase != v1.PodSucceeded && pod.Status.Phase != v1.PodFailed {
-		return nil, nil
+		return nil, 0, nil
 	}
 	util.LogError("===========================================WorkProofUpload TASK")
 	nameSpace := AccountToSpace(app.Owner[:])
@@ -42,7 +43,7 @@ func (m *Minter) DoWithTaskState(ctx *context.Context, app model.Pod, stage uint
 	logs, crs, err := m.getMetricInfo(*ctx, app, nameSpace, name, from)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
-		return nil, err
+		return nil, 0, err
 	}
 
 	m.StopApp(app)

@@ -32,6 +32,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	chain "github.com/wetee-dao/tee-dsecret/pkg/chains"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -123,17 +124,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, nodePriv := mint.GetMintKey()
+	_, nodePriv, err := model.GetP2PKey()
+	if err != nil {
+		setupLog.Error(err, "unable to get p2p key")
+		os.Exit(1)
+	}
 
 	// Link to polkadot
-	mainChain, err := chain.ConnectMainChain(chainAddr, nodePriv)
+	_, err = chain.ConnectMainChain(chainAddr, nodePriv)
 	if err != nil {
 		fmt.Println("Connect to chain error:", err)
 		os.Exit(1)
 	}
 
 	// Init node
-	node, _, _, err := sidechain.InitSideChain(chainPort, mainChain, func() {
+	node, _, _, err := sidechain.InitSideChain(chainPort, true, func() {
 		fmt.Println()
 		util.LogWithYellow("Main Chain", chainAddr)
 		util.LogWithYellow("Node Key", nodePriv.GetPublic().SS58())

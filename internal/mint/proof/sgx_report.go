@@ -31,7 +31,7 @@ var (
 // return: report, time, err
 func GetRemoteReport(minter *chain.Signer, data []byte) ([]byte, int64, error) {
 	timestamp := time.Now().Unix()
-	if Report != nil && LastReport+30 > timestamp && (data == nil || len(data) == 0) {
+	if Report != nil && LastReport+30 > timestamp && len(data) == 0 {
 		return Report, LastReport, nil
 	}
 
@@ -52,7 +52,7 @@ func GetRemoteReport(minter *chain.Signer, data []byte) ([]byte, int64, error) {
 		return nil, 0, err
 	}
 
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		LastReport = timestamp
 		Report = report
 	}

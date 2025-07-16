@@ -30,7 +30,7 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid model.Pod, nameSpace, na
 	}
 
 	// 如果是不是TASK类型，则获取c0容器的日志
-	if wid.Ptype.Script == nil {
+	if wid.Ptype.SCRIPT == nil {
 		podLogOpts.Container = "c0"
 	}
 
@@ -63,7 +63,7 @@ func (m *Minter) getMetricInfo(ctx context.Context, wid model.Pod, nameSpace, na
 	// Gets the memory usage of the Pod
 	podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses(nameSpace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		if wid.Ptype.CpuService != nil {
+		if wid.Ptype.CPU != nil {
 			return nil, nil, err
 		} else {
 			use["d"] = []int64{0, 0, 0}
@@ -130,7 +130,7 @@ func (m *Minter) StopApp(p model.Pod) error {
 		}
 	}
 
-	if p.Ptype.CpuService != nil || p.Ptype.GpuService != nil {
+	if p.Ptype.CPU != nil || p.Ptype.GPU != nil {
 		nameSpace := m.K8sClient.AppsV1().Deployments(space)
 
 		return nameSpace.Delete(ctx, name, metav1.DeleteOptions{})
