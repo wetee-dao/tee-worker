@@ -6,7 +6,6 @@ import (
 
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/internal/util"
 )
@@ -52,7 +51,7 @@ func (m *Minter) BuildEnvsFromSettings(podId uint64, settings []*gtypes.Env1) ([
 
 // WrapNodeService
 // 包装环境变量
-func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, nodeSers *v1.Service) error {
+func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, nodeSers *corev1.Service) error {
 	mdata := make(map[string]string)
 	mdata["cluster_domain"] = m.HostDomain
 	mdata["project_domain"] = nameSpace + ".svc.cluster.local"

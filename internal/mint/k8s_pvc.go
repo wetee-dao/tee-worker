@@ -12,23 +12,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name string, cs []model.Container, deployment *appsv1.Deployment) error {
-	// 查询所有id所对应的pvc
-	pvcList, err := m.K8sClient.CoreV1().PersistentVolumeClaims(nameSpace).List(*ctx, metav1.ListOptions{})
+// Add PVC to deployment
+func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name string, containers []model.Container, deployment *appsv1.Deployment) error {
+	// query namespace pvcs
+	pvcs, err := m.K8sClient.CoreV1().PersistentVolumeClaims(nameSpace).List(*ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
-	for cindex := range cs {
-		disk := cs[cindex].Cr.Disk
+	for containerIndex := range containers {
+		disks := containers[containerIndex].Cr.Disk
 
 		// 判断是否存在PVC
-		l := len(disk)
-		for i := 0; i < l; i++ {
-			cdisk := disk[i]
-			pvcName, pvc := findPvc(name, pvcList.Items, cindex, cdisk)
-			// pvcName := name + "-pvc" + strings.ReplaceAll(path, "/", "-")
-			// m.K8sClient
+		for i, disk := range disks {
+			pvcName, pvc := findPvc(name, pvcs.Items, containerIndex, disk)
+
 			// 不存在就创建
 			if pvc == nil {
 				pvc = &corev1.PersistentVolumeClaim{
@@ -55,7 +53,7 @@ func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name 
 
 			// 挂载卷到 deployment
 			deployment.Spec.Template.Spec.Volumes = append(deployment.Spec.Template.Spec.Volumes, corev1.Volume{
-				Name: name + "-store-" + fmt.Sprint(cindex) + "-" + fmt.Sprint(i),
+				Name: name + "-store-" + fmt.Sprint(containerIndex) + "-" + fmt.Sprint(i),
 				VolumeSource: corev1.VolumeSource{
 					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 						ClaimName: pvcName,
@@ -64,9 +62,9 @@ func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name 
 			})
 
 			// 挂载到容器
-			deployment.Spec.Template.Spec.Containers[cindex].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[cindex].VolumeMounts, corev1.VolumeMount{
-				Name:      name + "-store-" + fmt.Sprint(cindex) + "-" + fmt.Sprint(i),
-				MountPath: string(*cdisk.Path.SSD),
+			deployment.Spec.Template.Spec.Containers[containerIndex].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[containerIndex].VolumeMounts, corev1.VolumeMount{
+				Name:      name + "-store-" + fmt.Sprint(containerIndex) + "-" + fmt.Sprint(i),
+				MountPath: string(*disk.Path.SSD),
 			})
 		}
 	}
@@ -75,11 +73,11 @@ func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name 
 }
 
 // 查询数组中是否存在目标元素
-func findPvc(name string, arr []corev1.PersistentVolumeClaim, cindex int, target model.Disk) (string, *corev1.PersistentVolumeClaim) {
-	pvcName := name + "-pvc-" + fmt.Sprint(cindex) + "-" + strings.ReplaceAll(string(*target.Path.SSD), "/", "-")
-	for _, value := range arr {
-		if value.ObjectMeta.Name == pvcName {
-			return pvcName, &value
+func findPvc(name string, pvcs []corev1.PersistentVolumeClaim, containerIndex int, target model.Disk) (string, *corev1.PersistentVolumeClaim) {
+	pvcName := name + "-pvc-" + fmt.Sprint(containerIndex) + "-" + strings.ReplaceAll(string(*target.Path.SSD), "/", "-")
+	for _, pvc := range pvcs {
+		if pvc.ObjectMeta.Name == pvcName {
+			return pvcName, &pvc
 		}
 	}
 	return pvcName, nil

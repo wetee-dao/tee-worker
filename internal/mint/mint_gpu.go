@@ -18,53 +18,52 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func (m *Minter) DoWithGpuAppState(ctx *context.Context, app model.Pod, stage uint32, blockNumber uint32) (*types.Call, int64, error) {
-	_, err := m.CheckGpuAppStatus(ctx, app)
+func (m *Minter) DoGPU(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*types.Call, int64, error) {
+	_, err := m.CheckGPU(ctx, pod)
 	if err != nil {
 		util.LogError("checkPodStatus", err)
 		return nil, 0, err
 	}
 
-	if app.Status != 3 {
-		return nil, 0, nil
-	}
+	// if pod.Status != 3 {
+	// 	return nil, 0, nil
+	// }
 
-	nameSpace := AccountToSpace(app.Owner[:])
-	now := time.Now()
+	nameSpace := AccountToSpace(pod.Owner[:])
 
+	util.LogWithCyan("===========================================", "DEPLOY GPU", pod.PodId)
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
 	// App状态 0: created, 1: deploying, 2: stop, 3: deoloyed
-	if uint32(blockNumber)-app.LastMintBlockNumber < stage {
-		if (uint64(blockNumber)+app.PodId)%10 != 0 {
-			return nil, 0, nil
-		}
-		// 如果当前区块高度小于当前工作高度+阶段高度则不上传工作证明 但是保存工作证明到本地
-		logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, true)
-		if err != nil {
-			util.LogError("getMetricInfo", err)
-			return nil, 0, err
-		}
-		return nil, 0, proof.CacheWorkProof(app.PodId, logs, crs, now, uint64(blockNumber))
+	if uint32(currBlock)-pod.LastMintBlockNumber < stage {
+		// if (uint64(currBlock)+pod.PodId)%10 != 0 {
+		// 	return nil, 0, nil
+		// }
+		// // 如果当前区块高度小于当前工作高度+阶段高度则不上传工作证明 但是保存工作证明到本地
+		// logs, crs, err := m.GetLogAndCr(ctx, nameSpace, pod, now, stage, true)
+		// if err != nil {
+		// 	util.LogError("getMetricInfo", err)
+		// 	return nil, 0, err
+		// }
+		// return nil, 0, proof.CacheWorkProof(pod.PodId, logs, crs, now, uint64(currBlock))
 	}
 
-	util.LogError("=========================================== WorkProofUpload GPU")
-
-	logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, false)
+	now := time.Now()
+	logs, crs, err := m.GetMetric(ctx, nameSpace, pod, now, stage, false)
 	if err != nil {
-		util.LogError("getMetricInfo", err)
+		util.LogError("GetMetric", err)
 		return nil, 0, err
 	}
 
-	return proof.MakeWorkProof(app, logs, crs, now, uint64(app.LastMintBlockNumber))
+	return proof.MakeWorkProof(pod, logs, crs, now)
 }
 
 // checkAppStatus check app status
 // 校对应用状态
-func (m *Minter) CheckGpuAppStatus(ctx *context.Context, app model.Pod) (*appsv1.Deployment, error) {
-	address := AccountToSpace(app.Owner[:])
+func (m *Minter) CheckGPU(ctx *context.Context, pod model.Pod) (*appsv1.Deployment, error) {
+	address := AccountToSpace(pod.Owner[:])
 	nameSpace := m.K8sClient.AppsV1().Deployments(address)
-	name := GetPodName(app.PodId)
+	name := GetPodName(pod.PodId)
 
 	deployment, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
@@ -73,7 +72,7 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, app model.Pod) (*appsv1
 		}
 
 		// 重新创建
-		err = m.CreateGpuApp(ctx, app.Owner[:], app, []*gtypes.Env1{}, uint64(app.Version))
+		err = m.CreateGpuApp(ctx, pod, []*gtypes.Env1{})
 		if err != nil {
 			return nil, err
 		}
@@ -88,42 +87,43 @@ func (m *Minter) CheckGpuAppStatus(ctx *context.Context, app model.Pod) (*appsv1
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, app model.Pod, envs []*gtypes.Env1, version uint64) error {
-	saddress := AccountToSpace(user)
+func (m *Minter) CreateGpuApp(ctx *context.Context, pod model.Pod, envs []*gtypes.Env1) error {
+	// get namespace name
+	name := GetPodName(pod.PodId)
+	saddress := AccountToSpace(pod.Owner[:])
+	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
 	err := m.checkNameSpace(*ctx, saddress)
 	if err != nil {
 		return err
 	}
 
-	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
-	name := GetPodName(app.PodId)
-
-	// 构建容器
-	// 构建容器端口
-	pContainers, err := m.buildPodContainer(ctx, app, saddress, name, app.Containers, envs)
+	// build pod
+	// build pod ports
+	pContainers, err := m.buildPodContainer(ctx, pod, saddress, name, pod.Containers, envs)
 	if err != nil {
 		return err
 	}
 
-	// 添加gpu资源
+	// add gpu resources
 	for i := 0; i < len(pContainers); i++ {
-		pContainers[i].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Containers[i-1].Cr.Gpu), resource.DecimalExponent)
-		pContainers[i].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(app.Containers[i-1].Cr.Gpu), resource.DecimalExponent)
+		pContainers[i].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(pod.Containers[i].Cr.Gpu), resource.DecimalExponent)
+		pContainers[i].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(pod.Containers[i].Cr.Gpu), resource.DecimalExponent)
 	}
 
+	// build deployment
 	nvidiaClass := "nvidia"
 	deployment := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
-			Annotations: map[string]string{"version": fmt.Sprint(version)},
+			Annotations: map[string]string{"version": fmt.Sprint(pod.Version)},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{"gpu": name},
+				MatchLabels: map[string]string{"tee": name},
 			},
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"gpu": name},
+					Labels: map[string]string{"tee": name},
 				},
 				Spec: v1.PodSpec{
 					RuntimeClassName: &nvidiaClass,
@@ -136,11 +136,11 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, app model.Pod, 
 		},
 	}
 
-	// 添加模型
-	m.WrapAiModel(&app, &deployment)
+	// add model
+	m.WrapAiModel(&pod, &deployment)
 
 	// ADD Libos
-	m.WrapLibos(&deployment, app.TeeType)
+	m.WrapLibos(&deployment, pod.TeeType)
 
 	_, err = nameSpace.Create(*ctx, &deployment, metav1.CreateOptions{})
 	if err != nil {
@@ -150,31 +150,11 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, user []byte, app model.Pod, 
 	return err
 }
 
-func (m *Minter) UpdateGpuApp(ctx *context.Context, user []byte, workId gtypes.WorkId, app *gtypes.GpuApp, envs []v1.EnvVar, version uint64) error {
-	saddress := AccountToSpace(user)
-	nameSpace := m.K8sClient.AppsV1().Deployments(saddress)
-	name := GetPodName(workId.Id)
-
-	existing, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
-	if err == nil {
-		fmt.Println("================================================= Updating", name)
-		existing.ObjectMeta.Annotations = map[string]string{
-			"version": fmt.Sprint(version),
-		}
-		existing.Spec.Template.Spec.Containers[0].Env = envs
-		existing.Spec.Template.Spec.Containers[0].Image = string(app.Image)
-		// existing.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort = int32(app.Port[0])
-		_, err = nameSpace.Update(*ctx, existing, metav1.UpdateOptions{})
-		fmt.Println("================================================= Update", err)
-	}
-
-	return err
-}
-
 func (m *Minter) WrapAiModel(app *model.Pod, deployment *appsv1.Deployment) {
 	meta := map[string]string{}
 	json.Unmarshal([]byte(app.Meta), &meta)
-	if meta["ai-model"] == "sd" {
+	switch meta["ai-model"] {
+	case "sd":
 		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[0].VolumeMounts, v1.VolumeMount{
 			Name:      "model-volume",
 			MountPath: "/app/stable-diffusion-webui/models/Stable-diffusion",
@@ -200,7 +180,7 @@ func (m *Minter) WrapAiModel(app *model.Pod, deployment *appsv1.Deployment) {
 				},
 			},
 		})
-	} else if meta["ai-model"] == "ollama" {
+	case "ollama":
 		deployment.Spec.Template.Spec.Containers[0].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[0].VolumeMounts, v1.VolumeMount{
 			Name:      "ollama-volume",
 			MountPath: "/root/.ollama",

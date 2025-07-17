@@ -45,6 +45,7 @@ import (
 	"wetee.app/worker/graph"
 	"wetee.app/worker/internal/controller"
 	"wetee.app/worker/internal/mint"
+	"wetee.app/worker/internal/mint/libos"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/internal/util"
 	//+kubebuilder:scaffold:imports
@@ -165,8 +166,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// signer, _ := mint.MinterIns.PrivateKey.ToSigner()
-	// go libos.StartSecretServerInCluster(signer.Address)
+	signer, _ := mint.MinterIns.PrivateKey.ToSigner()
+	go libos.StartSecretServerInCluster(signer.Address)
 	go mint.MinterIns.StartMint()
 	go graph.StartServer()
 

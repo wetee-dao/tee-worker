@@ -36,7 +36,7 @@ func StartSecretServerInCluster(addr string) {
 		resp := wtypes.TeeParam{
 			Time:    t,
 			Report:  report,
-			Address: minter.Address,
+			Address: minter.PublicKey,
 			Data:    []byte{},
 		}
 

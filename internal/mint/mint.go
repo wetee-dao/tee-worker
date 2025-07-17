@@ -11,7 +11,6 @@ import (
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 	chains "github.com/wetee-dao/tee-dsecret/pkg/chains"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	sidechain "github.com/wetee-dao/tee-dsecret/side-chain"
@@ -94,13 +93,16 @@ func (m *Minter) StartMint() {
 		}
 
 		// 保存clusterId
-		store.SetClusterId(cluster.Id)
-
+		err = store.SetClusterId(cluster.Id)
+		if err != nil {
+			util.LogError("worker.SetClusterId", err)
+			time.Sleep(time.Second * 10)
+			continue
+		}
 		break
 	}
 
 	clusterId, _ := store.GetClusterId()
-	fmt.Println("ClusterId => ", clusterId)
 
 	for {
 		start := time.Now()
@@ -129,14 +131,18 @@ func (m *Minter) StartMint() {
 		}
 
 		// 删除过期的合约
-		// Delete expired contracts
+		// Delete contracts
 		for _, p := range deleted {
-			err := m.StopApp(p)
+			err := m.StopPod(p)
 			if err != nil && !strings.Contains(err.Error(), "not found") {
-				util.LogError("DeleteRuning "+fmt.Sprint(p.PodId), err)
+				util.LogError("DelPod "+fmt.Sprint(p.PodId), err)
 				continue
 			}
-			store.DelPod(p)
+
+			err = store.DelPod(p)
+			if err != nil {
+				util.LogWithRed("DelPod", err)
+			}
 		}
 
 		addAndUpdated := append(added, updated...)
@@ -154,92 +160,85 @@ func (m *Minter) StartMint() {
 		// }
 		var stage uint32 = 30
 
-		util.LogWithGray("POD ALL", ">", len(podVersions))
 		todoList, err := chains.MainChain.GetPodsByIds(ids)
-		if err != nil {
-			util.LogError("GetPodsByIds", err)
-			sleepFrom(start, time.Second*6)
-			continue
+		if len(todoList) > 0 {
+			util.LogWithGray("POD ALL", "-", len(podVersions))
+			if err != nil {
+				util.LogError("GetPodsByIds", err)
+				sleepFrom(start, time.Second*6)
+				continue
+			}
+			util.LogWithCyan("TODO   ", "-", len(todoList))
 		}
-		util.LogWithCyan("TODO   ", ">", len(todoList))
 
 		// 触发TEE调用
 		// Trigger TEE calls
 		// m.trigger(cs, clusterId, uint64(head.Number))
 
-		// 校对合约状态
 		// Check contract status
 		calls := make([]*model.IndexCall, 0, 20)
 		for _, p := range todoList {
 			ctx := context.Background()
 
 			if p.Ptype.CPU != nil {
-				// 如果是APP类型，检查Pod状态，检查是否需要上传工作证明
-				// If it is APP type, check Pod status, check if it needs to upload work proof
-				call, t, err := m.DoWithAppState(&ctx, p, stage, uint32(head))
+				call, t, err := m.DoAPP(&ctx, p, stage, uint32(head))
 				if err != nil {
-					util.LogError("DoWithAppState", err)
+					util.LogError("DoWithApp", err)
 					continue
 				}
 				if call != nil {
-					bt, _ := codec.Encode(call)
-					calls = append(calls, &model.IndexCall{
-						Index: t,
-						Call:  bt,
-					})
+					calls = append(calls, model.ToIndexCall(call, t))
 				}
 			} else if p.Ptype.SCRIPT != nil {
-				// 如果是TASK类型，检查Pod状态，Pod如果执行完成，则上传日志和结果
-				// If it is TASK type, check Pod status, Pod if it is executed, upload logs and results
-				call, t, err := m.DoWithTaskState(&ctx, p, stage, uint32(head))
+				call, t, err := m.DoTASK(&ctx, p, stage, uint32(head))
 				if err != nil {
-					util.LogError("DoWithTaskState", err)
+					util.LogError("DoTASK", err)
 					continue
 				}
 				if call != nil {
-					bt, _ := codec.Encode(call)
-					calls = append(calls, &model.IndexCall{
-						Index: t,
-						Call:  bt,
-					})
+					calls = append(calls, model.ToIndexCall(call, t))
 				}
 			} else if p.Ptype.GPU != nil {
-				// 如果是GPU类型，检查Pod状态，检查是否需要上传工作证明
-				call, t, err := m.DoWithGpuAppState(&ctx, p, stage, uint32(head))
+				call, t, err := m.DoGPU(&ctx, p, stage, uint32(head))
 				if err != nil {
-					util.LogError("DoWithGpuAppState", err)
+					util.LogError("DoGPU", err)
 					continue
 				}
 				if call != nil {
-					bt, _ := codec.Encode(call)
-					calls = append(calls, &model.IndexCall{
-						Index: t,
-						Call:  bt,
-					})
+					calls = append(calls, model.ToIndexCall(call, t))
 				}
 			}
 
-			store.SetPod(p)
+			err = store.SetPod(p)
+			if err != nil {
+				util.LogWithRed("SetPod", err)
+			}
 		}
 
-		if len(calls) > 0 {
-			_, err := sidechain.SubmitTx(&model.Tx{
-				Payload: &model.Tx_HubCall{
-					HubCall: &model.HubCall{
-						Call: calls,
-					},
+		if len(calls) == 0 {
+			sleepFrom(start, time.Second*6)
+			continue
+		}
+
+		// substrate sync tx
+		_, err = sidechain.SubmitTx(&model.Tx{
+			Payload: &model.Tx_HubCall{
+				HubCall: &model.HubCall{
+					Call: calls,
 				},
-			})
-			fmt.Println("submit tx", err)
+			},
+		})
+		if err != nil {
+			util.LogError("SubmitTx", err)
 		}
 
 		sleepFrom(start, time.Second*6)
 	}
 }
 
-func CalcPodVersionFromCache(newArr []model.PodVersion) (added, updated []model.PodVersion, deleted []model.Pod, e error) {
+func CalcPodVersionFromCache(newPod []model.PodVersion) (added, updated []model.PodVersion, deleted []model.Pod, e error) {
 	// get data from cache
-	oldArr, err := store.GetPods()
+	oldPod, err := store.GetPods()
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -247,10 +246,11 @@ func CalcPodVersionFromCache(newArr []model.PodVersion) (added, updated []model.
 	oldMap := make(map[uint64]model.Pod)
 	newMap := make(map[uint64]model.PodVersion)
 
-	for _, v := range oldArr {
+	for _, v := range oldPod {
 		oldMap[v.PodId] = *v
 	}
-	for _, v := range newArr {
+
+	for _, v := range newPod {
 		newMap[v.PodId] = v
 	}
 

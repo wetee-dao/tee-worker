@@ -9,7 +9,6 @@ import (
 	"github.com/edgelesssys/ego/attestation"
 	"github.com/edgelesssys/ego/attestation/tcbstatus"
 	"github.com/edgelesssys/ego/enclave"
-	"github.com/vedhavyas/go-subkey/v2"
 	"github.com/vedhavyas/go-subkey/v2/ed25519"
 	"wetee.app/worker/internal/util"
 
@@ -29,10 +28,7 @@ func VerifyReportProof(workerReport *wtypes.TeeParam) (*wtypes.TeeReport, error)
 	var reportBytes, msgBytes, timestamp = workerReport.Report, workerReport.Data, workerReport.Time
 
 	// decode address
-	_, signer, err := subkey.SS58Decode(workerReport.Address)
-	if err != nil {
-		return nil, errors.New("SS58 decode: " + err.Error())
-	}
+	signer := workerReport.Address
 
 	// 检查时间戳，超过 30s 签名过期
 	if timestamp+30 < time.Now().Unix() {

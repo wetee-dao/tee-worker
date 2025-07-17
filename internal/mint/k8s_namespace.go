@@ -9,7 +9,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// checkNameSpace check if the namespace exists, if not, create it
+// Check if the namespace exists, if not, create it
+// 检查命名空间是否存在，如果不存在，则创建
 func (m *Minter) checkNameSpace(ctx context.Context, address string) error {
 	k8s := m.K8sClient.CoreV1()
 	nameSpaces, err := k8s.Namespaces().List(ctx, metav1.ListOptions{})

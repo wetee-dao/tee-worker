@@ -28,7 +28,7 @@ func (m *Minter) UploadClusterProof() ([]byte, error) {
 		Report:  report,
 		Time:    t,
 		TeeType: 0,
-		Address: signer.SS58Address(42),
+		Address: signer.PublicKey,
 		Data:    nil,
 	}
 
@@ -48,6 +48,7 @@ func (m *Minter) UploadClusterProof() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// Lock the mutex to ensure thread safety
 	m.mu.Lock()
 	// Initialize a channel for the message ID

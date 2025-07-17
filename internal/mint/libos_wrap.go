@@ -8,7 +8,6 @@ import (
 
 func (m *Minter) WrapLibos(deployment *appsv1.Deployment, version model.TEEType) {
 	if version.CVM != nil {
-		// 获取APPID
 		envs := []corev1.EnvVar{
 			deployment.Spec.Template.Spec.Containers[0].Env[0],
 		}

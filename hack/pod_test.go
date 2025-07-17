@@ -73,7 +73,7 @@ func TestUpdatePod(t *testing.T) {
 
 	trueValue := true
 	var value80 uint16 = 80
-	var container_id uint64 = 1
+	var container_id uint64 = 0
 	cloudIns.ExecEditContainer(0,
 		[]cloud.ContainerInput{
 			{
@@ -111,7 +111,7 @@ func TestRestartPod(t *testing.T) {
 		panic(err)
 	}
 
-	cloudIns.ExecStopPod(2, chain.ExecParams{
+	cloudIns.ExecRestartPod(0, chain.ExecParams{
 		Signer:    &pk,
 		PayAmount: types.NewU128(*big.NewInt(0)),
 	})
@@ -135,7 +135,7 @@ func TestDeletePod(t *testing.T) {
 		panic(err)
 	}
 
-	cloudIns.ExecStopPod(2, chain.ExecParams{
+	cloudIns.ExecStopPod(0, chain.ExecParams{
 		Signer:    &pk,
 		PayAmount: types.NewU128(*big.NewInt(0)),
 	})

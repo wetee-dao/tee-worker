@@ -110,7 +110,7 @@ func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *types.TeeParam) (*ty
 		Report:  report,
 		Time:    t,
 		TeeType: 0,
-		Address: signer.SS58Address(42),
+		Address: signer.PublicKey,
 		Data:    nil,
 	}
 

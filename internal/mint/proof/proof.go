@@ -17,7 +17,7 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now time.Time, BlockNumber uint64) (*types.Call, int64, error) {
+func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now time.Time) (*types.Call, int64, error) {
 	name := fmt.Sprint(pod.PodId)
 
 	// 获取log和硬件资源使用量
@@ -37,11 +37,12 @@ func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now tim
 		util.LogError("DeleteLog", err)
 		return nil, 0, err
 	}
+
 	if len(logs) > 0 {
 		// 获取log hash
 		// Get log hash
 		var bt []byte
-		logHash, bt, err = GetWorkLogHash(logs, BlockNumber)
+		logHash, bt, err = GetWorkLogHash(logs, uint64(pod.LastMintBlockNumber))
 		if err != nil {
 			util.LogError("getWorkLogHash", err)
 			return nil, 0, err
@@ -58,11 +59,12 @@ func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now tim
 		util.LogError("DeleteLog", err)
 		return nil, 0, err
 	}
+
 	if len(crs) > 0 {
 		// 获取计算资源hash
 		// Get Computing resource hash
 		var bt []byte
-		crHash, cr, bt, err = GetWorkCrHash(crs, BlockNumber)
+		crHash, cr, bt, err = GetWorkCrHash(crs, uint64(pod.LastMintBlockNumber))
 		if err != nil {
 			util.LogError("getWorkCrHash", err)
 			return nil, 0, err
@@ -85,14 +87,14 @@ func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now tim
 		hasHash = true
 	}
 
-	fmt.Println("cache work proof ========> ", crProof, hasHash)
+	fmt.Println("MakeWorkProof ========> ", crProof, hasHash)
 
 	// 获取工作证明
 	// Get report of work
 	report := [32]byte{}
 	reportData, err := store.GetWorkDcapReport(pod.PodId)
 	if err != nil {
-		util.LogError("GetWorkDcapReport", err)
+		// util.LogError("GetWorkDcapReport", err)
 	} else {
 		hash := blake2b.Sum256(reportData)
 		report = hash
@@ -179,7 +181,7 @@ func CacheWorkProof(podId uint64, logs []string, crs map[string][]int64, now tim
 		}
 	}
 
-	fmt.Println("cache work proof ========> ", len(logs), len(crs))
+	fmt.Println("CACHE TEE PROOF ========> ", len(logs), len(crs))
 
 	return nil
 }

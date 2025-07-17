@@ -15,53 +15,51 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func (m *Minter) DoWithTaskState(ctx *context.Context, app model.Pod, stage uint32, blockNumber uint32) (*types.Call, int64, error) {
+func (m *Minter) DoTASK(ctx *context.Context, pod model.Pod, stage uint32, blockNumber uint32) (*types.Call, int64, error) {
 	// 处于调度状态，不处理
-	if uint64(app.Status) == 4 {
+	if uint64(pod.Status) == 4 {
 		return nil, 0, nil
 	}
 
-	pod, err := m.CheckTaskStatus(ctx, app)
+	task, err := m.CheckTASK(ctx, pod)
 	if err != nil {
-		util.LogError("checkTaskStatus", err)
+		util.LogError("CheckTASK", err)
 		return nil, 0, err
 	}
 
 	// 判断是否上传工作证明
 	// Determine whether to upload proof of employment
-	if pod.Status.Phase != v1.PodSucceeded && pod.Status.Phase != v1.PodFailed {
+	if task.Status.Phase != v1.PodSucceeded && task.Status.Phase != v1.PodFailed {
 		return nil, 0, nil
 	}
 	util.LogError("===========================================WorkProofUpload TASK")
-	nameSpace := AccountToSpace(app.Owner[:])
-	name := GetPodName(app.PodId)
+	nameSpace := AccountToSpace(pod.Owner[:])
+	name := GetPodName(pod.PodId)
 
 	// 获取log和硬件资源使用量
 	// Obtain the log and hardware resource usage
-	t := uint64(blockNumber) - uint64(app.LastMintBlockNumber)
+	t := uint64(blockNumber) - uint64(pod.LastMintBlockNumber)
 	from := time.Now().Add(-6 * time.Second * time.Duration(t)).Unix()
-	logs, crs, err := m.getMetricInfo(*ctx, app, nameSpace, name, from)
+	logs, crs, err := m.getMetricInfo(*ctx, pod, nameSpace, name, from)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
 		return nil, 0, err
 	}
 
-	m.StopApp(app)
-
-	now := time.Now()
-	return proof.MakeWorkProof(app, logs, crs, now, uint64(app.LastMintBlockNumber))
+	m.StopPod(pod)
+	return proof.MakeWorkProof(pod, logs, crs, time.Now())
 }
 
 // check task status，if task is running, return pod, if task not run, create pod
-func (m *Minter) CheckTaskStatus(ctx *context.Context, app model.Pod) (*v1.Pod, error) {
-	address := AccountToSpace(app.Owner[:])
+func (m *Minter) CheckTASK(ctx *context.Context, pod model.Pod) (*v1.Pod, error) {
+	address := AccountToSpace(pod.Owner[:])
 	nameSpace := m.K8sClient.CoreV1().Pods(address)
-	name := GetPodName(app.PodId)
+	name := GetPodName(pod.PodId)
 
-	pod, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
+	task, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if err.Error() == "pods \""+name+"\" not found" {
-			err = m.CreateTask(ctx, app.Owner[:][:], app, []*gtypes.Env1{}, app.Version)
+			err = m.CreateTask(ctx, pod.Owner[:][:], pod, []*gtypes.Env1{}, pod.Version)
 			if err != nil {
 				return nil, err
 			}
@@ -71,7 +69,7 @@ func (m *Minter) CheckTaskStatus(ctx *context.Context, app model.Pod) (*v1.Pod, 
 		return nil, err
 	}
 
-	return pod, nil
+	return task, nil
 }
 
 // create task

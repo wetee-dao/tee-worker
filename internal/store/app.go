@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wetee-dao/tee-dsecret/pkg/model"
+	"github.com/wetee-dao/tee-dsecret/pkg/util"
 )
 
 func SealAppID(PodId uint64) (string, error) {
@@ -17,7 +17,7 @@ func SealAppID(PodId uint64) (string, error) {
 	key := fmt.Sprint(PodId) + "-" + fmt.Sprint(time.Now().Unix())
 	var val []byte
 
-	val, err := model.SealWithProductKey([]byte(key), nil)
+	val, err := util.SealWithProductKey([]byte(key), nil)
 	if err != nil {
 		return "", err
 	}
@@ -38,7 +38,7 @@ func UnSealAppID(id string) (uint64, error) {
 	}
 
 	var val []byte
-	val, err = model.Unseal(buf, nil)
+	val, err = util.Unseal(buf, nil)
 	if err != nil {
 		return 0, err
 	}
