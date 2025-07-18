@@ -8,8 +8,9 @@ import (
 
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/mint/proof"
-	types "wetee.app/worker/internal/model"
+	"wetee.app/worker/internal/store"
 )
 
 // UploadClusterProof is a function used to upload cluster verification information
@@ -24,7 +25,7 @@ func (m *Minter) UploadClusterProof() ([]byte, error) {
 	}
 
 	// 上传 TEE 证书
-	param := types.TeeParam{
+	param := model.TeeParam{
 		Report:  report,
 		Time:    t,
 		TeeType: 0,
@@ -39,7 +40,7 @@ func (m *Minter) UploadClusterProof() ([]byte, error) {
 	msgId := uuid.NewV4().String()
 
 	// Call the SendMessageToSecret method to send a message
-	err = m.SendMessageToSecret(context.Background(), &types.Message{
+	err = m.SendMessageToSecret(context.Background(), &store.Message{
 		MsgID:   msgId,
 		Type:    "upload_cluster_proof",
 		Payload: bt,
@@ -57,12 +58,12 @@ func (m *Minter) UploadClusterProof() ([]byte, error) {
 	m.mu.Unlock()
 
 	// Initialize a variable of type Result
-	var data *types.Result
+	var data *store.Result
 	// Select statement to wait for data on the channel
 	select {
 	// If there is data on the channel, assign it to the data variable
 	case d := <-m.preRecerve[msgId]:
-		data = d.(*types.Result)
+		data = d.(*store.Result)
 	// If no data is received within 30 seconds, return a timeout error
 	case <-time.After(30 * time.Second):
 		return nil, fmt.Errorf("timeout receiving from channel")
@@ -90,7 +91,7 @@ func (m *Minter) UploadClusterProofreply(data []byte, err string, msgID string, 
 		return nil
 	}
 
-	m.preRecerve[msgID] <- &types.Result{
+	m.preRecerve[msgID] <- &store.Result{
 		Error:  err,
 		Result: data,
 	}

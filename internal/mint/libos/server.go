@@ -7,15 +7,17 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"wetee.app/worker/internal/mint"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/mint/proof"
-	wtypes "wetee.app/worker/internal/model"
+	"wetee.app/worker/internal/util"
 )
 
 // 启动InCluster服务器
 // start server in cluster for confidential
-func StartSecretServerInCluster(addr string) {
+func StartTEEServer(pk *model.PrivKey) {
 	router := chi.NewRouter()
+	addr := pk.GetPublic().SS58()
+	signer, _ := pk.ToSigner()
 
 	// TODO
 	cert, priv := proof.CreateCertificate(addr)
@@ -29,14 +31,17 @@ func StartSecretServerInCluster(addr string) {
 	}
 
 	router.Get("/report", func(w http.ResponseWriter, r *http.Request) {
-		minter, _ := mint.MinterIns.PrivateKey.ToSigner()
-
 		// Get root dcap report
-		report, t, _ := proof.GetRemoteReport(minter, []byte{})
-		resp := wtypes.TeeParam{
+		report, t, err := proof.GetRemoteReport(signer, []byte{})
+		if err != nil {
+			util.LogWithYellow("SecretServer", "Remote REPORT", err)
+			return
+		}
+
+		resp := model.TeeParam{
 			Time:    t,
 			Report:  report,
-			Address: minter.PublicKey,
+			Address: pk.GetPublic().Byte(),
 			Data:    []byte{},
 		}
 

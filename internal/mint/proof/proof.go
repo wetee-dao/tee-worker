@@ -1,6 +1,7 @@
 package proof
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -91,18 +92,19 @@ func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now tim
 
 	// 获取工作证明
 	// Get report of work
-	report := [32]byte{}
-	reportData, err := store.GetWorkDcapReport(pod.PodId)
+	reportHash := [32]byte{}
+	report, err := store.GetPendingTEEReport(pod.PodId)
 	if err != nil {
 		// util.LogError("GetWorkDcapReport", err)
 	} else {
+		reportData, _ := json.Marshal(report)
 		hash := blake2b.Sum256(reportData)
-		report = hash
+		reportHash = hash
 	}
 
 	// 所有需要提交的信息都不存在，不继续提交
 	// All required submission information is missing, and the submission will not be continued.
-	if report == [32]byte{} && crHash == nil && logHash == nil {
+	if reportHash == [32]byte{} && crHash == nil && logHash == nil {
 		return nil, 0, errors.New("report, crHash and logHash are all nil")
 	}
 
@@ -115,14 +117,14 @@ func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now tim
 		return nil, 0, errors.New("get G-dkg_pub_key error")
 	}
 
-	err = chains.MainChain.DryStartPod(pod.PodId, types.H256(report), *account)
+	err = chains.MainChain.DryStartPod(pod.PodId, types.H256(reportHash), *account)
 	if err != nil {
 		util.LogError("DryStartPod", err)
 		return nil, 0, err
 	}
 
 	t := time.Now().UnixMilli()
-	call, err := chains.MainChain.TxCallOfStartPod(pod.PodId, types.H256(report), *account)
+	call, err := chains.MainChain.TxCallOfStartPod(pod.PodId, types.H256(reportHash), *account)
 	if err != nil {
 		util.LogError("TxCallOfStartPod", err)
 		return nil, 0, err

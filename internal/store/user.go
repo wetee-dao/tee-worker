@@ -22,17 +22,3 @@ func GetClusterId() (uint64, error) {
 	}
 	return strconv.ParseUint(string(val), 10, 64)
 }
-
-func SetMintId(id []byte) error {
-	key := "MinterId"
-	val := id
-	return model.SetKey(UserBucket, key, val)
-}
-
-func GetMintId() ([]byte, error) {
-	val, err := model.GetKey(UserBucket, "MinterId")
-	if err != nil {
-		return nil, err
-	}
-	return val, nil
-}

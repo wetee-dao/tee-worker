@@ -9,7 +9,7 @@ import (
 const PodBucket = "pod"
 const PodKey = "run_"
 
-// SetPod 将运行时缓存数据存储到指定的 bucket 和键中
+// SetPod
 func SetPod(pod model.Pod) error {
 	key := PodKey + fmt.Sprint(pod.PodId)
 	return model.SetJson(PodBucket, key, &pod)
@@ -21,7 +21,7 @@ func DelPod(pod model.Pod) error {
 	return model.DeleteKey(PodBucket, key)
 }
 
-// GetPods 函数从 SecretBucket 中获取键为 "run_" 的值
+// GetPods
 func GetPods() ([]*model.Pod, error) {
 	return model.GetJsonList[model.Pod](PodBucket, PodKey)
 }

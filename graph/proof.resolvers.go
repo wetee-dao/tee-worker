@@ -12,11 +12,11 @@ import (
 	"strings"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"wetee.app/worker/graph/model"
+	wmodel "wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/mint/proof"
-	wtypes "wetee.app/worker/internal/model"
 )
 
 // WorkLoglist is the resolver for the work_loglist field.
@@ -62,7 +62,7 @@ func (r *queryResolver) WorkWetriclist(ctx context.Context, podID uint64, page i
 }
 
 // WorkServicelist is the resolver for the work_servicelist field.
-func (r *queryResolver) WorkServicelist(ctx context.Context, projectID string, podID uint64) ([]*model.Service, error) {
+func (r *queryResolver) WorkServicelist(ctx context.Context, projectID string, podID uint64) ([]*wmodel.Service, error) {
 	name := mint.GetPodName(podID)
 
 	client := mint.MinterIns.K8sClient
@@ -74,20 +74,20 @@ func (r *queryResolver) WorkServicelist(ctx context.Context, projectID string, p
 		return nil, gqlerror.Errorf("WorkServiceList:" + err.Error())
 	}
 
-	var services []*model.Service = make([]*model.Service, 0, 10)
+	var services []*wmodel.Service = make([]*wmodel.Service, 0, 10)
 	if list != nil {
 		for i := 0; i < len(list.Items); i++ {
 			item := list.Items[i]
-			var ports = make([]*model.ServicePort, 0, len(item.Spec.Ports))
+			var ports = make([]*wmodel.ServicePort, 0, len(item.Spec.Ports))
 			for j := 0; j < len(item.Spec.Ports); j++ {
-				ports = append(ports, &model.ServicePort{
+				ports = append(ports, &wmodel.ServicePort{
 					Name:     item.ObjectMeta.Name,
 					Port:     int(item.Spec.Ports[j].Port),
 					Protocol: fmt.Sprint(item.Spec.Ports[j].Protocol),
 					NodePort: int(item.Spec.Ports[j].NodePort),
 				})
 			}
-			services = append(services, &model.Service{
+			services = append(services, &wmodel.Service{
 				Type:  fmt.Sprint(item.Spec.Type),
 				Ports: ports,
 			})
@@ -105,8 +105,8 @@ func (r *queryResolver) AttestationReportVerify(ctx context.Context, report stri
 		return false, gqlerror.Errorf("HexDecodeString:" + err.Error())
 	}
 
-	ps := wtypes.TeeParam{}
-	json.Unmarshal(bt, &wtypes.TeeParam{})
+	ps := model.TeeParam{}
+	json.Unmarshal(bt, &model.TeeParam{})
 
 	_, err = proof.VerifyReportProof(&ps)
 	if err != nil {

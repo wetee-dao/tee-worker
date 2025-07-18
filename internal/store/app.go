@@ -45,9 +45,9 @@ func UnSealAppID(id string) (uint64, error) {
 
 	str := string(val)
 	strs := strings.Split(str, "-")
-	if len(strs) != 3 {
+	if len(strs) != 2 {
 		return 0, fmt.Errorf("invalid id")
 	}
 
-	return strconv.ParseUint(strs[1], 10, 64)
+	return strconv.ParseUint(strs[0], 10, 64)
 }

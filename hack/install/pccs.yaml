@@ -13,11 +13,15 @@ spec:
         app: sgx-pccs-api
     spec:
       containers:
-        - image: wetee/pccs:latest
+        - image: wetee/pccs:250718
           name: c1
           env:
-            - name: APIKEY
-              value: 8d375b775de84c2593e7694dedbbbe90
+            - name: HTTP_PROXY
+              value: "http://192.168.111.105:8891"
+            - name: HTTPS_PROXY
+              value: "http://192.168.111.105:8891"
+            - name: NO_PROXY
+              value: "localhost,127.0.0.1"
           ports:
             - containerPort: 8081
               name: wetee-pccs-8081

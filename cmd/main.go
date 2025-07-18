@@ -166,8 +166,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	signer, _ := mint.MinterIns.PrivateKey.ToSigner()
-	go libos.StartSecretServerInCluster(signer.Address)
+	go libos.StartTEEServer(nodePriv)
 	go mint.MinterIns.StartMint()
 	go graph.StartServer()
 

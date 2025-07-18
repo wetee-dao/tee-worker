@@ -10,12 +10,12 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/mint/proof"
-	types "wetee.app/worker/internal/model"
+	"wetee.app/worker/internal/store"
 )
 
 // ReencryptSecretRequest 函数用于生成重新加密的请求，并处理返回结果
-func (m *Minter) ReencryptSecretRequest(secretId string, rdrPk *model.PubKey) (*types.ReencryptSecret, error) {
-	req := types.ReencryptSecretRequest{
+func (m *Minter) ReencryptSecretRequest(secretId string, rdrPk *model.PubKey) (*model.ReencryptSecret, error) {
+	req := model.ReencryptSecretRequest{
 		SecretId: secretId,
 		RdrPk:    rdrPk,
 	}
@@ -29,7 +29,7 @@ func (m *Minter) ReencryptSecretRequest(secretId string, rdrPk *model.PubKey) (*
 	msgId := uuid.NewV4().String()
 
 	// Call the SendMessageToSecret method to send a message
-	err = m.SendMessageToSecret(context.Background(), &types.Message{
+	err = m.SendMessageToSecret(context.Background(), &store.Message{
 		MsgID:   msgId,
 		Type:    "reencrypt_secret_remote_request",
 		Payload: bt,
@@ -48,12 +48,12 @@ func (m *Minter) ReencryptSecretRequest(secretId string, rdrPk *model.PubKey) (*
 	m.mu.Unlock()
 
 	// Initialize a variable of type Result
-	var data *types.Result
+	var data *store.Result
 	// Select statement to wait for data on the channel
 	select {
 	// If there is data on the channel, assign it to the data variable
 	case d := <-m.preRecerve[msgId]:
-		data = d.(*types.Result)
+		data = d.(*store.Result)
 	// If no data is received within 30 seconds, return a timeout error
 	case <-time.After(30 * time.Second):
 		return nil, fmt.Errorf("timeout receiving from channel")
@@ -71,7 +71,7 @@ func (m *Minter) ReencryptSecretRequest(secretId string, rdrPk *model.PubKey) (*
 	}
 
 	// Unmarshal the data into a ReencryptSecret struct
-	var reencryptSecret types.ReencryptSecret
+	var reencryptSecret model.ReencryptSecret
 	err = json.Unmarshal(data.Result, &reencryptSecret)
 
 	return &reencryptSecret, err
@@ -84,7 +84,7 @@ func (m *Minter) ReencryptSecretReply(data []byte, err string, msgID string, Org
 		return nil
 	}
 
-	m.preRecerve[msgID] <- &types.Result{
+	m.preRecerve[msgID] <- &store.Result{
 		Error:  err,
 		Result: data,
 	}
@@ -93,7 +93,7 @@ func (m *Minter) ReencryptSecretReply(data []byte, err string, msgID string, Org
 }
 
 // LaunchFromDsecret 函数处理重新加密的秘密回复
-func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *types.TeeParam) (*types.ReencryptSecret, error) {
+func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *model.TeeParam) (*model.ReencryptSecret, error) {
 	signer, _ := m.PrivateKey.ToSigner()
 
 	// 获取 TEE 根证书
@@ -106,7 +106,7 @@ func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *types.TeeParam) (*ty
 
 	// 构造集群可信证明
 	// make cluster dcap report
-	clusterReport := types.TeeParam{
+	clusterReport := model.TeeParam{
 		Report:  report,
 		Time:    t,
 		TeeType: 0,
@@ -116,7 +116,7 @@ func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *types.TeeParam) (*ty
 
 	// 构造启动请求
 	// make launch request
-	req := types.LaunchRequest{
+	req := store.LaunchRequest{
 		WorkID:  fmt.Sprint(pid),
 		Libos:   libosReport,
 		Cluster: &clusterReport,
@@ -131,11 +131,14 @@ func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *types.TeeParam) (*ty
 	msgId := uuid.NewV4().String()
 
 	// Call the SendMessageToSecret method to send a message
-	err = m.SendMessageToSecret(context.Background(), &types.Message{
+	err = m.SendMessageToSecret(context.Background(), &store.Message{
 		MsgID:   msgId,
 		Type:    "work_launch_request",
 		Payload: bt,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	// Lock the mutex to ensure thread safety
 	m.mu.Lock()
@@ -145,12 +148,12 @@ func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *types.TeeParam) (*ty
 	m.mu.Unlock()
 
 	// Initialize a variable of type Result
-	var data *types.Result
+	var data *store.Result
 	// Select statement to wait for data on the channel
 	select {
 	// If there is data on the channel, assign it to the data variable
 	case d := <-m.preRecerve[msgId]:
-		data = d.(*types.Result)
+		data = d.(*store.Result)
 	// If no data is received within 30 seconds, return a timeout error
 	case <-time.After(30 * time.Second):
 		return nil, fmt.Errorf("timeout receiving from channel")
@@ -168,7 +171,7 @@ func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *types.TeeParam) (*ty
 	}
 
 	// Unmarshal the data into a ReencryptSecret struct
-	var reencryptSecret types.ReencryptSecret
+	var reencryptSecret model.ReencryptSecret
 	err = json.Unmarshal(data.Result, &reencryptSecret)
 
 	return &reencryptSecret, err
@@ -181,7 +184,7 @@ func (m *Minter) WorkLaunchReply(data []byte, err string, msgID string, OrgId st
 		return nil
 	}
 
-	m.preRecerve[msgID] <- &types.Result{
+	m.preRecerve[msgID] <- &store.Result{
 		Error:  err,
 		Result: data,
 	}

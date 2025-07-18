@@ -1,4 +1,4 @@
-package types
+package store
 
 import (
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
@@ -24,28 +24,12 @@ type Result struct {
 	Result []byte `json:"result"`
 }
 
-// ReencryptSecretRequest 函数处理重新加密的秘密请求
-type ReencryptSecretRequest struct {
-	// 密文ID
-	SecretId string `json:"secret_id,omitempty"`
-	// 密文接收者公钥
-	RdrPk *model.PubKey `json:"rdr_pk,omitempty"`
-}
-
-// ReencryptSecret 函数处理重新加密的结果
-type ReencryptSecret struct {
-	// 密文解码数据，需配合私钥使用
-	XncCmt []byte `json:"xnc_cmt,omitempty"`
-	// 密文
-	EncScrt [][]byte `json:"enc_scrt,omitempty"`
-}
-
 // LaunchRequest 函数处理启动请求
 type LaunchRequest struct {
 	// libos tee report
-	Libos *TeeParam
+	Libos *model.TeeParam
 	// cluster tee report
-	Cluster *TeeParam
+	Cluster *model.TeeParam
 	// worker tee report
 	WorkID string
 }
@@ -59,5 +43,5 @@ type Envs struct {
 // 环境变量包装
 type EnvWrap struct {
 	Pub Envs
-	Sec ReencryptSecret
+	Sec model.ReencryptSecret
 }

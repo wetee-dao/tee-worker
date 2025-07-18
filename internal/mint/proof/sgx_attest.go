@@ -10,15 +10,14 @@ import (
 	"github.com/edgelesssys/ego/attestation/tcbstatus"
 	"github.com/edgelesssys/ego/enclave"
 	"github.com/vedhavyas/go-subkey/v2/ed25519"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/internal/util"
-
-	wtypes "wetee.app/worker/internal/model"
 )
 
-func VerifyReportProof(workerReport *wtypes.TeeParam) (*wtypes.TeeReport, error) {
+func VerifyReportProof(workerReport *model.TeeParam) (*model.TeeReport, error) {
 	// TODO SEV/TDX not support
 	if workerReport.TeeType != 0 {
-		return &wtypes.TeeReport{
+		return &model.TeeReport{
 			CodeSignature: []byte{},
 			CodeSigner:    []byte{},
 			CodeProductID: []byte{},
@@ -64,7 +63,7 @@ func VerifyReportProof(workerReport *wtypes.TeeParam) (*wtypes.TeeReport, error)
 	// 	return nil, errors.New("debug mode is not allowed")
 	// }
 
-	return &wtypes.TeeReport{
+	return &model.TeeReport{
 		TeeType:       workerReport.TeeType,
 		CodeSigner:    report.SignerID,
 		CodeSignature: report.UniqueID,
