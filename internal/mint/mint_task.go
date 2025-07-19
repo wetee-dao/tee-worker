@@ -15,13 +15,8 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func (m *Minter) DoTASK(ctx *context.Context, pod model.Pod, stage uint32, blockNumber uint32) (*types.Call, int64, error) {
-	// 处于调度状态，不处理
-	if uint64(pod.Status) == 4 {
-		return nil, 0, nil
-	}
-
-	task, err := m.CheckTASK(ctx, pod)
+func (m *Minter) MintTASK(ctx *context.Context, pod model.Pod, stage uint32, blockNumber uint32) (*types.Call, int64, error) {
+	task, err := m.DeployOrUpdateTASK(ctx, pod)
 	if err != nil {
 		util.LogError("CheckTASK", err)
 		return nil, 0, err
@@ -32,7 +27,8 @@ func (m *Minter) DoTASK(ctx *context.Context, pod model.Pod, stage uint32, block
 	if task.Status.Phase != v1.PodSucceeded && task.Status.Phase != v1.PodFailed {
 		return nil, 0, nil
 	}
-	util.LogError("===========================================WorkProofUpload TASK")
+
+	util.LogWithBlue("===========================================MINT TASK", pod.PodId)
 	nameSpace := AccountToSpace(pod.Owner[:])
 	name := GetPodName(pod.PodId)
 
@@ -40,7 +36,7 @@ func (m *Minter) DoTASK(ctx *context.Context, pod model.Pod, stage uint32, block
 	// Obtain the log and hardware resource usage
 	t := uint64(blockNumber) - uint64(pod.LastMintBlockNumber)
 	from := time.Now().Add(-6 * time.Second * time.Duration(t)).Unix()
-	logs, crs, err := m.getMetricInfo(*ctx, pod, nameSpace, name, from)
+	logs, crs, err := m.queryMetric(*ctx, pod, nameSpace, name, from)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
 		return nil, 0, err
@@ -51,11 +47,12 @@ func (m *Minter) DoTASK(ctx *context.Context, pod model.Pod, stage uint32, block
 }
 
 // check task status，if task is running, return pod, if task not run, create pod
-func (m *Minter) CheckTASK(ctx *context.Context, pod model.Pod) (*v1.Pod, error) {
+func (m *Minter) DeployOrUpdateTASK(ctx *context.Context, pod model.Pod) (*v1.Pod, error) {
 	address := AccountToSpace(pod.Owner[:])
 	nameSpace := m.K8sClient.CoreV1().Pods(address)
 	name := GetPodName(pod.PodId)
 
+	util.LogWithBlue("===========================================DEPLOY TASK", pod.PodId)
 	task, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if err.Error() == "pods \""+name+"\" not found" {

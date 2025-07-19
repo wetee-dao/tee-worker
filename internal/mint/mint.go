@@ -66,7 +66,6 @@ func InitCluster(mgr manager.Manager, privateKey *model.PrivKey) error {
 // 开始挖矿
 func (m *Minter) StartMint() {
 	signer, _ := m.PrivateKey.ToSigner()
-	fmt.Println("MintKey => ", signer.Address)
 
 	// 等待集群开启
 	// Waiting for cluster start
@@ -117,13 +116,14 @@ func (m *Minter) StartMint() {
 		// Get contract list
 		podVersions, err := chains.MainChain.GetPodsVersionByWorker(clusterId)
 		if err != nil {
-			util.LogError("GetClusterContracts", err)
+			util.LogError("VersionContracts", err)
 			sleepFrom(start, time.Second*6)
 			continue
 		}
 
+		// 计算新增、更新、未改变的合约
 		// Calculate pod version
-		added, updated, deleted, err := CalcPodVersionFromCache(podVersions)
+		added, updated, unchanged, deleted, err := CalcPodVersionFromCache(podVersions)
 		if err != nil {
 			util.LogError("SetPods", err)
 			sleepFrom(start, time.Second*6)
@@ -158,98 +158,137 @@ func (m *Minter) StartMint() {
 		// 	util.LogError("GetStage", err)
 		// 	continue
 		// }
-		var stage uint32 = 30
+		var stage uint32 = 300
 
-		todoList, err := chains.MainChain.GetPodsByIds(ids)
-		if len(todoList) > 0 {
+		deployList, err := chains.MainChain.GetPodsByIds(ids)
+		if err != nil {
+			util.LogError("GetPodsByIds", err)
+			sleepFrom(start, time.Second*6)
+			continue
+		}
+		if len(deployList) > 0 {
 			util.LogWithGray("POD ALL", "-", len(podVersions))
-			if err != nil {
-				util.LogError("GetPodsByIds", err)
-				sleepFrom(start, time.Second*6)
-				continue
-			}
-			util.LogWithCyan("TODO   ", "-", len(todoList))
+			util.LogWithCyan("TODO   ", "-", len(deployList))
 		}
 
 		// 触发TEE调用
 		// Trigger TEE calls
 		// m.trigger(cs, clusterId, uint64(head.Number))
 
-		// Check contract status
-		calls := make([]*model.IndexCall, 0, 20)
-		for _, p := range todoList {
-			ctx := context.Background()
+		// Deploy POD
+		ctx := context.Background()
+		for _, p := range deployList {
+			if p.DeploySkipUtil >= uint32(head) {
+				continue
+			}
 
 			if p.Ptype.CPU != nil {
-				call, t, err := m.DoAPP(&ctx, p, stage, uint32(head))
+				_, err = m.DeployOrUpdateAPP(&ctx, p)
 				if err != nil {
 					util.LogError("DoWithApp", err)
 					continue
 				}
-				if call != nil {
-					calls = append(calls, model.ToIndexCall(call, t))
-				}
 			} else if p.Ptype.SCRIPT != nil {
-				call, t, err := m.DoTASK(&ctx, p, stage, uint32(head))
+				_, err = m.DeployOrUpdateTASK(&ctx, p)
 				if err != nil {
-					util.LogError("DoTASK", err)
+					util.LogError("DoWithApp", err)
 					continue
-				}
-				if call != nil {
-					calls = append(calls, model.ToIndexCall(call, t))
 				}
 			} else if p.Ptype.GPU != nil {
-				call, t, err := m.DoGPU(&ctx, p, stage, uint32(head))
+				_, err = m.DeployOrUpdateGPU(&ctx, p)
 				if err != nil {
-					util.LogError("DoGPU", err)
+					util.LogError("DoWithApp", err)
 					continue
-				}
-				if call != nil {
-					calls = append(calls, model.ToIndexCall(call, t))
 				}
 			}
 
+			p.DeploySkipUtil += 20
 			err = store.SetPod(p)
 			if err != nil {
 				util.LogWithRed("SetPod", err)
 			}
 		}
 
-		if len(calls) == 0 {
-			sleepFrom(start, time.Second*6)
-			continue
+		// Mint POD
+		mintCalls := make([]*model.IndexCall, 0, 20)
+		for _, pv := range unchanged {
+			p, err := store.GetPod(pv.PodId)
+			if err != nil {
+				util.LogError("GetPod", err)
+				continue
+			}
+
+			if p.SkipUtil >= uint32(head) {
+				continue
+			}
+
+			if p.Ptype.CPU != nil {
+				call, t, err := m.MintAPP(&ctx, *p, stage, uint32(head))
+				if err != nil {
+					util.LogError("MintAPP", err)
+					continue
+				}
+				if call != nil {
+					mintCalls = append(mintCalls, model.ToIndexCall(call, t))
+				}
+			} else if p.Ptype.SCRIPT != nil {
+				call, t, err := m.MintTASK(&ctx, *p, stage, uint32(head))
+				if err != nil {
+					util.LogError("MintTASK", err)
+					continue
+				}
+				if call != nil {
+					mintCalls = append(mintCalls, model.ToIndexCall(call, t))
+				}
+			} else if p.Ptype.GPU != nil {
+				call, t, err := m.MintGPU(&ctx, *p, stage, uint32(head))
+				if err != nil {
+					util.LogError("MintGPU", err)
+					continue
+				}
+				if call != nil {
+					mintCalls = append(mintCalls, model.ToIndexCall(call, t))
+				}
+			}
+
+			store.SetPodSkipUtil(p.PodId, p.LastMintBlockNumber+stage)
 		}
 
+		calls, keys, _ := store.GetPendingCall()
+		mintCalls = append(mintCalls, calls...)
+
 		// substrate sync tx
-		_, err = sidechain.SubmitTx(&model.Tx{
-			Payload: &model.Tx_HubCall{
-				HubCall: &model.HubCall{
-					Call: calls,
+		if len(mintCalls) > 0 {
+			_, err = sidechain.SubmitTx(&model.Tx{
+				Payload: &model.Tx_HubCall{
+					HubCall: &model.HubCall{
+						Call: mintCalls,
+					},
 				},
-			},
-		})
-		if err != nil {
-			util.LogError("SubmitTx", err)
+			})
+			if err != nil {
+				util.LogError("SubmitTx", err)
+			} else {
+				store.DeletePendingCalls(keys)
+			}
 		}
 
 		sleepFrom(start, time.Second*6)
 	}
 }
 
-func CalcPodVersionFromCache(newPod []model.PodVersion) (added, updated []model.PodVersion, deleted []model.Pod, e error) {
+func CalcPodVersionFromCache(newPod []model.PodVersion) (added, updated, unchanged []model.PodVersion, deleted []model.Pod, err error) {
 	// get data from cache
 	oldPod, err := store.GetPods()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	oldMap := make(map[uint64]model.Pod)
 	newMap := make(map[uint64]model.PodVersion)
-
 	for _, v := range oldPod {
 		oldMap[v.PodId] = *v
 	}
-
 	for _, v := range newPod {
 		newMap[v.PodId] = v
 	}
@@ -260,9 +299,15 @@ func CalcPodVersionFromCache(newPod []model.PodVersion) (added, updated []model.
 		if !exists {
 			// add
 			added = append(added, newVal)
-		} else if oldVal.Version != newVal.Version {
-			// update
-			updated = append(updated, newVal)
+		} else {
+			if oldVal.Version != newVal.Version {
+				// update
+				updated = append(updated, newVal)
+			} else {
+				// unchanged update last mint
+				unchanged = append(unchanged, newVal)
+				store.SetPodLastMint(id, newVal.LastMint)
+			}
 		}
 	}
 

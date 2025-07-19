@@ -14,7 +14,7 @@ import (
 // 获取应用消息
 func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 	// 验证 AppID
-	appID := chi.URLParam(r, "AppID")
+	appId := chi.URLParam(r, "AppID")
 
 	// 获取数据
 	bodyBytes, err := io.ReadAll(r.Body)
@@ -35,7 +35,7 @@ func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 获取数据
-	s, err := GetAppInfo(appID, param)
+	s, err := GetAppInfo(appId, param)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte("GetAppInfo error" + err.Error()))
@@ -49,9 +49,9 @@ func AppInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 // 获取应用消息
 // get app info
-func GetAppInfo(appID string, param *model.TeeParam) (map[string]string, error) {
+func GetAppInfo(appId string, param *model.TeeParam) (map[string]string, error) {
 	// 验证 report
-	// wid, err := VerifyLibOs(appID, nil)
+	// wid, err := VerifyLibOs(appId, nil)
 	// if err != nil {
 	// 	return nil, errors.Wrap(err, "VerifyLibOs error")
 	// }

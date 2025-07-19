@@ -19,28 +19,16 @@ import (
 
 // DoWithApp
 // 获取app状态
-func (m *Minter) DoAPP(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*types.Call, int64, error) {
-	util.LogWithCyan("===========================================", "DEPLOY APP", pod.PodId)
-	_, err := m.CheckAPP(ctx, pod)
-	if err != nil {
-		util.LogError("CheckAPP", err)
-		return nil, 0, err
-	}
-
+func (m *Minter) MintAPP(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*types.Call, int64, error) {
 	nameSpace := AccountToSpace(pod.Owner[:])
 
 	// Check if work proof needs to be uploaded
 	// status 0=>created  1=>deoloying 2=>error  3=>stop
 	if currBlock-pod.LastMintBlockNumber < stage {
-		// 如果当前区块高度小于当前工作高度+阶段高度则不上传工作证明 但是保存工作证明到本地
-		// logs, crs, err := m.GetLogAndCr(ctx, nameSpace, app, now, stage, true)
-		// if err != nil {
-		// 	util.LogError("getMetricInfo", err)
-		// 	return nil, 0, err
-		// }
-		// return nil, 0, proof.CacheWorkProof(app.PodId, logs, crs, now, uint64(blockNumber))
+		return nil, 0, nil
 	}
 
+	util.LogWithCyan("===========================================", "MINT APP", pod.PodId)
 	// Get logs and use compute resource
 	now := time.Now()
 	logs, crs, err := m.GetMetric(ctx, nameSpace, pod, now, stage, false)
@@ -54,7 +42,8 @@ func (m *Minter) DoAPP(ctx *context.Context, pod model.Pod, stage uint32, currBl
 
 // CheckAPP check app status
 // 校对应用状态
-func (m *Minter) CheckAPP(ctx *context.Context, pod model.Pod) (*appsv1.Deployment, error) {
+func (m *Minter) DeployOrUpdateAPP(ctx *context.Context, pod model.Pod) (*appsv1.Deployment, error) {
+	util.LogWithCyan("===========================================", "DEPLOY APP", pod.PodId)
 	// get namespace name
 	name := GetPodName(pod.PodId)
 	address := AccountToSpace(pod.Owner[:])
@@ -77,7 +66,7 @@ func (m *Minter) CheckAPP(ctx *context.Context, pod model.Pod) (*appsv1.Deployme
 	}
 
 	// create pod
-	deployment, err = m.CreateApp(ctx, pod, []*gtypes.Env1{})
+	deployment, err = m.DeployApp(ctx, pod, []*gtypes.Env1{})
 	if err != nil {
 		return nil, errors.Wrap(err, "CreateApp")
 	}
@@ -87,7 +76,7 @@ func (m *Minter) CheckAPP(ctx *context.Context, pod model.Pod) (*appsv1.Deployme
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateApp(ctx *context.Context, pod model.Pod, envs []*gtypes.Env1) (*appsv1.Deployment, error) {
+func (m *Minter) DeployApp(ctx *context.Context, pod model.Pod, envs []*gtypes.Env1) (*appsv1.Deployment, error) {
 	// get namespace name
 	name := GetPodName(pod.PodId)
 	nameSpaceStr := AccountToSpace(pod.Owner[:])

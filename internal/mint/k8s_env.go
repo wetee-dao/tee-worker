@@ -75,6 +75,7 @@ func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, nodeSers
 	return nil
 }
 
+// Filter Envs for container
 func filterEnvs(envs []*gtypes.Env1, index uint16) []*gtypes.Env1 {
 	var fenvs []*gtypes.Env1
 	for i, env := range envs {

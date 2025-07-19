@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
@@ -17,7 +18,7 @@ import (
 // load app secret file and env
 func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	// 验证 AppID
-	appID := chi.URLParam(r, "AppID")
+	appId := chi.URLParam(r, "AppID")
 
 	// 获取数据
 	bodyBytes, err := io.ReadAll(r.Body)
@@ -38,7 +39,7 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 加载应用的加密环境变量和文件
-	s, err := loading(appID, param)
+	s, err := loading(appId, param)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
@@ -52,9 +53,9 @@ func LoadingHandler(w http.ResponseWriter, r *http.Request) {
 
 // 加载应用加密文件，加密环境变量
 // load app secret file and env
-func loading(appID string, param *model.TeeParam) (*store.EnvWrap, error) {
+func loading(appId string, param *model.TeeParam) (*store.EnvWrap, error) {
 	// 验证 libos 完整性信息
-	podId, err := VerifyLibOs(appID, param)
+	podId, err := VerifyLibOs(appId, param)
 	if err != nil {
 		return nil, errors.Wrap(err, "VerifyLibOs error")
 	}
@@ -65,13 +66,11 @@ func loading(appID string, param *model.TeeParam) (*store.EnvWrap, error) {
 		return nil, errors.Wrap(err, "DCAP Report set error")
 	}
 
-	util.LogWithBlue("LOAD POD", podId)
-
-	// 上传TEE环境变量，设置当前的部署 Key
-	// secret, err := mint.MinterIns.LaunchFromDsecret(podId, param)
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "LaunchFromDsecret error")
-	// }
+	util.LogWithBlue("LOADED POD", podId)
+	err = mint.MinterIns.AddPendingDeployTx(podId)
+	if err != nil {
+		return nil, errors.Wrap(err, "AddPendingDeployTx error")
+	}
 
 	// 获取配置文件
 	// 获取加密配置文件
@@ -83,18 +82,21 @@ func loading(appID string, param *model.TeeParam) (*store.EnvWrap, error) {
 }
 
 // VerifyLibOs 函数验证应用程序标识和报告，并返回工作标识或错误
-func VerifyLibOs(appID string, report *model.TeeParam) (uint64, error) {
+func VerifyLibOs(appId string, report *model.TeeParam) (uint64, error) {
 	// 解包应用程序标识
-	id, err := store.UnSealAppID(appID)
+	id, appTime, err := store.UnSealAppID(appId)
 	if err != nil {
-		// 如果解包过程中出现错误，则返回错误信息
 		return 0, errors.Wrap(err, "AppID error")
+	}
+
+	// 应用的状态只能60秒内使用
+	if time.Now().Unix() > appTime+60 {
+		// return 0, errors.New("AppID time error")
 	}
 
 	// 验证工作标识和报告
 	_, err = mint.MinterIns.VerifyWorkLibos(id, report)
 	if err != nil {
-		// 如果验证过程中出现错误，则返回错误信息
 		return 0, errors.Wrap(err, "VerifyWorkLibos error")
 	}
 

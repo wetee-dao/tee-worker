@@ -11,7 +11,7 @@ const CacheBucket = "cache"
 
 func SetCacheId(id string, value int64) error {
 	key := id
-	val := []byte(fmt.Sprint(value))
+	val := fmt.Append(nil, value)
 	return model.SetKey(CacheBucket, key, val)
 }
 

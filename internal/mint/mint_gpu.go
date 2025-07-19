@@ -18,36 +18,17 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func (m *Minter) DoGPU(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*types.Call, int64, error) {
-	_, err := m.CheckGPU(ctx, pod)
-	if err != nil {
-		util.LogError("checkPodStatus", err)
-		return nil, 0, err
-	}
-
-	// if pod.Status != 3 {
-	// 	return nil, 0, nil
-	// }
-
+func (m *Minter) MintGPU(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*types.Call, int64, error) {
 	nameSpace := AccountToSpace(pod.Owner[:])
 
-	util.LogWithCyan("===========================================", "DEPLOY GPU", pod.PodId)
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
-	// App状态 0: created, 1: deploying, 2: stop, 3: deoloyed
+	// status 0=>created  1=>deoloying 2=>error  3=>stop
 	if uint32(currBlock)-pod.LastMintBlockNumber < stage {
-		// if (uint64(currBlock)+pod.PodId)%10 != 0 {
-		// 	return nil, 0, nil
-		// }
-		// // 如果当前区块高度小于当前工作高度+阶段高度则不上传工作证明 但是保存工作证明到本地
-		// logs, crs, err := m.GetLogAndCr(ctx, nameSpace, pod, now, stage, true)
-		// if err != nil {
-		// 	util.LogError("getMetricInfo", err)
-		// 	return nil, 0, err
-		// }
-		// return nil, 0, proof.CacheWorkProof(pod.PodId, logs, crs, now, uint64(currBlock))
+		return nil, 0, nil
 	}
 
+	util.LogWithCyan("===========================================", "MINT APP", pod.PodId)
 	now := time.Now()
 	logs, crs, err := m.GetMetric(ctx, nameSpace, pod, now, stage, false)
 	if err != nil {
@@ -60,11 +41,12 @@ func (m *Minter) DoGPU(ctx *context.Context, pod model.Pod, stage uint32, currBl
 
 // checkAppStatus check app status
 // 校对应用状态
-func (m *Minter) CheckGPU(ctx *context.Context, pod model.Pod) (*appsv1.Deployment, error) {
+func (m *Minter) DeployOrUpdateGPU(ctx *context.Context, pod model.Pod) (*appsv1.Deployment, error) {
 	address := AccountToSpace(pod.Owner[:])
 	nameSpace := m.K8sClient.AppsV1().Deployments(address)
 	name := GetPodName(pod.PodId)
 
+	util.LogWithCyan("===========================================", "DEPLOY APP", pod.PodId)
 	deployment, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if !strings.Contains(err.Error(), "not found") {

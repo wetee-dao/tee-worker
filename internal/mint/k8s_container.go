@@ -43,7 +43,6 @@ func (m *Minter) buildPodContainer(
 	cs []model.Container,
 	envs []*gtypes.Env1,
 ) ([]v1.Container, error) {
-	podContainers := make([]v1.Container, 0, len(cs))
 	serviceSpace := m.K8sClient.CoreV1().Services(nameSpace)
 	nodePorts, teePorts := []v1.ServicePort{}, []v1.ServicePort{}
 
@@ -64,7 +63,7 @@ func (m *Minter) buildPodContainer(
 	})
 
 	// 创建对外服务
-	service := v1.Service{
+	nodeSers, err := serviceSpace.Create(*ctx, &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   name + "-expose",
 			Labels: map[string]string{"service": name},
@@ -74,16 +73,14 @@ func (m *Minter) buildPodContainer(
 			Type:     "NodePort",
 			Ports:    nodePorts,
 		},
-	}
-
-	nodeSers, err := serviceSpace.Create(*ctx, &service, metav1.CreateOptions{})
+	}, metav1.CreateOptions{})
 	if err != nil {
-		fmt.Println("====== CREATE service", err)
+		fmt.Println("====== CREATE service error", err)
 		return nil, err
 	}
 
-	// 创建项目内端口
-	teeService := v1.Service{
+	// 创建TEE服务
+	_, err = serviceSpace.Create(*ctx, &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   name,
 			Labels: map[string]string{"service": name},
@@ -93,14 +90,14 @@ func (m *Minter) buildPodContainer(
 			ClusterIP: "None",
 			Ports:     teePorts,
 		},
-	}
-	_, err = serviceSpace.Create(*ctx, &teeService, metav1.CreateOptions{})
+	}, metav1.CreateOptions{})
 	if err != nil {
-		fmt.Println("====== CREATE tee service", err)
+		fmt.Println("====== CREATE tee service error", err)
 		return nil, err
 	}
 
 	// 构建容器
+	podContainers := make([]v1.Container, 0, len(cs))
 	for i, container := range cs {
 		// 获取服务端口
 		ports := BuildContainerPortFormService(name, container.Port)
@@ -108,14 +105,14 @@ func (m *Minter) buildPodContainer(
 		// 构建来自用户的环境变量
 		containerEnvs, err := m.BuildEnvsFromSettings(pod.PodId, filterEnvs(envs, uint16(i)))
 		if err != nil {
-			fmt.Println("====== CREATE user envs", err)
+			fmt.Println("====== CREATE user envs error", err)
 			return nil, err
 		}
 
 		// 构建来自集群的环境变量
 		err = m.WrapEnvs(containerEnvs, nameSpace, name, nodeSers)
 		if err != nil {
-			fmt.Println("====== CREATE cluster envs", err)
+			fmt.Println("====== CREATE cluster envs error", err)
 			return nil, err
 		}
 

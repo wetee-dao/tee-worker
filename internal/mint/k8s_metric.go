@@ -46,7 +46,7 @@ func (m *Minter) GetMetric(ctx *context.Context, nameSpace string, pod model.Pod
 	}
 
 	// 获取指定 Pod 的日志和硬件资源使用量信息
-	logs, crs, err := m.getMetricInfo(*ctx, pod, nameSpace, pods.Items[0].Name, from)
+	logs, crs, err := m.queryMetric(*ctx, pod, nameSpace, pods.Items[0].Name, from)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
 	}
@@ -56,7 +56,7 @@ func (m *Minter) GetMetric(ctx *context.Context, nameSpace string, pod model.Pod
 }
 
 // 获取容器的资源信息和日志
-func (m *Minter) getMetricInfo(ctx context.Context, pod model.Pod, nameSpace, name string, form int64) ([]string, map[string][]int64, error) {
+func (m *Minter) queryMetric(ctx context.Context, pod model.Pod, nameSpace, name string, form int64) ([]string, map[string][]int64, error) {
 	podLogOpts := &v1.PodLogOptions{
 		SinceTime: &metav1.Time{
 			Time: time.Unix(form, 0),

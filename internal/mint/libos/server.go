@@ -30,8 +30,8 @@ func StartTEEServer(pk *model.PrivKey) {
 		},
 	}
 
+	// Get worker tee report
 	router.Get("/report", func(w http.ResponseWriter, r *http.Request) {
-		// Get root dcap report
 		report, t, err := proof.GetRemoteReport(signer, []byte{})
 		if err != nil {
 			util.LogWithYellow("SecretServer", "Remote REPORT", err)
@@ -52,7 +52,10 @@ func StartTEEServer(pk *model.PrivKey) {
 		w.Write(bt)
 	})
 
+	// Get app info
 	router.Post("/appInfo/{AppID}", AppInfoHandler)
+
+	// launch app
 	router.Post("/appLaunch/{AppID}", LoadingHandler)
 
 	server := &http.Server{Addr: ":8883", Handler: router, TLSConfig: &tlsCfg}
