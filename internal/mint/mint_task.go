@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
+	inkutil "github.com/wetee-dao/ink.go/util"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	v1 "k8s.io/api/core/v1"
@@ -43,7 +44,7 @@ func (m *Minter) MintTASK(ctx *context.Context, pod model.Pod, stage uint32, blo
 	}
 
 	m.StopPod(pod)
-	return proof.MakeWorkProof(pod, logs, crs, time.Now())
+	return proof.MakeWorkProof(pod, inkutil.NewNone[types.AccountID](), logs, crs, time.Now())
 }
 
 // check task status，if task is running, return pod, if task not run, create pod

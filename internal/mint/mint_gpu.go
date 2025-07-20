@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
+	inkutil "github.com/wetee-dao/ink.go/util"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
@@ -36,7 +37,7 @@ func (m *Minter) MintGPU(ctx *context.Context, pod model.Pod, stage uint32, curr
 		return nil, 0, err
 	}
 
-	return proof.MakeWorkProof(pod, logs, crs, now)
+	return proof.MakeWorkProof(pod, inkutil.NewNone[types.AccountID](), logs, crs, now)
 }
 
 // checkAppStatus check app status

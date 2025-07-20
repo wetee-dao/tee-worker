@@ -27,7 +27,7 @@ make build
 #     && ego sign manager"
 
 # 构建镜像
-make docker-build docker-push IMG=registry.cn-hangzhou.aliyuncs.com/wetee_dao/worker:$tag
+make docker-build docker-push IMG=wetee/worker:$tag
 
 # 清理旧的部署
 make undeploy
@@ -36,7 +36,7 @@ make manifests
 make install
 
 # 部署镜像
-make deploy IMG=registry.cn-hangzhou.aliyuncs.com/wetee_dao/worker:$tag
+make deploy IMG=wetee/worker:$tag
 
 # 创建内部服务
 kubectl create -f ./hack/install/manager_headless.yaml

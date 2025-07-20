@@ -54,7 +54,7 @@ func TestAddPod(t *testing.T) {
 }
 
 func TestUpdatePod(t *testing.T) {
-	client, err := chain.ClientInit("ws://127.0.0.1:9944", true)
+	client, err := chain.ClientInit("ws://192.168.111.105:9944", true)
 	if err != nil {
 		panic(err)
 	}
@@ -79,7 +79,7 @@ func TestUpdatePod(t *testing.T) {
 			{
 				Etype: cloud.EditType{UPDATE: &container_id},
 				Container: cloud.Container{
-					Image:   []byte("nginx:latest"),
+					Image:   []byte("wetee/ego-hello:2025-07-20-09-11"),
 					Command: cloud.Command{NONE: &trueValue},
 					Port:    []cloud.Service{{Http: &value80}},
 					Cr:      cloud.CR{Cpu: 1000, Mem: 800},

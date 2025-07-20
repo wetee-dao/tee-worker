@@ -66,9 +66,10 @@ func loading(appId string, param *model.TeeParam) (*store.EnvWrap, error) {
 		return nil, errors.Wrap(err, "DCAP Report set error")
 	}
 
-	util.LogWithBlue("LOADED POD", podId)
-	err = mint.MinterIns.AddPendingDeployTx(podId)
+	util.LogWithGray("PRELOADED POD", podId)
+	err = mint.MinterIns.AddPendingDeployTx(podId, param.Address)
 	if err != nil {
+		util.LogWithRed("PRELOADED POD EROR", err)
 		return nil, errors.Wrap(err, "AddPendingDeployTx error")
 	}
 

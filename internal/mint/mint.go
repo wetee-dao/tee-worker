@@ -185,19 +185,19 @@ func (m *Minter) StartMint() {
 			if p.Ptype.CPU != nil {
 				_, err = m.DeployOrUpdateAPP(&ctx, p)
 				if err != nil {
-					util.LogError("DoWithApp", err)
+					util.LogError("DeployOrUpdateAPP", err)
 					continue
 				}
 			} else if p.Ptype.SCRIPT != nil {
 				_, err = m.DeployOrUpdateTASK(&ctx, p)
 				if err != nil {
-					util.LogError("DoWithApp", err)
+					util.LogError("DeployOrUpdateTASK", err)
 					continue
 				}
 			} else if p.Ptype.GPU != nil {
 				_, err = m.DeployOrUpdateGPU(&ctx, p)
 				if err != nil {
-					util.LogError("DoWithApp", err)
+					util.LogError("DeployOrUpdateGPU", err)
 					continue
 				}
 			}
@@ -218,7 +218,7 @@ func (m *Minter) StartMint() {
 				continue
 			}
 
-			if p.SkipUtil >= uint32(head) {
+			if p.SkipUtil >= uint32(head) || p.Status != 1 {
 				continue
 			}
 

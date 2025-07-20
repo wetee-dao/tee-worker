@@ -13,12 +13,13 @@ import (
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"golang.org/x/crypto/blake2b"
 
+	inkutil "github.com/wetee-dao/ink.go/util"
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/internal/util"
 )
 
-func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now time.Time) (*types.Call, int64, error) {
+func MakeWorkProof(pod model.Pod, pod_key inkutil.Option[types.AccountID], logs []string, crs map[string][]int64, now time.Time) (*types.Call, int64, error) {
 	name := fmt.Sprint(pod.PodId)
 
 	// 获取log和硬件资源使用量
@@ -88,7 +89,7 @@ func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now tim
 		hasHash = true
 	}
 
-	fmt.Println("MakeWorkProof ========> ", crProof, hasHash)
+	util.LogWithGray("MakeWorkProof", crProof, hasHash)
 
 	// 获取工作证明
 	// Get report of work
@@ -117,14 +118,14 @@ func MakeWorkProof(pod model.Pod, logs []string, crs map[string][]int64, now tim
 		return nil, 0, errors.New("get G-dkg_pub_key error")
 	}
 
-	err = chains.MainChain.DryStartPod(pod.PodId, types.H256(reportHash), *account)
+	err = chains.MainChain.DryStartPod(pod.PodId, pod_key, types.H256(reportHash), *account)
 	if err != nil {
 		util.LogError("DryStartPod", err)
 		return nil, 0, err
 	}
 
 	t := time.Now().UnixMilli()
-	call, err := chains.MainChain.TxCallOfStartPod(pod.PodId, types.H256(reportHash), *account)
+	call, err := chains.MainChain.TxCallOfStartPod(pod.PodId, pod_key, types.H256(reportHash), *account)
 	if err != nil {
 		util.LogError("TxCallOfStartPod", err)
 		return nil, 0, err

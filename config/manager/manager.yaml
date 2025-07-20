@@ -90,6 +90,8 @@ spec:
           env:
             - name: P2P_PORT
               value: "30010"
+            - name: CHAIN_ADDR
+              value: "ws://192.168.111.105:9944"
           # TODO(user): Configure the resources accordingly based on the project requirements.
           # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
           resources:
