@@ -26,8 +26,8 @@ func (m *Minter) AddPendingDeployTx(podId uint64, key []byte) error {
 	now := time.Now()
 	ctx := context.Background()
 	logs, crs, err := m.GetMetric(&ctx, address, *pod, now, 1, false)
-	if err != nil {
-		return errors.Wrap(err, "GetLogAndCr")
+	if err != nil && len(logs) == 0 {
+		// return errors.Wrap(err, "GetLogAndCr")
 	}
 
 	ss58 := model.SS58Encode(key, 42)

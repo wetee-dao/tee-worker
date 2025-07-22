@@ -11,7 +11,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/internal/util"
 )
 
 // 获取工作日志和硬件资源使用量
@@ -48,7 +47,7 @@ func (m *Minter) GetMetric(ctx *context.Context, nameSpace string, pod model.Pod
 	// 获取指定 Pod 的日志和硬件资源使用量信息
 	logs, crs, err := m.queryMetric(*ctx, pod, nameSpace, pods.Items[0].Name, from)
 	if err != nil {
-		util.LogError("getMetricInfo", err)
+		return logs, crs, errors.Wrap(err, "QueryMetric")
 	}
 
 	// 返回获取到的日志和硬件资源使用量
@@ -74,7 +73,7 @@ func (m *Minter) queryMetric(ctx context.Context, pod model.Pod, nameSpace, name
 	req := clientset.CoreV1().Pods(nameSpace).GetLogs(name, podLogOpts)
 	podLogs, err := req.Stream(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, errors.Wrap(err, "GetLogs")
 	}
 	defer podLogs.Close()
 
@@ -89,15 +88,14 @@ func (m *Minter) queryMetric(ctx context.Context, pod model.Pod, nameSpace, name
 		fmt.Printf("failed to read log line: %v", err)
 	}
 
-	use := map[string][]int64{}
-
 	// 获取Pod的内存使用情况
 	// Gets the memory usage of the Pod
+	use := map[string][]int64{}
 	metricsClient := m.MetricsClient
 	podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses(nameSpace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if pod.Ptype.CPU != nil {
-			return nil, nil, err
+			return logs, use, errors.Wrap(err, "PodMetricses")
 		} else {
 			use["d"] = []int64{0, 0, 0}
 		}

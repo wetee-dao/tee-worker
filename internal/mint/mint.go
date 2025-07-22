@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -145,21 +146,13 @@ func (m *Minter) StartMint() {
 			}
 		}
 
+		// 等待部署的程序
+		// Pod list from chain to deploy
 		addAndUpdated := append(added, updated...)
 		ids := make([]uint64, 0, len(addAndUpdated))
 		for _, p := range addAndUpdated {
 			ids = append(ids, p.PodId)
 		}
-
-		// 获取收费周期
-		// Get the charge cycle
-		// stage, err := worker.GetStage()
-		// if err != nil {
-		// 	util.LogError("GetStage", err)
-		// 	continue
-		// }
-		var stage uint32 = 300
-
 		deployList, err := chains.MainChain.GetPodsByIds(ids)
 		if err != nil {
 			util.LogError("GetPodsByIds", err)
@@ -168,16 +161,19 @@ func (m *Minter) StartMint() {
 		}
 		if len(deployList) > 0 {
 			util.LogWithGray("POD ALL", "-", len(podVersions))
-			util.LogWithCyan("TODO   ", "-", len(deployList))
+			util.LogWithGreen("TODO   ", "-", len(deployList))
 		}
 
 		// 触发TEE调用
 		// Trigger TEE calls
 		// m.trigger(cs, clusterId, uint64(head.Number))
 
+		// 部署程序
 		// Deploy POD
 		ctx := context.Background()
 		for _, p := range deployList {
+			// 跳过20个块内已经部署的程序
+			// Skip programs deployed within 20 blocks
 			if p.DeploySkipUtil >= uint32(head) {
 				continue
 			}
@@ -202,6 +198,8 @@ func (m *Minter) StartMint() {
 				}
 			}
 
+			// 20个区块内不重复处理
+			// 20 blocks do not repeat processing
 			p.DeploySkipUtil += 20
 			err = store.SetPod(p)
 			if err != nil {
@@ -209,6 +207,15 @@ func (m *Minter) StartMint() {
 			}
 		}
 
+		// 获取收费周期
+		// Get the charge cycle
+		stage, err := chains.MainChain.GetMintInterval()
+		if err != nil {
+			util.LogError("GetMintInterval", err)
+			continue
+		}
+
+		// 获取程序运行费用
 		// Mint POD
 		mintCalls := make([]*model.IndexCall, 0, 20)
 		for _, pv := range unchanged {
@@ -218,9 +225,11 @@ func (m *Minter) StartMint() {
 				continue
 			}
 
+			// 跳过200个块以内已经部署的POD
 			if p.SkipUtil >= uint32(head) || p.Status != 1 {
 				continue
 			}
+			m.checkPodStatus(&ctx, *p)
 
 			if p.Ptype.CPU != nil {
 				call, t, err := m.MintAPP(&ctx, *p, stage, uint32(head))
@@ -251,13 +260,16 @@ func (m *Minter) StartMint() {
 				}
 			}
 
-			store.SetPodSkipUtil(p.PodId, p.LastMintBlockNumber+stage)
+			store.SetPodSkipUtil(p.PodId, p.LastMintBlockNumber+200)
 		}
 
+		// 读取待同步到区块链的调用
+		// query call for sync to chain
 		calls, keys, _ := store.GetPendingCall()
 		mintCalls = append(mintCalls, calls...)
 
-		// substrate sync tx
+		// 批量提交调用到区块链
+		// sync tx to chain
 		if len(mintCalls) > 0 {
 			_, err = sidechain.SubmitTx(&model.Tx{
 				Payload: &model.Tx_HubCall{
@@ -266,7 +278,7 @@ func (m *Minter) StartMint() {
 					},
 				},
 			})
-			if err != nil {
+			if err != nil && !strings.Contains(err.Error(), "tx already exists") {
 				util.LogError("SubmitTx", err)
 			} else {
 				store.DeletePendingCalls(keys)
@@ -274,6 +286,35 @@ func (m *Minter) StartMint() {
 		}
 
 		sleepFrom(start, time.Second*6)
+	}
+}
+
+// 测试已经部署的程序的状态
+// check pod status
+func (m *Minter) checkPodStatus(ctx *context.Context, pod model.Pod) {
+	// get namespace name
+	name := GetPodName(pod.PodId)
+	address := AccountToSpace(pod.Owner[:])
+	nameSpace := m.K8sClient.AppsV1().Deployments(address)
+
+	// get deployment
+	deployment, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if !strings.Contains(err.Error(), "not found") {
+			return
+		}
+	}
+
+	// check if deployment exists
+	if deployment.Name != "" {
+		return
+	}
+
+	// deploy app
+	if pod.Ptype.CPU != nil {
+		m.DeployOrUpdateAPP(ctx, pod)
+	} else if pod.Ptype.GPU != nil {
+		m.DeployOrUpdateGPU(ctx, pod)
 	}
 }
 

@@ -29,7 +29,7 @@ func (m *Minter) MintGPU(ctx *context.Context, pod model.Pod, stage uint32, curr
 		return nil, 0, nil
 	}
 
-	util.LogWithCyan("===========================================", "MINT APP", pod.PodId)
+	util.LogWithCyan("MINT GPU", "===========================================", pod.PodId)
 	now := time.Now()
 	logs, crs, err := m.GetMetric(ctx, nameSpace, pod, now, stage, false)
 	if err != nil {
@@ -47,7 +47,7 @@ func (m *Minter) DeployOrUpdateGPU(ctx *context.Context, pod model.Pod) (*appsv1
 	nameSpace := m.K8sClient.AppsV1().Deployments(address)
 	name := GetPodName(pod.PodId)
 
-	util.LogWithCyan("===========================================", "DEPLOY APP", pod.PodId)
+	util.LogWithCyan("DEPLOY APP", "===========================================", pod.PodId)
 	deployment, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if !strings.Contains(err.Error(), "not found") {

@@ -29,22 +29,22 @@ func (m *Minter) MintAPP(ctx *context.Context, pod model.Pod, stage uint32, curr
 		return nil, 0, nil
 	}
 
-	util.LogWithCyan("===========================================", "MINT APP", pod.PodId)
+	util.LogWithCyan("MINT APP", "===========================================", pod.PodId)
 	// Get logs and use compute resource
 	now := time.Now()
 	logs, crs, err := m.GetMetric(ctx, nameSpace, pod, now, stage, false)
-	if err != nil {
-		return nil, 0, errors.Wrap(err, "GetLogAndCr")
+	if err != nil && len(logs) == 0 {
+		return nil, 0, errors.Wrap(err, "GetMetric")
 	}
 
-	// make pod start proof
+	// make pod mint proof
 	return proof.MakeWorkProof(pod, inkutil.NewNone[types.AccountID](), logs, crs, now)
 }
 
 // CheckAPP check app status
 // 校对应用状态
 func (m *Minter) DeployOrUpdateAPP(ctx *context.Context, pod model.Pod) (*appsv1.Deployment, error) {
-	util.LogWithCyan("===========================================", "DEPLOY APP", pod.PodId)
+	util.LogWithCyan("DEPLOY APP", "===========================================", pod.PodId)
 	// get namespace name
 	name := GetPodName(pod.PodId)
 	address := AccountToSpace(pod.Owner[:])
@@ -69,7 +69,7 @@ func (m *Minter) DeployOrUpdateAPP(ctx *context.Context, pod model.Pod) (*appsv1
 	// create pod
 	deployment, err = m.DeployApp(ctx, pod, []*gtypes.Env1{})
 	if err != nil {
-		return nil, errors.Wrap(err, "CreateApp")
+		return nil, errors.Wrap(err, "DeployApp")
 	}
 
 	return deployment, err

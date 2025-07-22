@@ -89,7 +89,7 @@ func MakeWorkProof(pod model.Pod, pod_key inkutil.Option[types.AccountID], logs 
 		hasHash = true
 	}
 
-	util.LogWithGray("MakeWorkProof", crProof, hasHash)
+	util.LogWithGray("MakeWorkProof", crProof.Cpu, hasHash)
 
 	// 获取工作证明
 	// Get report of work

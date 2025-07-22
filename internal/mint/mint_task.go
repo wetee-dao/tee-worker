@@ -29,7 +29,7 @@ func (m *Minter) MintTASK(ctx *context.Context, pod model.Pod, stage uint32, blo
 		return nil, 0, nil
 	}
 
-	util.LogWithBlue("===========================================MINT TASK", pod.PodId)
+	util.LogWithBlue("MINT TASK", "===========================================", pod.PodId)
 	nameSpace := AccountToSpace(pod.Owner[:])
 	name := GetPodName(pod.PodId)
 
@@ -53,7 +53,7 @@ func (m *Minter) DeployOrUpdateTASK(ctx *context.Context, pod model.Pod) (*v1.Po
 	nameSpace := m.K8sClient.CoreV1().Pods(address)
 	name := GetPodName(pod.PodId)
 
-	util.LogWithBlue("===========================================DEPLOY TASK", pod.PodId)
+	util.LogWithBlue("DEPLOY TASK", "===========================================", pod.PodId)
 	task, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if err.Error() == "pods \""+name+"\" not found" {

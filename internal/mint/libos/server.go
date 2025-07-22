@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -12,22 +13,38 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
+func TeeServerSer(pk *model.PrivKey) (cert []byte, key []byte, der []byte, err error) {
+	// int tls cert
+	return util.Ed25519Cert(
+		"localhost",
+		[]net.IP{net.ParseIP("127.0.0.1")},
+		[]string{"localhost"},
+		pk.PrivateKey,
+		pk.GetPublic().PublicKey,
+	)
+}
+
 // 启动InCluster服务器
 // start server in cluster for confidential
 func StartTEEServer(pk *model.PrivKey) {
 	router := chi.NewRouter()
-	addr := pk.GetPublic().SS58()
 	signer, _ := pk.ToSigner()
 
-	// TODO
-	cert, priv := proof.CreateCertificate(addr)
-	tlsCfg := tls.Config{
-		Certificates: []tls.Certificate{
-			{
-				Certificate: [][]byte{cert},
-				PrivateKey:  priv,
-			},
-		},
+	// init tee server cert
+	_, _, serverCertDER, err := TeeServerSer(pk)
+	if err != nil {
+		panic(err)
+	}
+
+	// Golang tls.config
+	serverCert := tls.Certificate{Certificate: [][]byte{serverCertDER}, PrivateKey: pk.PrivateKey}
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{serverCert},
+		MinVersion:   tls.VersionTLS13,
+
+		// skip client verification
+		InsecureSkipVerify: true,
+		ClientAuth:         tls.RequireAnyClientCert,
 	}
 
 	// Get worker tee report
@@ -58,7 +75,7 @@ func StartTEEServer(pk *model.PrivKey) {
 	// launch app
 	router.Post("/appLaunch/{AppID}", LoadingHandler)
 
-	server := &http.Server{Addr: ":8883", Handler: router, TLSConfig: &tlsCfg}
+	server := &http.Server{Addr: ":8883", Handler: router, TLSConfig: tlsConfig}
 	log.Printf("Start http://0.0.0.0:8883 for InCluster server")
 	server.ListenAndServeTLS("", "")
 }
