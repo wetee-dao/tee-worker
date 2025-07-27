@@ -105,10 +105,10 @@ func (r *queryResolver) AttestationReportVerify(ctx context.Context, report stri
 		return false, gqlerror.Errorf("HexDecodeString:" + err.Error())
 	}
 
-	ps := model.TeeParam{}
-	json.Unmarshal(bt, &model.TeeParam{})
+	ps := model.TeeCall{}
+	json.Unmarshal(bt, &model.TeeCall{})
 
-	_, err = proof.VerifyReportProof(&ps)
+	_, err = model.VerifyReport(&ps)
 	if err != nil {
 		return false, gqlerror.Errorf("VerifyLocalReport error:" + err.Error())
 	}

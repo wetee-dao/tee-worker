@@ -14,19 +14,13 @@ import (
 )
 
 // 获取工作日志和硬件资源使用量
-func (m *Minter) GetMetric(ctx *context.Context, nameSpace string, pod model.Pod, now time.Time, stage uint32, isCache bool) ([]string, map[string][]int64, error) {
+func (m *Minter) GetMetric(ctx *context.Context, nameSpace string, pod model.Pod, now time.Time, stage uint32) ([]string, map[string][]int64, error) {
 	// 获取上次记录的时间
 	name := GetPodName(pod.PodId)
-	if isCache {
-		name = name + "-cache"
-	}
 
 	// 获取上次记录的缓存时间
-	from, err := store.GetCacheId(name)
+	from, err := store.GetLastMintTime(name)
 	if err != nil {
-		if isCache {
-			stage = 9
-		}
 		from = now.Add(-6 * time.Second * time.Duration(stage)).Unix()
 	}
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
-	"golang.org/x/crypto/blake2b"
+	"wetee.app/worker/internal/util"
 )
 
 const PodBucket = "pod"
@@ -50,24 +50,28 @@ func GetPods() ([]*model.Pod, error) {
 	return model.GetJsonList[model.Pod](PodBucket, PodKey)
 }
 
+var PendingCallKey = "pending_call_"
+
 // Add pending call
-func AddPendingCall(call *model.IndexCall) error {
-	hash := blake2b.Sum256(call.Call)
-	key := "pending_call_" + hex.EncodeToString(hash[:])
+func AddPendingCall(call *model.TeeCall) error {
+	key := PendingCallKey + hex.EncodeToString(call.Report)
 	return model.SetProtoMessage(PodBucket, key, call)
 }
 
 // Get pending call
-func GetPendingCall() ([]*model.IndexCall, [][]byte, error) {
-	key := "pending_call_"
-	return model.GetProtoMessageList[model.IndexCall](PodBucket, key)
+func GetPendingCall() ([]*model.TeeCall, [][]byte, error) {
+	return model.GetProtoMessageList[model.TeeCall](PodBucket, PendingCallKey)
 }
 
 // Delete pending call
 func DeletePendingCalls(keys [][]byte) error {
 	tx := model.DBINS.NewTransaction()
 	for _, key := range keys {
-		tx.Delete(key)
+		err := tx.Delete(key)
+		if err != nil {
+			util.LogError("DeletePendingCalls", err)
+			return err
+		}
 	}
 	return tx.Commit()
 }

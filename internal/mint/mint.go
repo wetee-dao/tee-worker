@@ -212,12 +212,13 @@ func (m *Minter) StartMint() {
 		stage, err := chains.MainChain.GetMintInterval()
 		if err != nil {
 			util.LogError("GetMintInterval", err)
+			sleepFrom(start, time.Second*6)
 			continue
 		}
 
 		// 获取程序运行费用
 		// Mint POD
-		mintCalls := make([]*model.IndexCall, 0, 20)
+		mintCalls := make([]*model.TeeCall, 0, 20)
 		for _, pv := range unchanged {
 			p, err := store.GetPod(pv.PodId)
 			if err != nil {
@@ -232,31 +233,31 @@ func (m *Minter) StartMint() {
 			m.checkPodStatus(&ctx, *p)
 
 			if p.Ptype.CPU != nil {
-				call, t, err := m.MintAPP(&ctx, *p, stage, uint32(head))
+				call, err := m.MintAPP(&ctx, *p, stage, uint32(head))
 				if err != nil {
 					util.LogError("MintAPP", err)
 					continue
 				}
 				if call != nil {
-					mintCalls = append(mintCalls, model.ToIndexCall(call, t))
+					mintCalls = append(mintCalls, call)
 				}
 			} else if p.Ptype.SCRIPT != nil {
-				call, t, err := m.MintTASK(&ctx, *p, stage, uint32(head))
+				call, err := m.MintTASK(&ctx, *p, stage, uint32(head))
 				if err != nil {
 					util.LogError("MintTASK", err)
 					continue
 				}
 				if call != nil {
-					mintCalls = append(mintCalls, model.ToIndexCall(call, t))
+					mintCalls = append(mintCalls, call)
 				}
 			} else if p.Ptype.GPU != nil {
-				call, t, err := m.MintGPU(&ctx, *p, stage, uint32(head))
+				call, err := m.MintGPU(&ctx, *p, stage, uint32(head))
 				if err != nil {
 					util.LogError("MintGPU", err)
 					continue
 				}
 				if call != nil {
-					mintCalls = append(mintCalls, model.ToIndexCall(call, t))
+					mintCalls = append(mintCalls, call)
 				}
 			}
 
@@ -273,15 +274,16 @@ func (m *Minter) StartMint() {
 		if len(mintCalls) > 0 {
 			_, err = sidechain.SubmitTx(&model.Tx{
 				Payload: &model.Tx_HubCall{
-					HubCall: &model.HubCall{
-						Call: mintCalls,
-					},
+					HubCall: &model.HubCall{Call: mintCalls},
 				},
 			})
-			if err != nil && !strings.Contains(err.Error(), "tx already exists") {
+			if err != nil && !strings.Contains(err.Error(), "tx already exists") && err.Error() != "Tx already received from peer" {
 				util.LogError("SubmitTx", err)
 			} else {
-				store.DeletePendingCalls(keys)
+				err := store.DeletePendingCalls(keys)
+				if err != nil {
+					util.LogError("DeletePendingCalls", err)
+				}
 			}
 		}
 

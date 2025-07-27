@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -14,7 +15,6 @@ import (
 	dmodel "github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/mint"
-	"wetee.app/worker/internal/mint/proof"
 	"wetee.app/worker/internal/store"
 )
 
@@ -31,9 +31,20 @@ func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, erro
 		maddress = minter.Address
 	}
 
-	report, _, err := proof.GetRemoteReport(minter, nil)
+	clusterReport := dmodel.TeeCall{
+		Tx: &dmodel.TeeCall_Text{},
+	}
+
+	err = dmodel.IssueReport(minter, &clusterReport)
 	if err != nil {
-		report = nil
+		fmt.Println("GetRootDcapReport => ", err)
+		return nil, err
+	}
+
+	report, err := json.Marshal(clusterReport)
+	if err != nil {
+		fmt.Println("Marshal cluster report => ", err)
+		return nil, err
 	}
 
 	return &model.WorkerInfo{

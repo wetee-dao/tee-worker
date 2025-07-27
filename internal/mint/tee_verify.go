@@ -5,9 +5,9 @@ import (
 )
 
 // VerifyWorker 函数验证工人报告并返回签名者或错误
-func (m *Minter) VerifyWorker(reportData *model.TeeParam) ([]byte, error) {
+func (m *Minter) VerifyWorker(reportData *model.TeeCall) ([]byte, error) {
 	// 解码地址
-	signer := reportData.Address
+	signer := reportData.Caller
 
 	// report, err := proof.VerifyReportProof(reportData)
 	// if err != nil {
@@ -33,9 +33,9 @@ func (m *Minter) VerifyWorker(reportData *model.TeeParam) ([]byte, error) {
 }
 
 // VerifyWorker 函数验证工人报告并返回签名者或错误
-func (m *Minter) VerifyDsecret(reportData *model.TeeParam) ([]byte, error) {
+func (m *Minter) VerifyDsecret(reportData *model.TeeCall) ([]byte, error) {
 	// 解码地址
-	signer := reportData.Address
+	signer := reportData.Caller
 
 	// report, err := proof.VerifyReportProof(reportData)
 	// if err != nil {
@@ -61,9 +61,9 @@ func (m *Minter) VerifyDsecret(reportData *model.TeeParam) ([]byte, error) {
 }
 
 // VerifyWorker 函数验证工人报告并返回签名者或错误
-func (m *Minter) VerifyWorkLibos(podid uint64, reportData *model.TeeParam) ([]byte, error) {
+func (m *Minter) VerifyWorkLibos(podid uint64, reportData *model.TeeCall) ([]byte, error) {
 	// 解码地址
-	signer := reportData.Address
+	signer := reportData.Caller
 
 	// report, err := proof.VerifyReportProof(reportData)
 	// if err != nil {

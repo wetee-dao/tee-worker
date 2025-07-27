@@ -72,7 +72,7 @@ package mint
 // // 		}
 
 // // 		// 获取 worker report
-// // 		paramWrap := wtypes.TeeParam{
+// // 		paramWrap := wtypes.TeeCall{
 // // 			Address: signer.Address,
 // // 			Time:    t,
 // // 			Data:    nil,

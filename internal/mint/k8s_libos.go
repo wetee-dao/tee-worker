@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// wrap libos init container to deployment
 func (m *Minter) WrapLibos(deployment *appsv1.Deployment, version model.TEEType) {
 	if version.CVM != nil {
 		envs := []corev1.EnvVar{

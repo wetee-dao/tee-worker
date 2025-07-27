@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
-	"wetee.app/worker/internal/mint/proof"
 	"wetee.app/worker/internal/store"
 )
 
@@ -17,20 +16,19 @@ import (
 func (m *Minter) UploadClusterProof() ([]byte, error) {
 	signer, _ := m.PrivateKey.ToSigner()
 
+	// 上传 TEE 证书
+	// Upload TEE certificate
+	param := model.TeeCall{
+		TeeType: 0,
+		Caller:  signer.PublicKey,
+	}
+
 	// 获取 TEE 根证书
-	report, t, err := proof.GetRemoteReport(signer, nil)
+	// Obtain TEE root certificate
+	err := model.IssueReport(signer, &param)
 	if err != nil {
 		fmt.Println("GetRootDcapReport => ", err)
 		return nil, err
-	}
-
-	// 上传 TEE 证书
-	param := model.TeeParam{
-		Report:  report,
-		Time:    t,
-		TeeType: 0,
-		Address: signer.PublicKey,
-		Data:    nil,
 	}
 
 	// Use the json package to serialize the param object into JSON format

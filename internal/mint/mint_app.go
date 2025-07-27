@@ -20,21 +20,22 @@ import (
 
 // DoWithApp
 // 获取app状态
-func (m *Minter) MintAPP(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*types.Call, int64, error) {
+func (m *Minter) MintAPP(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*model.TeeCall, error) {
 	nameSpace := AccountToSpace(pod.Owner[:])
 
 	// Check if work proof needs to be uploaded
 	// status 0=>created  1=>deoloying 2=>error  3=>stop
 	if currBlock-pod.LastMintBlockNumber < stage {
-		return nil, 0, nil
+		return nil, nil
 	}
 
 	util.LogWithCyan("MINT APP", "===========================================", pod.PodId)
-	// Get logs and use compute resource
+
+	// get logs and use compute resource
 	now := time.Now()
-	logs, crs, err := m.GetMetric(ctx, nameSpace, pod, now, stage, false)
+	logs, crs, err := m.GetMetric(ctx, nameSpace, pod, now, stage)
 	if err != nil && len(logs) == 0 {
-		return nil, 0, errors.Wrap(err, "GetMetric")
+		return nil, errors.Wrap(err, "GetMetric")
 	}
 
 	// make pod mint proof
@@ -45,6 +46,7 @@ func (m *Minter) MintAPP(ctx *context.Context, pod model.Pod, stage uint32, curr
 // 校对应用状态
 func (m *Minter) DeployOrUpdateAPP(ctx *context.Context, pod model.Pod) (*appsv1.Deployment, error) {
 	util.LogWithCyan("DEPLOY APP", "===========================================", pod.PodId)
+
 	// get namespace name
 	name := GetPodName(pod.PodId)
 	address := AccountToSpace(pod.Owner[:])

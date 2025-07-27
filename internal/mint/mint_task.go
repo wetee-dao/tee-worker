@@ -16,17 +16,18 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func (m *Minter) MintTASK(ctx *context.Context, pod model.Pod, stage uint32, blockNumber uint32) (*types.Call, int64, error) {
+// mint task
+func (m *Minter) MintTASK(ctx *context.Context, pod model.Pod, stage uint32, blockNumber uint32) (*model.TeeCall, error) {
 	task, err := m.DeployOrUpdateTASK(ctx, pod)
 	if err != nil {
 		util.LogError("CheckTASK", err)
-		return nil, 0, err
+		return nil, err
 	}
 
 	// 判断是否上传工作证明
 	// Determine whether to upload proof of employment
 	if task.Status.Phase != v1.PodSucceeded && task.Status.Phase != v1.PodFailed {
-		return nil, 0, nil
+		return nil, nil
 	}
 
 	util.LogWithBlue("MINT TASK", "===========================================", pod.PodId)
@@ -40,7 +41,7 @@ func (m *Minter) MintTASK(ctx *context.Context, pod model.Pod, stage uint32, blo
 	logs, crs, err := m.queryMetric(*ctx, pod, nameSpace, name, from)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
-		return nil, 0, err
+		return nil, err
 	}
 
 	m.StopPod(pod)

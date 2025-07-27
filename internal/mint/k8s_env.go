@@ -7,7 +7,6 @@ import (
 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	corev1 "k8s.io/api/core/v1"
 	"wetee.app/worker/internal/store"
-	"wetee.app/worker/internal/util"
 )
 
 // Get Envs from Work
@@ -33,6 +32,7 @@ func (m *Minter) BuildEnvsFromSettings(podId uint64, settings []*gtypes.Env1) ([
 
 	envs := []corev1.EnvVar{
 		{Name: "APPID", Value: wid},
+		{Name: "PODID", Value: fmt.Sprint(podId)},
 	}
 
 	for _, setting := range settings {
@@ -55,7 +55,7 @@ func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, nodeSers
 	mdata := make(map[string]string)
 	mdata["cluster_domain"] = m.HostDomain
 	mdata["project_domain"] = nameSpace + ".svc.cluster.local"
-	mdata["gen_ssl"] = strings.Join(util.GetSslRoot(), "|")
+	// mdata["server_ssl"] = strings.Join(util.GetSslRoot(), "|")
 	for i, port := range nodeSers.Spec.Ports {
 		if port.NodePort != 0 {
 			mdata["ser_"+fmt.Sprint(i)+"_nodeport"] = fmt.Sprint(port.NodePort)

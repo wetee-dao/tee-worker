@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -115,7 +116,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	chainAddr := util.GetEnv("CHAIN_ADDR", DefaultChainUrl)
+	chainAddr := strings.Split(util.GetEnv("CHAIN_ADDR", DefaultChainUrl), ",")
 	chainPort := util.GetEnvInt("SIDE_CHAIN_PORT", 10000)
 
 	// 初始化数据库
@@ -213,7 +214,7 @@ func main() {
 // load config from env or from file
 func loadConfig(context string) *rest.Config {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	util.LogError("LoadingRules", loadingRules)
+	// util.LogError("LoadingRules", loadingRules)
 	conf, err := loadConfigWithContext("", loadingRules, context)
 	if err != nil {
 		fmt.Println(err, " **** unable to get kubeconfig")

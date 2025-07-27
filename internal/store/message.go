@@ -27,9 +27,9 @@ type Result struct {
 // LaunchRequest 函数处理启动请求
 type LaunchRequest struct {
 	// libos tee report
-	Libos *model.TeeParam
+	Libos *model.TeeCall
 	// cluster tee report
-	Cluster *model.TeeParam
+	Cluster *model.TeeCall
 	// worker tee report
 	WorkID string
 }
@@ -42,6 +42,7 @@ type Envs struct {
 
 // 环境变量包装
 type EnvWrap struct {
+	Id  uint64
 	Pub Envs
 	Sec model.ReencryptSecret
 }

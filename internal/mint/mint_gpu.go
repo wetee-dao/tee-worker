@@ -19,22 +19,23 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
-func (m *Minter) MintGPU(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*types.Call, int64, error) {
+// MintGPU mint gpu
+func (m *Minter) MintGPU(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*model.TeeCall, error) {
 	nameSpace := AccountToSpace(pod.Owner[:])
 
 	// 判断是否上传工作证明
 	// Check if work proof needs to be uploaded
 	// status 0=>created  1=>deoloying 2=>error  3=>stop
 	if uint32(currBlock)-pod.LastMintBlockNumber < stage {
-		return nil, 0, nil
+		return nil, nil
 	}
 
 	util.LogWithCyan("MINT GPU", "===========================================", pod.PodId)
 	now := time.Now()
-	logs, crs, err := m.GetMetric(ctx, nameSpace, pod, now, stage, false)
+	logs, crs, err := m.GetMetric(ctx, nameSpace, pod, now, stage)
 	if err != nil {
 		util.LogError("GetMetric", err)
-		return nil, 0, err
+		return nil, err
 	}
 
 	return proof.MakeWorkProof(pod, inkutil.NewNone[types.AccountID](), logs, crs, now)

@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
-	"wetee.app/worker/internal/mint/proof"
 	"wetee.app/worker/internal/store"
 )
 
@@ -93,25 +92,20 @@ func (m *Minter) ReencryptSecretReply(data []byte, err string, msgID string, Org
 }
 
 // LaunchFromDsecret 函数处理重新加密的秘密回复
-func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *model.TeeParam) (*model.ReencryptSecret, error) {
+func (m *Minter) LaunchFromDsecret(pid uint64, libosReport *model.TeeCall) (*model.ReencryptSecret, error) {
 	signer, _ := m.PrivateKey.ToSigner()
-
-	// 获取 TEE 根证书
-	// get root dcap report
-	report, t, err := proof.GetRemoteReport(signer, nil)
-	if err != nil {
-		fmt.Println("GetRootDcapReport => ", err)
-		return nil, err
-	}
 
 	// 构造集群可信证明
 	// make cluster dcap report
-	clusterReport := model.TeeParam{
-		Report:  report,
-		Time:    t,
+	clusterReport := model.TeeCall{
 		TeeType: 0,
-		Address: signer.PublicKey,
-		Data:    nil,
+		Caller:  signer.PublicKey,
+	}
+
+	err := model.IssueReport(signer, &clusterReport)
+	if err != nil {
+		fmt.Println("GetRootDcapReport => ", err)
+		return nil, err
 	}
 
 	// 构造启动请求

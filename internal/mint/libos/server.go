@@ -1,15 +1,15 @@
 package libos
 
 import (
+	"bytes"
 	"crypto/tls"
-	"encoding/json"
 	"log"
 	"net"
 	"net/http"
 
+	"github.com/cometbft/cometbft/abci/types"
 	"github.com/go-chi/chi/v5"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
-	"wetee.app/worker/internal/mint/proof"
 	"wetee.app/worker/internal/util"
 )
 
@@ -49,24 +49,25 @@ func StartTEEServer(pk *model.PrivKey) {
 
 	// Get worker tee report
 	router.Get("/report", func(w http.ResponseWriter, r *http.Request) {
-		report, t, err := proof.GetRemoteReport(signer, []byte{})
+		resp := &model.TeeCall{
+			Tx: &model.TeeCall_Text{
+				Text: []byte{},
+			},
+		}
+
+		err = model.IssueReport(signer, resp)
 		if err != nil {
 			util.LogWithYellow("SecretServer", "Remote REPORT", err)
+			w.WriteHeader(500)
+			w.Write([]byte("TEE report error" + err.Error()))
 			return
 		}
 
-		resp := model.TeeParam{
-			Time:    t,
-			Report:  report,
-			Address: pk.GetPublic().Byte(),
-			Data:    []byte{},
-		}
-
 		// Return report
-		bt, _ := json.Marshal(resp)
-		w.Header().Set("Content-Type", "application/json")
+		buf := new(bytes.Buffer)
+		err = types.WriteMessage(resp, buf)
 		w.WriteHeader(200)
-		w.Write(bt)
+		w.Write(buf.Bytes())
 	})
 
 	// Get app info

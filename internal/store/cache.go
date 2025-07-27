@@ -7,16 +7,17 @@ import (
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 )
 
-const CacheBucket = "cache"
+const MinTimeKey = "last_mint_"
 
-func SetCacheId(id string, value int64) error {
-	key := id
+// set pod last mint time
+func SetLastMintTime(id string, value int64) error {
 	val := fmt.Append(nil, value)
-	return model.SetKey(CacheBucket, key, val)
+	return model.SetKey(PodBucket, MinTimeKey+id, val)
 }
 
-func GetCacheId(id string) (int64, error) {
-	val, err := model.GetKey(CacheBucket, id)
+// get pod last mint time
+func GetLastMintTime(id string) (int64, error) {
+	val, err := model.GetKey(PodBucket, MinTimeKey+id)
 	if err != nil {
 		return 0, err
 	}
