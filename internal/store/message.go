@@ -35,14 +35,7 @@ type LaunchRequest struct {
 }
 
 // 公开的环境变量
-type Envs struct {
+type ContainerEnvs struct {
 	Envs  map[string]string
 	Files map[string][]byte
-}
-
-// 环境变量包装
-type EnvWrap struct {
-	Id  uint64
-	Pub Envs
-	Sec model.ReencryptSecret
 }

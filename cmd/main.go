@@ -140,7 +140,7 @@ func main() {
 	}
 
 	// Init node
-	node, _, _, err := sidechain.InitSideChain(chainPort, true, func() {
+	node, side, _, err := sidechain.InitSideChain(chainPort, true, func() {
 		fmt.Println()
 		util.LogWithYellow("Main Chain", chainAddr)
 		util.LogWithYellow("Node Key", nodePriv.GetPublic().SS58())
@@ -167,7 +167,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	go libos.StartTEEServer(nodePriv)
+	go libos.StartTEEServer(nodePriv, side)
 	go mint.MinterIns.StartMint()
 	go graph.StartServer()
 

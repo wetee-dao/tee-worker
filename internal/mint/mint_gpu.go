@@ -83,7 +83,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, pod model.Pod, envs []*gtype
 
 	// build pod
 	// build pod ports
-	pContainers, err := m.buildPodContainer(ctx, pod, saddress, name, pod.Containers, envs)
+	pContainers, err := m.buildPodContainer(ctx, pod, saddress, name)
 	if err != nil {
 		return err
 	}

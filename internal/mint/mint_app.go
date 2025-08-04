@@ -9,7 +9,6 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/pkg/errors"
 	inkutil "github.com/wetee-dao/ink.go/util"
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -69,7 +68,7 @@ func (m *Minter) DeployOrUpdateAPP(ctx *context.Context, pod model.Pod) (*appsv1
 	}
 
 	// create pod
-	deployment, err = m.DeployApp(ctx, pod, []*gtypes.Env1{})
+	deployment, err = m.DeployApp(ctx, pod)
 	if err != nil {
 		return nil, errors.Wrap(err, "DeployApp")
 	}
@@ -79,7 +78,7 @@ func (m *Minter) DeployOrUpdateAPP(ctx *context.Context, pod model.Pod) (*appsv1
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) DeployApp(ctx *context.Context, pod model.Pod, envs []*gtypes.Env1) (*appsv1.Deployment, error) {
+func (m *Minter) DeployApp(ctx *context.Context, pod model.Pod) (*appsv1.Deployment, error) {
 	// get namespace name
 	name := GetPodName(pod.PodId)
 	nameSpaceStr := AccountToSpace(pod.Owner[:])
@@ -91,7 +90,7 @@ func (m *Minter) DeployApp(ctx *context.Context, pod model.Pod, envs []*gtypes.E
 
 	// build pod
 	// build pod ports
-	pContainers, err := m.buildPodContainer(ctx, pod, nameSpaceStr, name, pod.Containers, envs)
+	pContainers, err := m.buildPodContainer(ctx, pod, nameSpaceStr, name)
 	if err != nil {
 		return nil, err
 	}

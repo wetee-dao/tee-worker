@@ -66,7 +66,7 @@ func InitCluster(mgr manager.Manager, privateKey *model.PrivKey) error {
 // start mint
 // 开始挖矿
 func (m *Minter) StartMint() {
-	signer, _ := m.PrivateKey.ToSigner()
+	signer := m.PrivateKey.ToSigner()
 
 	// 等待集群开启
 	// Waiting for cluster start
@@ -227,10 +227,15 @@ func (m *Minter) StartMint() {
 			}
 
 			// 跳过200个块以内已经部署的POD
-			if p.SkipUtil >= uint32(head) || p.Status != 1 {
+			if p.SkipUtil >= uint32(head) {
 				continue
 			}
+
 			m.checkPodStatus(&ctx, *p)
+
+			if p.Status != 1 {
+				continue
+			}
 
 			if p.Ptype.CPU != nil {
 				call, err := m.MintAPP(&ctx, *p, stage, uint32(head))
@@ -303,6 +308,7 @@ func (m *Minter) checkPodStatus(ctx *context.Context, pod model.Pod) {
 	deployment, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if !strings.Contains(err.Error(), "not found") {
+			util.LogWithRed("====== check pod status err", err)
 			return
 		}
 	}

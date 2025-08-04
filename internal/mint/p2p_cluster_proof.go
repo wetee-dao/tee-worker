@@ -14,7 +14,7 @@ import (
 
 // UploadClusterProof is a function used to upload cluster verification information
 func (m *Minter) UploadClusterProof() ([]byte, error) {
-	signer, _ := m.PrivateKey.ToSigner()
+	signer := m.PrivateKey.ToSigner()
 
 	// 上传 TEE 证书
 	// Upload TEE certificate

@@ -9,7 +9,6 @@ import (
 
 	"fmt"
 
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -40,11 +39,11 @@ func (m *Minter) buildPodContainer(
 	ctx *context.Context,
 	pod model.Pod,
 	nameSpace, name string,
-	cs []model.Container,
-	envs []*gtypes.Env1,
+	// envs []*gtypes.Env1,
 ) ([]v1.Container, error) {
 	serviceSpace := m.K8sClient.CoreV1().Services(nameSpace)
 	nodePorts, teePorts := []v1.ServicePort{}, []v1.ServicePort{}
+	cs := pod.Containers
 
 	// 计算所有的服务端口
 	for i, container := range cs {
@@ -103,7 +102,7 @@ func (m *Minter) buildPodContainer(
 		ports := BuildContainerPortFormService(name, container.Port)
 
 		// 构建来自用户的环境变量
-		containerEnvs, err := m.BuildEnvsFromSettings(pod.PodId, filterEnvs(envs, uint16(i)))
+		containerEnvs, err := m.BuildEnvsFromSettings(pod.PodId, nameSpace, pod.Containers[i].Env)
 		if err != nil {
 			fmt.Println("====== CREATE user envs error", err)
 			return nil, err

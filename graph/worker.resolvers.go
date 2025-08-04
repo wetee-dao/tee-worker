@@ -56,7 +56,7 @@ func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, erro
 
 // Worker is the resolver for the worker field.
 func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
-	gsigner, _ := mint.MinterIns.PrivateKey.ToSigner()
+	gsigner := mint.MinterIns.PrivateKey.ToSigner()
 	worker := &module.Worker{
 		Signer: gsigner,
 	}

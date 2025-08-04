@@ -1,29 +1,19 @@
 package mint
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
+	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	corev1 "k8s.io/api/core/v1"
 	"wetee.app/worker/internal/store"
 )
 
-// Get Envs from Work
-// 获取环境变量
-func (m *Minter) BuildEnvs(podId uint64) ([]corev1.EnvVar, error) {
-	// settings, err := m.GetSettingsFromWork(workId, nil)
-	// if err != nil {
-	// 	return []corev1.EnvVar{}, errors.Wrap(err, "GetSettingsFromWork error")
-	// }
-	settings := []*gtypes.Env1{}
-
-	return m.BuildEnvsFromSettings(podId, settings)
-}
-
 // Build Envs
 // 获取配置文件
-func (m *Minter) BuildEnvsFromSettings(podId uint64, settings []*gtypes.Env1) ([]corev1.EnvVar, error) {
+func (m *Minter) BuildEnvsFromSettings(podId uint64, nameSpace string, settings []model.Env) ([]corev1.EnvVar, error) {
 	// 用于应用联系控制面板的凭证
 	wid, err := store.SealAppID(podId)
 	if err != nil {
@@ -33,18 +23,35 @@ func (m *Minter) BuildEnvsFromSettings(podId uint64, settings []*gtypes.Env1) ([
 	envs := []corev1.EnvVar{
 		{Name: "APPID", Value: wid},
 		{Name: "PODID", Value: fmt.Sprint(podId)},
+		{Name: "NAME_SPACE", Value: nameSpace},
 	}
 
+	files := map[string]string{}
+	encrypts := map[string]uint64{}
 	for _, setting := range settings {
-		// TODO add file
-		if setting.K.IsFile {
-			continue
+		if setting.Env != nil {
+			envs = append(envs, corev1.EnvVar{
+				Name:  string(setting.Env.F0),
+				Value: string(setting.Env.F1),
+			})
+		} else if setting.File != nil {
+			files[string(setting.File.F0)] = hex.EncodeToString(setting.File.F1)
+		} else if setting.Encrypt != nil {
+			encrypts[string(setting.Encrypt.F0)] = setting.Encrypt.F1
 		}
-		envs = append(envs, corev1.EnvVar{
-			Name:  string(setting.K.AsEnvField0),
-			Value: string(setting.V),
-		})
 	}
+
+	fbt, _ := json.Marshal(files)
+	envs = append(envs, corev1.EnvVar{
+		Name:  "__FILES__",
+		Value: string(fbt),
+	})
+
+	ebt, _ := json.Marshal(encrypts)
+	envs = append(envs, corev1.EnvVar{
+		Name:  "__ENCRYPTS__",
+		Value: string(ebt),
+	})
 
 	return envs, nil
 }
@@ -73,15 +80,4 @@ func (m *Minter) WrapEnvs(envs []corev1.EnvVar, nameSpace, name string, nodeSers
 	}
 
 	return nil
-}
-
-// Filter Envs for container
-func filterEnvs(envs []*gtypes.Env1, index uint16) []*gtypes.Env1 {
-	var fenvs []*gtypes.Env1
-	for i, env := range envs {
-		if env.Index == index {
-			fenvs = append(fenvs, envs[i])
-		}
-	}
-	return fenvs
 }

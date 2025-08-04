@@ -4,8 +4,10 @@ go 1.23.5
 
 require (
 	github.com/99designs/gqlgen v0.17.74
-	github.com/edgelesssys/ego v1.7.0
+	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.2-0.20240919131012-e3b938563803
+	github.com/cometbft/cometbft v1.0.1
 	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/cors v1.2.1
 	github.com/onsi/ginkgo/v2 v2.22.1
 	github.com/onsi/gomega v1.36.2
 	github.com/pkg/errors v0.9.1
@@ -19,12 +21,9 @@ require (
 	k8s.io/client-go v0.29.2
 	k8s.io/metrics v0.28.4
 	sigs.k8s.io/controller-runtime v0.17.5
-	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.2-0.20240919131012-e3b938563803
-	github.com/go-chi/cors v1.2.1
 )
 
 require (
-	github.com/cometbft/cometbft v1.0.1 // indirect
 	github.com/DataDog/zstd v1.5.6-0.20230824185856-869dae002e5e // indirect
 	github.com/bits-and-blooms/bitset v1.13.0 // indirect
 	github.com/cloudflare/circl v1.6.0 // indirect
@@ -43,6 +42,7 @@ require (
 	github.com/dgraph-io/badger/v4 v4.5.1 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/edgelesssys/ego v1.7.0 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-kit/log v0.2.1 // indirect

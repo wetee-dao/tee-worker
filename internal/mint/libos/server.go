@@ -3,22 +3,26 @@ package libos
 import (
 	"bytes"
 	"crypto/tls"
-	"log"
 	"net"
 	"net/http"
 
 	"github.com/cometbft/cometbft/abci/types"
 	"github.com/go-chi/chi/v5"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
+	sidechain "github.com/wetee-dao/tee-dsecret/side-chain"
 	"wetee.app/worker/internal/util"
 )
+
+const domain = "wetee-worker.worker-system.svc.cluster.local"
+
+var sideChain *sidechain.SideChain
 
 func TeeServerSer(pk *model.PrivKey) (cert []byte, key []byte, der []byte, err error) {
 	// int tls cert
 	return util.Ed25519Cert(
-		"localhost",
-		[]net.IP{net.ParseIP("127.0.0.1")},
-		[]string{"localhost"},
+		domain,
+		[]net.IP{net.ParseIP("0.0.0.0")},
+		[]string{domain},
 		pk.PrivateKey,
 		pk.GetPublic().PublicKey,
 	)
@@ -26,9 +30,10 @@ func TeeServerSer(pk *model.PrivKey) (cert []byte, key []byte, der []byte, err e
 
 // 启动InCluster服务器
 // start server in cluster for confidential
-func StartTEEServer(pk *model.PrivKey) {
+func StartTEEServer(pk *model.PrivKey, side *sidechain.SideChain) {
+	sideChain = side
 	router := chi.NewRouter()
-	signer, _ := pk.ToSigner()
+	signer := pk.ToSigner()
 
 	// init tee server cert
 	_, _, serverCertDER, err := TeeServerSer(pk)
@@ -44,7 +49,8 @@ func StartTEEServer(pk *model.PrivKey) {
 
 		// skip client verification
 		InsecureSkipVerify: true,
-		ClientAuth:         tls.RequireAnyClientCert,
+		// require client cert
+		ClientAuth: tls.RequestClientCert,
 	}
 
 	// Get worker tee report
@@ -71,12 +77,12 @@ func StartTEEServer(pk *model.PrivKey) {
 	})
 
 	// Get app info
-	router.Post("/appInfo/{AppID}", AppInfoHandler)
+	// router.Post("/info/{AppID}", AppInfoHandler)
 
 	// launch app
-	router.Post("/appLaunch/{AppID}", LoadingHandler)
+	router.Post("/launch/{AppID}", LoadingHandler)
 
 	server := &http.Server{Addr: ":8883", Handler: router, TLSConfig: tlsConfig}
-	log.Printf("Start http://0.0.0.0:8883 for InCluster server")
+	util.LogWithYellow("TEEServer", "https://"+domain+":8883")
 	server.ListenAndServeTLS("", "")
 }

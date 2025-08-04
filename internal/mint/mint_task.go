@@ -7,7 +7,6 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	inkutil "github.com/wetee-dao/ink.go/util"
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -58,7 +57,7 @@ func (m *Minter) DeployOrUpdateTASK(ctx *context.Context, pod model.Pod) (*v1.Po
 	task, err := nameSpace.Get(*ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if err.Error() == "pods \""+name+"\" not found" {
-			err = m.CreateTask(ctx, pod.Owner[:][:], pod, []*gtypes.Env1{}, pod.Version)
+			err = m.CreateTask(ctx, pod.Owner[:], pod, pod.Version)
 			if err != nil {
 				return nil, err
 			}
@@ -72,7 +71,7 @@ func (m *Minter) DeployOrUpdateTASK(ctx *context.Context, pod model.Pod) (*v1.Po
 }
 
 // create task
-func (m *Minter) CreateTask(ctx *context.Context, user []byte, app model.Pod, envs []*gtypes.Env1, version uint32) error {
+func (m *Minter) CreateTask(ctx *context.Context, user []byte, app model.Pod, version uint32) error {
 	saddress := AccountToSpace(user[:])
 	errc := m.checkNameSpace(*ctx, saddress)
 	if errc != nil {
@@ -95,7 +94,7 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, app model.Pod, en
 		return err
 	}
 
-	cenvs, err := m.BuildEnvsFromSettings(app.PodId, envs)
+	cenvs, err := m.BuildEnvsFromSettings(app.PodId, saddress, app.Containers[0].Env)
 	if err != nil {
 		return err
 	}

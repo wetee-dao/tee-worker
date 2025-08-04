@@ -9,6 +9,7 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
+	sidechain "github.com/wetee-dao/tee-dsecret/side-chain"
 	"golang.org/x/crypto/blake2b"
 
 	inkutil "github.com/wetee-dao/ink.go/util"
@@ -107,13 +108,9 @@ func MakeWorkProof(pod model.Pod, pod_key inkutil.Option[types.AccountID], logs 
 		return nil, errors.New("report, crHash and logHash are all nil")
 	}
 
-	key, err := model.GetKey("G", "dkg_pub_key")
+	account, err := sidechain.GetDkgPubkey()
 	if err != nil {
-		return nil, errors.New("get G-dkg_pub_key error")
-	}
-	account, err := types.NewAccountID(key)
-	if err != nil {
-		return nil, errors.New("get G-dkg_pub_key error")
+		return nil, err
 	}
 
 	err = chains.MainChain.DryMintPod(pod.PodId, types.H256(reportHash), *account)
