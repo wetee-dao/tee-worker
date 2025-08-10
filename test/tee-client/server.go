@@ -1,32 +1,17 @@
-package libos
+package client
 
 import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/panjf2000/gnet/v2"
-	"github.com/pkg/errors"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"github.com/wetee-dao/tee-dsecret/pkg/model/protoio"
 	sidechain "github.com/wetee-dao/tee-dsecret/side-chain"
 	"wetee.app/worker/internal/util"
 )
-
-// const domain = "wetee-worker.worker-system.svc.cluster.local"
-// var sideChain *sidechain.SideChain
-// func TeeServerSer(pk *model.PrivKey) (cert []byte, key []byte, der []byte, err error) {
-// 	// int tls cert
-// 	return util.Ed25519Cert(
-// 		domain,
-// 		[]net.IP{net.ParseIP("0.0.0.0")},
-// 		[]string{domain},
-// 		pk.PrivateKey,
-// 		pk.GetPublic().PublicKey,
-// 	)
-// }
 
 type TEEServer struct {
 	*gnet.BuiltinEventEngine
@@ -41,28 +26,21 @@ type TEEServer struct {
 
 func (s *TEEServer) OnBoot(srv gnet.Engine) (action gnet.Action) {
 	s.eng = srv
-	util.LogWithYellow("TEEServer", "listening on 8883")
+	fmt.Printf("Server is listening on %d \n", 8883)
 	return
 }
 
 func (s *TEEServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	report, err := s.report()
-	if err != nil {
-		util.LogWithRed("TEEServer", "OnOpen failed: %v", err)
-		out = s.wrapData(0, 500, []byte("OnOpen failed:"+err.Error()))
-	} else {
-		out = s.wrapData(0, 0, report)
-	}
-
+	out = []byte("sweetness\n")
 	return
 }
 
 func (s *TEEServer) OnClose(c gnet.Conn, err error) gnet.Action {
-	return gnet.Close
+	return gnet.Shutdown
 }
 
 func (s *TEEServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
-	packet, err := Decode(c)
+	packet, err := ApiDecode(c)
 	if err != nil {
 		util.LogWithRed("TEEServer", "Decode failed: %v", err)
 		return s.ReturnError(c, 0, err)
@@ -76,13 +54,10 @@ func (s *TEEServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 	}
 
 	switch string(req.Url) {
+	case "/report":
+		return s.ReturnData(c, req.Id, []byte("report"))
 	case "/launch":
-		data, err := s.launch(req.Data)
-		if err != nil {
-			return s.ReturnError(c, req.Id, errors.Wrap(err, "launch failed"))
-		}
-
-		return s.ReturnData(c, req.Id, data)
+		return s.ReturnData(c, req.Id, []byte("launch"))
 	default:
 		err = fmt.Errorf("unknown URL: %s", string(req.Url))
 		return s.ReturnError(c, req.Id, err)
@@ -91,30 +66,34 @@ func (s *TEEServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 
 // ReturnError 返回错误
 func (s *TEEServer) ReturnError(c gnet.Conn, req uint64, err error) gnet.Action {
-	bt := s.wrapData(req, 500, []byte(err.Error()))
+	result := &model.ApiResp{
+		ReqId: req,
+		Code:  500,
+		Data:  []byte(err.Error()),
+	}
+
+	// 写入解密消息
+	buf := new(bytes.Buffer)
+	abci.WriteMessage(result, buf)
+	bt, _ := ApiEncode(buf.Bytes())
 	c.Write(bt)
 	return gnet.None
 }
 
 // ReturnData 返回数据
 func (s *TEEServer) ReturnData(c gnet.Conn, req uint64, body []byte) gnet.Action {
-	bt := s.wrapData(req, 0, body)
-	c.Write(bt)
-	return gnet.None
-}
-
-func (s *TEEServer) wrapData(req uint64, code int32, data []byte) []byte {
 	result := &model.ApiResp{
 		ReqId: req,
-		Code:  code,
-		Data:  data,
+		Code:  0,
+		Data:  body,
 	}
 
+	// 写入解密消息
 	buf := new(bytes.Buffer)
 	abci.WriteMessage(result, buf)
-	bt, _ := Encode(buf.Bytes())
-
-	return bt
+	bt, _ := ApiEncode(buf.Bytes())
+	c.Write(bt)
+	return gnet.None
 }
 
 // Stop 停止服务器
@@ -136,9 +115,5 @@ func StartTEEServer(pk *model.PrivKey, side *sidechain.SideChain) {
 		side:      side,
 	}
 
-	err := gnet.Run(s, s.network+"://"+s.addr, gnet.WithMulticore(multicore))
-	if err != nil {
-		util.LogWithRed("TEEServer", "Run failed: %v", err)
-		os.Exit(1)
-	}
+	gnet.Run(s, s.network+"://"+s.addr, gnet.WithMulticore(multicore))
 }

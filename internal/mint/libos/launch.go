@@ -2,12 +2,9 @@ package libos
 
 import (
 	"bytes"
-	"io"
-	"net/http"
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"github.com/wetee-dao/tee-dsecret/pkg/model/protoio"
@@ -19,52 +16,23 @@ import (
 
 // 加载应用加密文件，加密环境变量
 // load app secret file and env
-func LoadingHandler(w http.ResponseWriter, r *http.Request) {
-	// 验证 AppID
-	appId := chi.URLParam(r, "AppID")
-
-	// 获取数据
-	bodyBytes, err := io.ReadAll(r.Body)
-	defer r.Body.Close()
-	if err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte("Read body error" + err.Error()))
-		return
-	}
-
+func (s *TEEServer) launch(req []byte) ([]byte, error) {
 	// 解析请求数据
 	param := &model.TeeCall{}
-	err = protoio.ReadMessage(bytes.NewBuffer(bodyBytes), param)
+	err := protoio.ReadMessage(bytes.NewBuffer(req), param)
 	if err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte("Request body unmarshal error:" + err.Error()))
-		return
+		return nil, errors.Wrap(err, "ReadMessage error")
 	}
 
-	// 加载应用的加密环境变量和文件
-	bt, err := loading(appId, param)
-	if err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	w.WriteHeader(200)
-	w.Write(bt)
-}
-
-// 加载应用加密文件，加密环境变量
-// load app secret file and env
-func loading(appId string, param *model.TeeCall) ([]byte, error) {
-	// 验证 libos 完整性信息
-	podId, err := VerifyLibOs(appId, param)
-	if err != nil {
-		return nil, errors.Wrap(err, "VerifyLibOs error")
-	}
-
+	var podId uint64 = 0
 	startReq := &model.PodStart{}
 	switch call := param.Tx.(type) {
 	case *model.TeeCall_PodStart:
+		podId, err = VerifyLibOs(string(call.PodStart.AppId), param)
+		if err != nil {
+			return nil, errors.Wrap(err, "VerifyLibOs error")
+		}
+
 		if call.PodStart.Id != podId {
 			return nil, errors.New("podid is not match tee call")
 		}
@@ -73,7 +41,7 @@ func loading(appId string, param *model.TeeCall) ([]byte, error) {
 		return nil, errors.New("Tx is not pod start")
 	}
 
-	secrets, err := sideChain.BroadcastDecryptSecret(startReq)
+	secrets, err := s.side.BroadcastDecryptSecret(startReq)
 	if err != nil {
 		return nil, errors.Wrap(err, "BroadcastDecryptSecret error")
 	}
