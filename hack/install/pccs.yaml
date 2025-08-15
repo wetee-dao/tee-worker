@@ -14,14 +14,7 @@ spec:
     spec:
       containers:
         - image: wetee/pccs:250718
-          name: c1
-          env:
-            - name: HTTP_PROXY
-              value: "http://192.168.111.105:8891"
-            - name: HTTPS_PROXY
-              value: "http://192.168.111.105:8891"
-            - name: NO_PROXY
-              value: "localhost,127.0.0.1"
+          name: c1"
           ports:
             - containerPort: 8081
               name: wetee-pccs-8081

@@ -42,7 +42,7 @@ func (s *TEEServer) OnClose(c gnet.Conn, err error) gnet.Action {
 func (s *TEEServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 	packet, err := ApiDecode(c)
 	if err != nil {
-		util.LogWithRed("TEEServer", "Decode failed: %v", err)
+		util.LogWithRed("TEEServer", "Decode failed:", err)
 		return s.ReturnError(c, 0, err)
 	}
 

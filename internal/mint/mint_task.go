@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"wetee.app/worker/internal/mint/proof"
+	"wetee.app/worker/internal/store"
 	"wetee.app/worker/internal/util"
 )
 
@@ -94,7 +95,20 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, app model.Pod, ve
 		return err
 	}
 
-	cenvs, err := m.BuildEnvsFromSettings(app.PodId, saddress, app.Containers[0].Env)
+	// 用于应用联系控制面板的凭证
+	wid, err := store.SealAppID(app.PodId)
+	if err != nil {
+		return err
+	}
+	initEnvs := InitData{
+		Envs: map[string]string{
+			"APPID":      wid,
+			"PODID":      fmt.Sprint(app.PodId),
+			"NAME_SPACE": saddress,
+		},
+	}
+
+	cenvs, err := m.BuildEnvsFromSettings(app.PodId, saddress, 0, app.Containers[0].Env, &initEnvs)
 	if err != nil {
 		return err
 	}

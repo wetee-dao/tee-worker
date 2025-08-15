@@ -48,7 +48,7 @@ func (s *TEEServer) OnBoot(srv gnet.Engine) (action gnet.Action) {
 func (s *TEEServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	report, err := s.report()
 	if err != nil {
-		util.LogWithRed("TEEServer", "OnOpen failed: %v", err)
+		util.LogWithRed("TEEServer", "OnOpen failed:", err)
 		out = s.wrapData(0, 500, []byte("OnOpen failed:"+err.Error()))
 	} else {
 		out = s.wrapData(0, 0, report)
@@ -64,14 +64,14 @@ func (s *TEEServer) OnClose(c gnet.Conn, err error) gnet.Action {
 func (s *TEEServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
 	packet, err := Decode(c)
 	if err != nil {
-		util.LogWithRed("TEEServer", "Decode failed: %v", err)
+		util.LogWithRed("TEEServer", "Decode failed:", err)
 		return s.ReturnError(c, 0, err)
 	}
 
 	req := new(model.ApiReq)
 	err = protoio.ReadMessage(bytes.NewBuffer(packet), req)
 	if err != nil {
-		util.LogWithRed("TEEServer", "ReadMessage failed: %v", err)
+		util.LogWithRed("TEEServer", "ReadMessage failed:", err)
 		return s.ReturnError(c, req.Id, err)
 	}
 
@@ -130,7 +130,7 @@ func StartTEEServer(pk *model.PrivKey, side *sidechain.SideChain) {
 
 	s := &TEEServer{
 		network:   "tcp",
-		addr:      fmt.Sprintf(":%d", port),
+		addr:      fmt.Sprintf("0.0.0.0:%d", port),
 		multicore: multicore,
 		pk:        pk,
 		side:      side,
@@ -138,7 +138,7 @@ func StartTEEServer(pk *model.PrivKey, side *sidechain.SideChain) {
 
 	err := gnet.Run(s, s.network+"://"+s.addr, gnet.WithMulticore(multicore))
 	if err != nil {
-		util.LogWithRed("TEEServer", "Run failed: %v", err)
+		util.LogWithRed("TEEServer", "Run failed:", err)
 		os.Exit(1)
 	}
 }

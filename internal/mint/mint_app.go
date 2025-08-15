@@ -90,7 +90,7 @@ func (m *Minter) DeployApp(ctx *context.Context, pod model.Pod) (*appsv1.Deploym
 
 	// build pod
 	// build pod ports
-	pContainers, err := m.buildPodContainer(ctx, pod, nameSpaceStr, name)
+	pContainers, initData, err := m.buildPodContainer(ctx, pod, nameSpaceStr, name)
 	if err != nil {
 		return nil, err
 	}
@@ -113,6 +113,9 @@ func (m *Minter) DeployApp(ctx *context.Context, pod model.Pod) (*appsv1.Deploym
 			},
 		},
 	}
+
+	// wrap init data
+	m.WrapDeploymentInitData(&deployment, pod.TeeType, initData)
 
 	// init PVC
 	err = m.DeploymentPVCWrap(ctx, nameSpaceStr, name, pod.Containers, &deployment)

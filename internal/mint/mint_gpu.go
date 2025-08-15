@@ -83,7 +83,7 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, pod model.Pod, envs []*gtype
 
 	// build pod
 	// build pod ports
-	pContainers, err := m.buildPodContainer(ctx, pod, saddress, name)
+	pContainers, initData, err := m.buildPodContainer(ctx, pod, saddress, name)
 	if err != nil {
 		return err
 	}
@@ -119,6 +119,9 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, pod model.Pod, envs []*gtype
 			},
 		},
 	}
+
+	// wrap init data
+	m.WrapDeploymentInitData(&deployment, pod.TeeType, initData)
 
 	// add model
 	m.WrapAiModel(&pod, &deployment)

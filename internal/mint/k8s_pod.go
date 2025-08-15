@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"wetee.app/worker/internal/store"
 )
 
 // BuildCommand
@@ -40,7 +41,7 @@ func (m *Minter) buildPodContainer(
 	pod model.Pod,
 	nameSpace, name string,
 	// envs []*gtypes.Env1,
-) ([]v1.Container, error) {
+) ([]v1.Container, *InitData, error) {
 	serviceSpace := m.K8sClient.CoreV1().Services(nameSpace)
 	nodePorts, teePorts := []v1.ServicePort{}, []v1.ServicePort{}
 	cs := pod.Containers
@@ -75,7 +76,7 @@ func (m *Minter) buildPodContainer(
 	}, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("====== CREATE service error", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	// 创建TEE服务
@@ -92,27 +93,41 @@ func (m *Minter) buildPodContainer(
 	}, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Println("====== CREATE tee service error", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	// 构建容器
 	podContainers := make([]v1.Container, 0, len(cs))
+
+	// 用于应用联系控制面板的凭证
+	wid, err := store.SealAppID(pod.PodId)
+	if err != nil {
+		return nil, nil, err
+	}
+	initEnvs := InitData{
+		Envs: map[string]string{
+			"APPID":      wid,
+			"PODID":      fmt.Sprint(pod.PodId),
+			"NAME_SPACE": nameSpace,
+		},
+	}
+
 	for i, container := range cs {
 		// 获取服务端口
 		ports := BuildContainerPortFormService(name, container.Port)
 
 		// 构建来自用户的环境变量
-		containerEnvs, err := m.BuildEnvsFromSettings(pod.PodId, nameSpace, pod.Containers[i].Env)
+		containerEnvs, err := m.BuildEnvsFromSettings(pod.PodId, nameSpace, i, pod.Containers[i].Env, &initEnvs)
 		if err != nil {
 			fmt.Println("====== CREATE user envs error", err)
-			return nil, err
+			return nil, nil, err
 		}
 
 		// 构建来自集群的环境变量
 		err = m.WrapEnvs(containerEnvs, nameSpace, name, nodeSers)
 		if err != nil {
 			fmt.Println("====== CREATE cluster envs error", err)
-			return nil, err
+			return nil, nil, err
 		}
 
 		podContainers = append(podContainers, v1.Container{
@@ -134,7 +149,7 @@ func (m *Minter) buildPodContainer(
 		})
 	}
 
-	return podContainers, nil
+	return podContainers, &initEnvs, nil
 }
 
 // Get Service Port From Service

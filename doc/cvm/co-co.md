@@ -6,9 +6,9 @@ containerd config default | sudo tee /etc/containerd/config.toml
 如果容器不断重启，按照这个页面调整 https://blog.csdn.net/roadtohacker/article/details/134654399
 
 # init
-sudo kubeadm init --apiserver-advertise-address=192.168.111.105 --pod-network-cidr=10.244.0.0/16  --image-repository registry.aliyuncs.com/google_containers
+sudo kubeadm init --apiserver-advertise-address=192.168.110.205 --pod-network-cidr=10.244.0.0/16  --image-repository registry.aliyuncs.com/google_containers
 
-kubeadm join 192.168.111.105:6443 --token y7utfc.hahjwcdr9fk9r2rg --discovery-token-ca-cert-hash sha256:c10ac8ffae8906f6643fbb674f203075c0ede5d73deec38b5b70b552d61b6e20
+kubeadm join 192.168.110.205:6443 --token y7utfc.hahjwcdr9fk9r2rg --discovery-token-ca-cert-hash sha256:c10ac8ffae8906f6643fbb674f203075c0ede5d73deec38b5b70b552d61b6e20
 
 # 网络插件
 kubectl apply -f ./co-co/canal.yaml

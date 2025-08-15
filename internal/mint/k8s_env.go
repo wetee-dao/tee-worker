@@ -7,53 +7,109 @@ import (
 	"strings"
 
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"wetee.app/worker/internal/store"
 )
+
+type InitData struct {
+	Envs     map[string]string
+	Files    map[int]map[string]string
+	Encrypts map[int]map[string]uint64
+}
 
 // Build Envs
 // 获取配置文件
-func (m *Minter) BuildEnvsFromSettings(podId uint64, nameSpace string, settings []model.Env) ([]corev1.EnvVar, error) {
-	// 用于应用联系控制面板的凭证
-	wid, err := store.SealAppID(podId)
-	if err != nil {
-		return []corev1.EnvVar{}, err
+func (m *Minter) BuildEnvsFromSettings(podId uint64, nameSpace string, index int, settingEnvs []model.Env, init *InitData) ([]corev1.EnvVar, error) {
+	envs := []corev1.EnvVar{}
+
+	if init.Envs == nil {
+		init.Envs = make(map[string]string)
+	}
+	if init.Files == nil {
+		init.Files = make(map[int]map[string]string)
+	}
+	if init.Files[index] == nil {
+		init.Files[index] = make(map[string]string)
+	}
+	if init.Encrypts == nil {
+		init.Encrypts = make(map[int]map[string]uint64)
+	}
+	if init.Encrypts[index] == nil {
+		init.Encrypts[index] = make(map[string]uint64)
 	}
 
-	envs := []corev1.EnvVar{
-		{Name: "APPID", Value: wid},
-		{Name: "PODID", Value: fmt.Sprint(podId)},
-		{Name: "NAME_SPACE", Value: nameSpace},
-	}
-
-	files := map[string]string{}
-	encrypts := map[string]uint64{}
-	for _, setting := range settings {
+	for _, setting := range settingEnvs {
 		if setting.Env != nil {
 			envs = append(envs, corev1.EnvVar{
 				Name:  string(setting.Env.F0),
 				Value: string(setting.Env.F1),
 			})
 		} else if setting.File != nil {
-			files[string(setting.File.F0)] = hex.EncodeToString(setting.File.F1)
+			init.Files[index][string(setting.File.F0)] = hex.EncodeToString(setting.File.F1)
 		} else if setting.Encrypt != nil {
-			encrypts[string(setting.Encrypt.F0)] = setting.Encrypt.F1
+			init.Encrypts[index][string(setting.Encrypt.F0)] = setting.Encrypt.F1
 		}
 	}
 
-	fbt, _ := json.Marshal(files)
-	envs = append(envs, corev1.EnvVar{
-		Name:  "__FILES__",
-		Value: string(fbt),
-	})
+	// fbt, _ := json.Marshal(files)
+	// envs = append(envs, corev1.EnvVar{
+	// 	Name:  "__FILES__",
+	// 	Value: string(fbt),
+	// })
 
-	ebt, _ := json.Marshal(encrypts)
-	envs = append(envs, corev1.EnvVar{
-		Name:  "__ENCRYPTS__",
-		Value: string(ebt),
-	})
+	// ebt, _ := json.Marshal(encrypts)
+	// envs = append(envs, corev1.EnvVar{
+	// 	Name:  "__ENCRYPTS__",
+	// 	Value: string(ebt),
+	// })
 
 	return envs, nil
+}
+
+func (m *Minter) WrapDeploymentInitData(deployment *appsv1.Deployment, version model.TEEType, initData *InitData) {
+	if version.SGX != nil {
+		for k, v := range initData.Envs {
+			deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
+				Name:  k,
+				Value: v,
+			})
+		}
+
+		encrypts, _ := json.Marshal(initData.Encrypts)
+		deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
+			Name:  "__ENCRYPTS__",
+			Value: string(encrypts),
+		})
+
+		files, _ := json.Marshal(initData.Files)
+		deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
+			Name:  "__FILES__",
+			Value: string(files),
+		})
+	} else if version.CVM != nil {
+
+	}
+}
+
+func (m *Minter) WrapPodInitData(pod *corev1.Pod, version model.TEEType, initData *InitData) {
+	for k, v := range initData.Envs {
+		pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
+			Name:  k,
+			Value: v,
+		})
+	}
+
+	encrypts, _ := json.Marshal(initData.Encrypts)
+	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
+		Name:  "__ENCRYPTS__",
+		Value: string(encrypts),
+	})
+
+	files, _ := json.Marshal(initData.Files)
+	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
+		Name:  "__FILES__",
+		Value: string(files),
+	})
 }
 
 // WrapNodeService
