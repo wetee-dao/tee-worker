@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -48,7 +49,6 @@ func (s *TEEServer) OnBoot(srv gnet.Engine) (action gnet.Action) {
 func (s *TEEServer) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
 	report, err := s.report()
 	if err != nil {
-		util.LogWithRed("TEEServer", "OnOpen failed:", err)
 		out = s.wrapData(0, 500, []byte("OnOpen failed:"+err.Error()))
 	} else {
 		out = s.wrapData(0, 0, report)
@@ -62,30 +62,35 @@ func (s *TEEServer) OnClose(c gnet.Conn, err error) gnet.Action {
 }
 
 func (s *TEEServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
-	packet, err := Decode(c)
+	id, packet, err := Decode(c)
 	if err != nil {
+		if errors.Is(err, io.ErrShortBuffer) {
+			return gnet.None
+		}
 		util.LogWithRed("TEEServer", "Decode failed:", err)
-		return s.ReturnError(c, 0, err)
+		return s.ReturnError(c, id, err)
 	}
 
+	// 解析请求
 	req := new(model.ApiReq)
 	err = protoio.ReadMessage(bytes.NewBuffer(packet), req)
 	if err != nil {
 		util.LogWithRed("TEEServer", "ReadMessage failed:", err)
-		return s.ReturnError(c, req.Id, err)
+		return s.ReturnError(c, id, err)
 	}
 
+	// 处理请求
 	switch string(req.Url) {
 	case "/launch":
 		data, err := s.launch(req.Data)
 		if err != nil {
-			return s.ReturnError(c, req.Id, errors.Wrap(err, "launch failed"))
+			return s.ReturnError(c, id, errors.Wrap(err, "call launch failed"))
 		}
 
-		return s.ReturnData(c, req.Id, data)
+		return s.ReturnData(c, id, data)
 	default:
 		err = fmt.Errorf("unknown URL: %s", string(req.Url))
-		return s.ReturnError(c, req.Id, err)
+		return s.ReturnError(c, id, err)
 	}
 }
 
@@ -103,17 +108,16 @@ func (s *TEEServer) ReturnData(c gnet.Conn, req uint64, body []byte) gnet.Action
 	return gnet.None
 }
 
+// wrapData 包装数据
 func (s *TEEServer) wrapData(req uint64, code int32, data []byte) []byte {
 	result := &model.ApiResp{
-		ReqId: req,
-		Code:  code,
-		Data:  data,
+		Code: code,
+		Data: data,
 	}
 
 	buf := new(bytes.Buffer)
 	abci.WriteMessage(result, buf)
-	bt, _ := Encode(buf.Bytes())
-
+	bt, _ := Encode(req, buf.Bytes())
 	return bt
 }
 

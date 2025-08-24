@@ -3,7 +3,9 @@ package client
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/panjf2000/gnet/v2"
@@ -40,42 +42,44 @@ func (s *TEEServer) OnClose(c gnet.Conn, err error) gnet.Action {
 }
 
 func (s *TEEServer) OnTraffic(c gnet.Conn) (action gnet.Action) {
-	packet, err := ApiDecode(c)
+	id, packet, err := Decode(c)
 	if err != nil {
+		if errors.Is(err, io.ErrShortBuffer) {
+			return gnet.None
+		}
 		util.LogWithRed("TEEServer", "Decode failed:", err)
-		return s.ReturnError(c, 0, err)
+		return s.ReturnError(c, id, err)
 	}
 
 	req := new(model.ApiReq)
 	err = protoio.ReadMessage(bytes.NewBuffer(packet), req)
 	if err != nil {
 		util.LogWithRed("TEEServer", "ReadMessage failed: %v", err)
-		return s.ReturnError(c, req.Id, err)
+		return s.ReturnError(c, id, err)
 	}
 
 	switch string(req.Url) {
 	case "/report":
-		return s.ReturnData(c, req.Id, []byte("report"))
+		return s.ReturnData(c, id, []byte("report"))
 	case "/launch":
-		return s.ReturnData(c, req.Id, []byte("launch"))
+		return s.ReturnData(c, id, []byte("launch"))
 	default:
 		err = fmt.Errorf("unknown URL: %s", string(req.Url))
-		return s.ReturnError(c, req.Id, err)
+		return s.ReturnError(c, id, err)
 	}
 }
 
 // ReturnError 返回错误
 func (s *TEEServer) ReturnError(c gnet.Conn, req uint64, err error) gnet.Action {
 	result := &model.ApiResp{
-		ReqId: req,
-		Code:  500,
-		Data:  []byte(err.Error()),
+		Code: 500,
+		Data: []byte(err.Error()),
 	}
 
 	// 写入解密消息
 	buf := new(bytes.Buffer)
 	abci.WriteMessage(result, buf)
-	bt, _ := ApiEncode(buf.Bytes())
+	bt, _ := Encode(req, buf.Bytes())
 	c.Write(bt)
 	return gnet.None
 }
@@ -83,15 +87,14 @@ func (s *TEEServer) ReturnError(c gnet.Conn, req uint64, err error) gnet.Action 
 // ReturnData 返回数据
 func (s *TEEServer) ReturnData(c gnet.Conn, req uint64, body []byte) gnet.Action {
 	result := &model.ApiResp{
-		ReqId: req,
-		Code:  0,
-		Data:  body,
+		Code: 0,
+		Data: body,
 	}
 
 	// 写入解密消息
 	buf := new(bytes.Buffer)
 	abci.WriteMessage(result, buf)
-	bt, _ := ApiEncode(buf.Bytes())
+	bt, _ := Encode(req, buf.Bytes())
 	c.Write(bt)
 	return gnet.None
 }

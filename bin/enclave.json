@@ -58,6 +58,10 @@
         {
             "source": "/opt/kube/config",
             "target": "/etc/kube/config"
+        },
+        {
+            "source": "/etc/ssl/certs/ca-certificates.crt",
+            "target": "/etc/ssl/certs/ca-certificates.crt"
         }
     ]
 }

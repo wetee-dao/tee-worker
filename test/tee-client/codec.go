@@ -1,35 +1,23 @@
 package client
 
 import (
-	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 	"net"
 
 	"github.com/panjf2000/gnet/v2"
 )
 
-var ErrIncompletePacket = errors.New("incomplete packet")
-
 const (
-	magicNumber     = 1314
-	magicNumberSize = 2
-	bodySize        = 4
+	headSize = 8
+	bodySize = 4
 )
-
-var magicNumberBytes []byte
-
-func init() {
-	magicNumberBytes = make([]byte, magicNumberSize)
-	binary.BigEndian.PutUint16(magicNumberBytes, uint16(magicNumber))
-}
 
 // Codec Protocol format:
 //
-// * 0           2                       6
+// * 0           8                       12
 // * +-----------+-----------------------+
-// * |   magic   |       body len        |
+// * |   head    |       body len        |
 // * +-----------+-----------+-----------+
 // * |                                   |
 // * +                                   +
@@ -37,66 +25,59 @@ func init() {
 // * +                                   +
 // * |            ... ...                |
 // * +-----------------------------------+
-func ApiEncode(buf []byte) ([]byte, error) {
-	bodyOffset := magicNumberSize + bodySize
+func Encode(id uint64, buf []byte) ([]byte, error) {
+	bodyOffset := headSize + bodySize
 	msgLen := bodyOffset + len(buf)
 
 	data := make([]byte, msgLen)
-	copy(data, magicNumberBytes)
+	idBytes := make([]byte, headSize)
+	binary.BigEndian.PutUint64(idBytes, id)
 
-	binary.BigEndian.PutUint32(data[magicNumberSize:bodyOffset], uint32(len(buf)))
+	copy(data, idBytes)
+
+	binary.BigEndian.PutUint32(data[headSize:bodyOffset], uint32(len(buf)))
 	copy(data[bodyOffset:msgLen], buf)
 	return data, nil
 }
 
-func ApiDecode(c gnet.Conn) ([]byte, error) {
-	bodyOffset := magicNumberSize + bodySize
+func Decode(c gnet.Conn) (uint64, []byte, error) {
+	bodyOffset := headSize + bodySize
 	buf, err := c.Peek(bodyOffset)
 	if err != nil {
-		if errors.Is(err, io.ErrShortBuffer) {
-			err = ErrIncompletePacket
-		}
-		return nil, err
+		return 0, nil, err
 	}
 
-	if !bytes.Equal(magicNumberBytes, buf[:magicNumberSize]) {
-		return nil, errors.New("invalid magic number")
-	}
+	id := binary.BigEndian.Uint64(buf[:headSize])
 
-	bodyLen := binary.BigEndian.Uint32(buf[magicNumberSize:bodyOffset])
+	bodyLen := binary.BigEndian.Uint32(buf[headSize:bodyOffset])
 	msgLen := bodyOffset + int(bodyLen)
 	buf, err = c.Peek(msgLen)
 	if err != nil {
-		if errors.Is(err, io.ErrShortBuffer) {
-			err = ErrIncompletePacket
-		}
-		return nil, err
+		return 0, nil, err
 	}
 	body := make([]byte, bodyLen)
 	copy(body, buf[bodyOffset:msgLen])
 	_, _ = c.Discard(msgLen)
 
-	return body, nil
+	return id, body, nil
 }
 
-func ReadFromApi(c net.Conn) ([]byte, error) {
-	bodyOffset := magicNumberSize + bodySize
+func ReadFromApi(c net.Conn) (uint64, []byte, error) {
+	bodyOffset := headSize + bodySize
 	headerData := make([]byte, bodyOffset)
-	_, readTagError := c.Read(headerData)
+	_, readTagError := io.ReadFull(c, headerData)
 	if readTagError != nil {
-		return nil, readTagError
+		return 0, nil, readTagError
 	}
 
-	if !bytes.Equal(magicNumberBytes, headerData[:magicNumberSize]) {
-		return nil, errors.New("invalid magic number")
-	}
+	id := binary.BigEndian.Uint64(headerData[:headSize])
 
-	bodyLen := binary.BigEndian.Uint32(headerData[magicNumberSize:bodyOffset])
+	bodyLen := binary.BigEndian.Uint32(headerData[headSize:bodyOffset])
 	bodyData := make([]byte, bodyLen)
-	_, readTagError = c.Read(bodyData)
+	_, readTagError = io.ReadFull(c, bodyData)
 	if readTagError != nil {
-		return nil, readTagError
+		return id, nil, readTagError
 	}
 
-	return bodyData, nil
+	return id, bodyData, nil
 }

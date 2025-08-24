@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - image: wetee/pccs:250718
-          name: c1"
+          name: c1
           ports:
             - containerPort: 8081
               name: wetee-pccs-8081

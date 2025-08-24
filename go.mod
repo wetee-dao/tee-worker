@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.74
 	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.2-0.20240919131012-e3b938563803
 	github.com/cometbft/cometbft v1.0.1
+	github.com/edgelesssys/ego v1.7.2
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/cors v1.2.1
 	github.com/onsi/ginkgo/v2 v2.22.1
@@ -43,7 +44,6 @@ require (
 	github.com/dgraph-io/badger/v4 v4.5.1 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/edgelesssys/ego v1.7.0 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
@@ -53,6 +53,9 @@ require (
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/flatbuffers v24.12.23+incompatible // indirect
+	github.com/google/go-configfs-tsm v0.2.2 // indirect
+	github.com/google/go-sev-guest v0.13.0 // indirect
+	github.com/google/logger v1.1.1 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/holiman/uint256 v1.2.4 // indirect
 	github.com/ipfs/go-cid v0.5.0 // indirect
