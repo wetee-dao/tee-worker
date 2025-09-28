@@ -6,7 +6,6 @@ require (
 	github.com/99designs/gqlgen v0.17.74
 	github.com/centrifuge/go-substrate-rpc-client/v4 v4.2.2-0.20240919131012-e3b938563803
 	github.com/cometbft/cometbft v1.0.1
-	github.com/edgelesssys/ego v1.7.2
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/cors v1.2.1
 	github.com/onsi/ginkgo/v2 v2.22.1
@@ -15,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/vedhavyas/go-subkey/v2 v2.0.0
 	github.com/vektah/gqlparser/v2 v2.5.27
-	github.com/wetee-dao/ink.go v0.1.23
+	github.com/wetee-dao/ink.go v0.1.30
 	github.com/wetee-dao/tee-dsecret v0.1.10
 	golang.org/x/crypto v0.38.0
 	k8s.io/api v0.29.2
@@ -44,6 +43,7 @@ require (
 	github.com/dgraph-io/badger/v4 v4.5.1 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.1.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/edgelesssys/ego v1.7.2 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-kit/log v0.2.1 // indirect

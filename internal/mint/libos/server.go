@@ -142,7 +142,7 @@ func StartTEEServer(pk *model.PrivKey, side *sidechain.SideChain) {
 
 	err := gnet.Run(s, s.network+"://"+s.addr, gnet.WithMulticore(multicore))
 	if err != nil {
-		util.LogWithRed("TEEServer", "Run failed:", err)
+		util.LogWithRed("TEEServer", "Run failed:", err, s.addr)
 		os.Exit(1)
 	}
 }

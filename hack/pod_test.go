@@ -11,8 +11,10 @@ import (
 	"wetee.app/worker/internal/util"
 )
 
+const TestChainUrl = "wss://xiaobai.asyou.me:30001/ws"
+
 func TestAddPod(t *testing.T) {
-	client, err := chain.InitClient([]string{"ws://127.0.0.1:9944"}, true)
+	client, err := chain.InitClient([]string{TestChainUrl}, true)
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +42,8 @@ func TestAddPod(t *testing.T) {
 				Image:   []byte("wetee/ego-hello:2025-07-28-06-58"),
 				Command: cloud.Command{NONE: &trueValue},
 				Port:    []cloud.Service{{Http: &value80}},
-				Cr:      cloud.CR{Cpu: 1000, Mem: 800},
+				Cpu:     1000,
+				Mem:     800,
 				Env: []cloud.Env{
 					{
 						Env: &struct {
@@ -83,7 +86,7 @@ func TestAddPod(t *testing.T) {
 }
 
 func TestUpdatePod(t *testing.T) {
-	client, err := chain.InitClient([]string{"ws://127.0.0.1:9944"}, true)
+	client, err := chain.InitClient([]string{TestChainUrl}, true)
 	if err != nil {
 		panic(err)
 	}
@@ -111,7 +114,8 @@ func TestUpdatePod(t *testing.T) {
 					Image:   []byte("wetee/ego-hello:2025-07-28-06-58"),
 					Command: cloud.Command{NONE: &trueValue},
 					Port:    []cloud.Service{{Http: &value80}},
-					Cr:      cloud.CR{Cpu: 1000, Mem: 800},
+					Cpu:     1000,
+					Mem:     800,
 					Env: []cloud.Env{
 						{
 							Env: &struct {
@@ -157,7 +161,7 @@ func TestUpdatePod(t *testing.T) {
 }
 
 func TestRestartPod(t *testing.T) {
-	client, err := chain.InitClient([]string{"ws://127.0.0.1:9944"}, true)
+	client, err := chain.InitClient([]string{TestChainUrl}, true)
 	if err != nil {
 		panic(err)
 	}
@@ -181,7 +185,7 @@ func TestRestartPod(t *testing.T) {
 }
 
 func TestDeletePod(t *testing.T) {
-	client, err := chain.InitClient([]string{"ws://127.0.0.1:9944"}, true)
+	client, err := chain.InitClient([]string{TestChainUrl}, true)
 	if err != nil {
 		panic(err)
 	}

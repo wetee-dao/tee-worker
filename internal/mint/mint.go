@@ -74,7 +74,7 @@ func (m *Minter) StartMint() {
 		// 获取clusterId
 		cluster, err := chains.MainChain.GetMintWorker(signer.AccountID())
 		if err != nil {
-			fmt.Println("ClusterId => clusterId not found, mint not started")
+			fmt.Println("ClusterId => clusterId not found, mint not started ", err)
 			time.Sleep(time.Second * 10)
 			continue
 		}

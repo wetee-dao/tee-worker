@@ -14,7 +14,7 @@ sudo chmod -R 777 /opt/wetee-worker
 
 export SIDE_CHAIN_PORT=10000
 export GQL_PORT=10005
-export CHAIN_ADDR=ws://127.0.0.1:9944
+export CHAIN_ADDR=ws://192.168.110.205:30002/ws
 export KUBECONFIG=/etc/kube/config
 
 echo $KUBE_CONFIG_PATH

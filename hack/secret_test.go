@@ -30,7 +30,7 @@ func TestInitSecret(t *testing.T) {
 		panic(err)
 	}
 
-	err = cloudIns.ExecInitSecret([]byte("TEST"), ink.ExecParams{
+	err = cloudIns.ExecInitSecret([]byte("TEST"), 0, ink.ExecParams{
 		Signer:    &pk,
 		PayAmount: types.NewU128(*big.NewInt(0)),
 	})

@@ -16,17 +16,17 @@ spec:
         app: wetee-dev
     spec:
       containers:
-        - image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/wetee-node:dev.2024-11-16-21_32
+        - image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/wetee-node:dev.2025-08-27-19_50
           name: c1
           volumeMounts:
             - name: wetee-chain
               mountPath: /chain-data
         - name: c2
+          image: nginx
           command:
             - /bin/sh
             - "-c"
             - 'nginx -g "daemon off;" -c  /mnt/ssl-proxy/nginx.conf'
-          image: anolis-registry.cn-zhangjiakou.cr.aliyuncs.com/openanolis/nginx:1.14.1-8.6
           ports:
             - containerPort: 443
               name: wetee-dev-443
@@ -35,18 +35,18 @@ spec:
             - name: wetee-proxy
               mountPath: /mnt/ssl-proxy
         - name: sidecar
-          image: registry.cn-hangzhou.aliyuncs.com/wetee_dao/substrate_sidecar:2024-11-26-15_26
+          image: parity/substrate-api-sidecar:latest
           env:
             - name: SAS_EXPRESS_KEEP_ALIVE_TIMEOUT
-              value: 6000
+              value: "6000"
       volumes:
         - name: wetee-chain
           hostPath:
             type: DirectoryOrCreate
-            path: /mnt/chain-dev/
+            path: /home/chain-data
         - name: wetee-proxy
           hostPath:
             type: DirectoryOrCreate
-            path: /mnt/ssl-proxy
+            path: /mnt/ssl-dev
       nodeSelector:
         TEE: "SGX"
