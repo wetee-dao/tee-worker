@@ -88,10 +88,10 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           env:
-            - name: P2P_PORT
-              value: "30010"
+            - name: SIDE_CHAIN_PORT
+              value: "10000"
             - name: CHAIN_ADDR
-              value: "ws://192.168.110.205:9944"
+              value: "ws://192.168.110.205:30002/ws"
           # TODO(user): Configure the resources accordingly based on the project requirements.
           # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
           resources:

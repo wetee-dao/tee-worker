@@ -100,15 +100,16 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, app model.Pod, ve
 	if err != nil {
 		return err
 	}
-	initEnvs := InitData{
-		Envs: map[string]string{
+	initEnvs := PodData{
+		InitDatas: map[string]string{
 			"APPID":      wid,
 			"PODID":      fmt.Sprint(app.PodId),
 			"NAME_SPACE": saddress,
 		},
+		Disks: map[int]map[string]uint64{},
 	}
 
-	cenvs, err := m.BuildEnvsFromSettings(app.PodId, saddress, 0, app.Containers[0].Env, &initEnvs)
+	cenvs, err := m.BuildEnvsFromSettings(app.PodId, saddress, 0, app.Containers[0].Env, app.Containers[0].Disk, &initEnvs)
 	if err != nil {
 		return err
 	}
@@ -129,12 +130,12 @@ func (m *Minter) CreateTask(ctx *context.Context, user []byte, app model.Pod, ve
 					Env:   cenvs,
 					Resources: v1.ResourceRequirements{
 						Limits: v1.ResourceList{
-							v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cr.Cpu) + "m"),
-							v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Cr.Mem) + "M"),
+							v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cpu) + "m"),
+							v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Mem) + "M"),
 						},
 						Requests: v1.ResourceList{
-							v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cr.Cpu) + "m"),
-							v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Cr.Mem) + "M"),
+							v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cpu) + "m"),
+							v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Mem) + "M"),
 						},
 					},
 				},

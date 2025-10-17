@@ -24,10 +24,10 @@ func readFileBase4(filename string) string {
 	return base64.StdEncoding.EncodeToString(data)
 }
 
-func GetSslRoot() []string {
-	if !IsFileExists(WORK_DIR+"/ser.pem") || !IsFileExists(WORK_DIR+"/ser.key") {
-		return []string{"", ""}
-	}
+// func GetSslRoot() []string {
+// 	if !IsFileExists(WORK_DIR+"/ser.pem") || !IsFileExists(WORK_DIR+"/ser.key") {
+// 		return []string{"", ""}
+// 	}
 
-	return []string{readFileBase4(WORK_DIR + "/ser.key"), readFileBase4(WORK_DIR + "/ser.pem")}
-}
+// 	return []string{readFileBase4(WORK_DIR + "/ser.key"), readFileBase4(WORK_DIR + "/ser.pem")}
+// }

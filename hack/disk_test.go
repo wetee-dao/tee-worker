@@ -10,10 +10,9 @@ import (
 	"github.com/wetee-dao/ink.go/util"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/contracts"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains/contracts/cloud"
-	"golang.org/x/crypto/blake2b"
 )
 
-func TestInitSecret(t *testing.T) {
+func TestInitDisk(t *testing.T) {
 	client, err := ink.InitClient([]string{TestChainUrl}, true)
 	if err != nil {
 		panic(err)
@@ -31,9 +30,7 @@ func TestInitSecret(t *testing.T) {
 		panic(err)
 	}
 
-	msg := []byte("TEST")
-	hash := blake2b.Sum256(msg)
-	err = cloudIns.ExecCreateSecret(msg, types.NewH256(hash[:]), ink.ExecParams{
+	err = cloudIns.ExecCreateDisk([]byte("TEST"), 10, ink.ExecParams{
 		Signer:    &pk,
 		PayAmount: types.NewU128(*big.NewInt(0)),
 	})
@@ -45,7 +42,7 @@ func TestInitSecret(t *testing.T) {
 
 }
 
-func TestQuerySecret(t *testing.T) {
+func TestQueryDisk(t *testing.T) {
 	client, err := ink.InitClient([]string{TestChainUrl}, true)
 	if err != nil {
 		panic(err)
@@ -63,7 +60,7 @@ func TestQuerySecret(t *testing.T) {
 		panic(err)
 	}
 
-	list, _, err := cloudIns.QueryUserSecrets(pk.H160Address(), util.NewNone[uint64](), 100, ink.DefaultParamWithOrigin(pk.AccountID()))
+	list, _, err := cloudIns.QueryUserDisks(pk.H160Address(), util.NewNone[uint64](), 100, ink.DefaultParamWithOrigin(pk.AccountID()))
 	fmt.Println(list)
 	fmt.Println(err)
 }

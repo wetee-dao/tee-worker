@@ -6,9 +6,11 @@ import (
 	"html/template"
 	"math/rand"
 	"slices"
+	"strings"
 
 	"fmt"
 
+	"github.com/wetee-dao/tee-dsecret/pkg/chains"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -41,7 +43,7 @@ func (m *Minter) buildPodContainer(
 	pod model.Pod,
 	nameSpace, name string,
 	// envs []*gtypes.Env1,
-) ([]v1.Container, *InitData, error) {
+) ([]v1.Container, *PodData, error) {
 	serviceSpace := m.K8sClient.CoreV1().Services(nameSpace)
 	nodePorts, teePorts := []v1.ServicePort{}, []v1.ServicePort{}
 	cs := pod.Containers
@@ -104,12 +106,18 @@ func (m *Minter) buildPodContainer(
 	if err != nil {
 		return nil, nil, err
 	}
-	initEnvs := InitData{
-		Envs: map[string]string{
+
+	chain_addr := strings.Join(chains.MainChain.GetChainUrls(), ",")
+	initEnvs := PodData{
+		InitDatas: map[string]string{
 			"APPID":      wid,
 			"PODID":      fmt.Sprint(pod.PodId),
 			"NAME_SPACE": nameSpace,
+			"CHAIN_ADDR": chain_addr,
 		},
+		Disks:    map[int]map[string]uint64{},
+		Files:    map[int]map[string]string{},
+		Encrypts: map[int]map[string]uint64{},
 	}
 
 	for i, container := range cs {
@@ -117,7 +125,7 @@ func (m *Minter) buildPodContainer(
 		ports := BuildContainerPortFormService(name, container.Port)
 
 		// 构建来自用户的环境变量
-		containerEnvs, err := m.BuildEnvsFromSettings(pod.PodId, nameSpace, i, pod.Containers[i].Env, &initEnvs)
+		containerEnvs, err := m.BuildEnvsFromSettings(pod.PodId, nameSpace, i, pod.Containers[i].Env, pod.Containers[i].Disk, &initEnvs)
 		if err != nil {
 			fmt.Println("====== CREATE user envs error", err)
 			return nil, nil, err
@@ -138,12 +146,12 @@ func (m *Minter) buildPodContainer(
 			Command: m.BuildCommand(&container.Command),
 			Resources: v1.ResourceRequirements{
 				Limits: v1.ResourceList{
-					v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cr.Cpu) + "m"),
-					v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Cr.Mem) + "M"),
+					v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cpu) + "m"),
+					v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Mem) + "M"),
 				},
 				Requests: v1.ResourceList{
-					v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cr.Cpu) + "m"),
-					v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Cr.Mem) + "M"),
+					v1.ResourceCPU:    resource.MustParse(fmt.Sprint(container.Cpu) + "m"),
+					v1.ResourceMemory: resource.MustParse(fmt.Sprint(container.Mem) + "M"),
 				},
 			},
 		})

@@ -41,7 +41,7 @@ func (s *TEEServer) launch(req []byte) ([]byte, error) {
 		return nil, errors.New("Tx is not pod start")
 	}
 
-	secrets, err := s.side.BroadcastDecryptSecret(startReq)
+	secrets, err := s.side.BroadcastReencryptReq(startReq)
 	if err != nil {
 		return nil, errors.Wrap(err, "BroadcastDecryptSecret error")
 	}

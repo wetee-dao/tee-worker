@@ -36,7 +36,7 @@ func StartServer() {
 
 	// graphql playground
 	router.Handle("/", playground.Handler("WeTEE-WORKER", "/gql"))
-	srv := handler.New(NewExecutableSchema(Config{
+	srv := handler.NewDefaultServer(NewExecutableSchema(Config{
 		Resolvers:  &Resolver{},
 		Directives: NewDirectiveRoot(),
 	}))
@@ -44,9 +44,9 @@ func StartServer() {
 	// main graphql
 	router.Handle("/gql", srv)
 
-	if util.IsFileExists(util.WORK_DIR+"/ser.pem") && util.IsFileExists(util.WORK_DIR+"/ser.key") {
+	if util.IsFileExists("./chain_data/ssl/ser.pem") && util.IsFileExists("./chain_data/ssl/ser.key") {
 		log.Printf("connect to https://0.0.0.0:%s/ for GraphQL playground", fmt.Sprint(port))
-		http.ListenAndServeTLS(":"+fmt.Sprint(port), util.WORK_DIR+"/ser.pem", util.WORK_DIR+"/ser.key", router)
+		http.ListenAndServeTLS(":"+fmt.Sprint(port), "./chain_data/ssl/ser.pem", "./chain_data/ssl/ser.key", router)
 	} else {
 		log.Printf("connect to http://0.0.0.0:%s/ for GraphQL playground", fmt.Sprint(port))
 		http.ListenAndServe(":"+fmt.Sprint(port), router)

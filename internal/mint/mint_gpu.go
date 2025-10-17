@@ -90,8 +90,8 @@ func (m *Minter) CreateGpuApp(ctx *context.Context, pod model.Pod, envs []*gtype
 
 	// add gpu resources
 	for i := 0; i < len(pContainers); i++ {
-		pContainers[i].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(pod.Containers[i].Cr.Gpu), resource.DecimalExponent)
-		pContainers[i].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(pod.Containers[i].Cr.Gpu), resource.DecimalExponent)
+		pContainers[i].Resources.Limits["nvidia.com/gpu"] = *resource.NewQuantity(int64(pod.Containers[i].Gpu), resource.DecimalExponent)
+		pContainers[i].Resources.Requests["nvidia.com/gpu"] = *resource.NewQuantity(int64(pod.Containers[i].Gpu), resource.DecimalExponent)
 	}
 
 	// build deployment

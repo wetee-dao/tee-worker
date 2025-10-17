@@ -21,7 +21,7 @@ func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name 
 	}
 
 	for containerIndex := range containers {
-		disks := containers[containerIndex].Cr.Disk
+		disks := containers[containerIndex].Disk
 
 		// 判断是否存在PVC
 		for i, disk := range disks {
@@ -40,7 +40,7 @@ func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name 
 						},
 						Resources: corev1.VolumeResourceRequirements{
 							Requests: corev1.ResourceList{
-								corev1.ResourceStorage: resource.MustParse("1Gi"),
+								corev1.ResourceStorage: resource.MustParse(fmt.Sprint(disk.Size) + "Gi"),
 							},
 						},
 					},
@@ -64,7 +64,7 @@ func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name 
 			// 挂载到容器
 			deployment.Spec.Template.Spec.Containers[containerIndex].VolumeMounts = append(deployment.Spec.Template.Spec.Containers[containerIndex].VolumeMounts, corev1.VolumeMount{
 				Name:      name + "-store-" + fmt.Sprint(containerIndex) + "-" + fmt.Sprint(i),
-				MountPath: string(*disk.Path.SSD),
+				MountPath: string(disk.Path),
 			})
 		}
 	}
@@ -73,8 +73,8 @@ func (m *Minter) DeploymentPVCWrap(ctx *context.Context, nameSpace string, name 
 }
 
 // 查询数组中是否存在目标元素
-func findPvc(name string, pvcs []corev1.PersistentVolumeClaim, containerIndex int, target model.Disk) (string, *corev1.PersistentVolumeClaim) {
-	pvcName := name + "-pvc-" + fmt.Sprint(containerIndex) + "-" + strings.ReplaceAll(string(*target.Path.SSD), "/", "-")
+func findPvc(name string, pvcs []corev1.PersistentVolumeClaim, containerIndex int, target model.ContainerDisk) (string, *corev1.PersistentVolumeClaim) {
+	pvcName := name + "-pvc-" + fmt.Sprint(containerIndex) + "-" + strings.ReplaceAll(string(target.Path), "/", "-")
 	for _, pvc := range pvcs {
 		if pvc.ObjectMeta.Name == pvcName {
 			return pvcName, &pvc
