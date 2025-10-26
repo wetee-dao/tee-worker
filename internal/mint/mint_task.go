@@ -32,13 +32,18 @@ func (m *Minter) MintTASK(ctx *context.Context, pod model.Pod, stage uint32, blo
 
 	util.LogWithBlue("MINT TASK", "===========================================", pod.PodId)
 	nameSpace := AccountToSpace(pod.Owner[:])
-	name := GetPodName(pod.PodId)
 
 	// 获取log和硬件资源使用量
 	// Obtain the log and hardware resource usage
 	t := uint64(blockNumber) - uint64(pod.LastMintBlockNumber)
 	from := time.Now().Add(-6 * time.Second * time.Duration(t)).Unix()
-	logs, crs, err := m.queryMetric(*ctx, pod, nameSpace, name, from)
+	crs, err := m.QueryMetric(*ctx, pod, nameSpace)
+	if err != nil {
+		util.LogError("getMetricInfo", err)
+		return nil, err
+	}
+
+	logs, err := m.QueryLog(*ctx, pod, nameSpace, from)
 	if err != nil {
 		util.LogError("getMetricInfo", err)
 		return nil, err

@@ -17,21 +17,30 @@ import (
 	wmodel "wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/mint/proof"
+	"wetee.app/worker/internal/store"
 )
 
 // WorkLoglist is the resolver for the work_loglist field.
 func (r *queryResolver) WorkLoglist(ctx context.Context, podID uint64, page int, size int) (string, error) {
-	list, err := proof.ListLogsById(podID, page, size, false)
+	pod, err := store.GetPod(podID)
 	if err != nil && err.Error() != "the list not found" {
-		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
+		return "", gqlerror.Errorf("GetPod:" + err.Error())
+	}
+
+	nameSpace := mint.AccountToSpace(pod.Owner[:])
+	list, err := mint.MinterIns.QueryLog(ctx, *pod, nameSpace, 0)
+	if err != nil {
+		return "", gqlerror.Errorf("QueryLog: " + nameSpace + " :" + err.Error())
 	}
 
 	listCache, err := proof.ListLogsById(podID, page, 200, true)
-	if err != nil && err.Error() != "the list not found" {
-		return "", gqlerror.Errorf("WorkLogCacheList:" + err.Error())
+	if err != nil {
+		return "", gqlerror.Errorf("WorkLogCacheList: " + err.Error())
 	}
 
-	listCache = append(listCache, list...)
+	listCache = append(listCache, proof.WorkLogProof{
+		Logs: list,
+	})
 	bt, err := json.Marshal(listCache)
 	if err != nil {
 		return "", gqlerror.Errorf("JsonMarshal:" + err.Error())
@@ -42,17 +51,26 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, podID uint64, page int,
 
 // WorkWetriclist is the resolver for the work_wetriclist field.
 func (r *queryResolver) WorkWetriclist(ctx context.Context, podID uint64, page int, size int) (string, error) {
-	list, err := proof.ListMonitoringsById(podID, page, size, false)
+	pod, err := store.GetPod(podID)
 	if err != nil && err.Error() != "the list not found" {
-		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
+		return "", gqlerror.Errorf("GetPod:" + err.Error())
+	}
+
+	nameSpace := mint.AccountToSpace(pod.Owner[:])
+
+	list, err := mint.MinterIns.QueryMetric(ctx, *pod, nameSpace)
+	if err != nil {
+		return "", gqlerror.Errorf("QueryMetric: " + err.Error())
 	}
 
 	listCache, err := proof.ListMonitoringsById(podID, page, 200, true)
-	if err != nil && err.Error() != "the list not found" {
+	if err != nil {
 		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
 
-	listCache = append(listCache, list...)
+	listCache = append(listCache, proof.WorkCrProof{
+		Cr: list,
+	})
 	bt, err := json.Marshal(listCache)
 	if err != nil {
 		return "", gqlerror.Errorf("JsonMarshal:" + err.Error())

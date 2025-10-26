@@ -56,7 +56,7 @@ func InitCluster(mgr manager.Manager, privateKey *model.PrivKey) error {
 		K8sClient:     clientset,
 		MetricsClient: metricsClient,
 		HostDomain:    "",
-		preRecerve:    make(map[string]chan interface{}),
+		preRecerve:    make(map[string]chan any),
 	}
 	MinterIns.PrivateKey = privateKey
 

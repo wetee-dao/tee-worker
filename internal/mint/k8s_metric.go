@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"wetee.app/worker/internal/store"
 )
 
@@ -39,9 +41,14 @@ func (m *Minter) GetMetric(ctx *context.Context, nameSpace string, pod model.Pod
 	}
 
 	// 获取指定 Pod 的日志和硬件资源使用量信息
-	logs, crs, err := m.queryMetric(*ctx, pod, nameSpace, pods.Items[0].Name, from)
+	crs, err := m.QueryMetric(*ctx, pod, nameSpace)
 	if err != nil {
-		return logs, crs, errors.Wrap(err, "QueryMetric")
+		return nil, crs, errors.Wrap(err, "QueryMetric")
+	}
+
+	logs, err := m.QueryLog(*ctx, pod, nameSpace, from)
+	if err != nil {
+		return nil, crs, errors.Wrap(err, "QueryLog")
 	}
 
 	// 返回获取到的日志和硬件资源使用量
@@ -49,47 +56,24 @@ func (m *Minter) GetMetric(ctx *context.Context, nameSpace string, pod model.Pod
 }
 
 // 获取容器的资源信息和日志
-func (m *Minter) queryMetric(ctx context.Context, pod model.Pod, nameSpace, name string, form int64) ([]string, map[string][]int64, error) {
-	podLogOpts := &v1.PodLogOptions{
-		SinceTime: &metav1.Time{
-			Time: time.Unix(form, 0),
-		},
-	}
-
-	// 如果是不是TASK类型，则获取c0容器的日志
-	if pod.Ptype.SCRIPT == nil {
-		podLogOpts.Container = "c0"
-	}
-
-	// 获取Pod的logs
-	// Get the logs of the Pod
-	clientset := m.K8sClient
-	req := clientset.CoreV1().Pods(nameSpace).GetLogs(name, podLogOpts)
-	podLogs, err := req.Stream(ctx)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "GetLogs")
-	}
-	defer podLogs.Close()
-
-	// 读取到的logs是 []string
-	// Read the logs line by line
-	logs := []string{}
-	scanner := bufio.NewScanner(podLogs)
-	for scanner.Scan() {
-		logs = append(logs, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		fmt.Printf("failed to read log line: %v", err)
-	}
+func (m *Minter) QueryMetric(ctx context.Context, pod model.Pod, nameSpace string) (map[string][]int64, error) {
+	// 获取上次记录的时间
+	name := GetPodName(pod.PodId)
 
 	// 获取Pod的内存使用情况
 	// Gets the memory usage of the Pod
 	use := map[string][]int64{}
 	metricsClient := m.MetricsClient
-	podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses(nameSpace).Get(ctx, name, metav1.GetOptions{})
+	clientset := m.K8sClient
+	dpod, err := GetPodFromDevlopment(ctx, clientset, nameSpace, name)
+	if err != nil {
+		return nil, errors.Wrap(err, "GetPodFromDevlopment")
+	}
+
+	podMetrics, err := metricsClient.MetricsV1beta1().PodMetricses(nameSpace).Get(ctx, dpod.Name, metav1.GetOptions{})
 	if err != nil {
 		if pod.Ptype.CPU != nil {
-			return logs, use, errors.Wrap(err, "PodMetricses")
+			return use, errors.Wrap(err, "PodMetricses")
 		} else {
 			use["d"] = []int64{0, 0, 0}
 		}
@@ -104,5 +88,67 @@ func (m *Minter) queryMetric(ctx context.Context, pod model.Pod, nameSpace, name
 		use[container.Name] = []int64{container.Usage.Cpu().MilliValue(), container.Usage.Memory().Value() / (1024 * 1024), 0}
 	}
 
-	return logs, use, nil
+	return use, nil
+}
+
+// 获取容器的资源信息和日志
+func (m *Minter) QueryLog(ctx context.Context, pod model.Pod, nameSpace string, form int64) ([]string, error) {
+	// 获取上次记录的时间
+	name := GetPodName(pod.PodId)
+	podLogOpts := &v1.PodLogOptions{
+		SinceTime: &metav1.Time{
+			Time: time.Unix(form, 0),
+		},
+	}
+
+	// 如果是不是TASK类型，则获取c0容器的日志
+	if pod.Ptype.SCRIPT == nil {
+		podLogOpts.Container = "c0"
+	}
+
+	// 获取Pod的logs
+	// Get the logs of the Pod
+	clientset := m.K8sClient
+	dpod, err := GetPodFromDevlopment(ctx, clientset, nameSpace, name)
+	if err != nil {
+		return nil, errors.Wrap(err, "GetPodFromDevlopment")
+	}
+
+	req := clientset.CoreV1().Pods(nameSpace).GetLogs(dpod.Name, podLogOpts)
+	podLogs, err := req.Stream(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "GetLogs")
+	}
+	defer podLogs.Close()
+
+	// 读取到的logs是 []string
+	// Read the logs line by line
+	logs := []string{}
+	scanner := bufio.NewScanner(podLogs)
+	for scanner.Scan() {
+		logs = append(logs, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("failed to read log line: %v", err)
+	}
+
+	return logs, nil
+}
+
+func GetPodFromDevlopment(ctx context.Context, clientset *kubernetes.Clientset, nameSpace, name string) (*v1.Pod, error) {
+	listOptions := metav1.ListOptions{
+		FieldSelector: "status.phase=Running",
+	}
+	podList, err := clientset.CoreV1().Pods(nameSpace).List(ctx, listOptions)
+	if err != nil {
+		return nil, errors.Wrap(err, "podList")
+	}
+
+	for _, p := range podList.Items {
+		if strings.Contains(p.Name, name) {
+			return &p, nil
+		}
+	}
+
+	return nil, err
 }
