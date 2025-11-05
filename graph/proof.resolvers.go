@@ -33,15 +33,7 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, podID uint64, page int,
 		return "", gqlerror.Errorf("QueryLog: " + nameSpace + " :" + err.Error())
 	}
 
-	listCache, err := proof.ListLogsById(podID, page, 200, true)
-	if err != nil {
-		return "", gqlerror.Errorf("WorkLogCacheList: " + err.Error())
-	}
-
-	listCache = append(listCache, proof.WorkLogProof{
-		Logs: list,
-	})
-	bt, err := json.Marshal(listCache)
+	bt, err := json.Marshal(list)
 	if err != nil {
 		return "", gqlerror.Errorf("JsonMarshal:" + err.Error())
 	}

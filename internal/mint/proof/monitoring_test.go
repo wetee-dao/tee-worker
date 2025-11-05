@@ -23,7 +23,7 @@ func TestListMonitoringsById(t *testing.T) {
 
 	var use map[string][]int64 = map[string][]int64{"x": {1, 2, 3}}
 
-	_, _, bt, err := GetWorkCrHash(use, 1)
+	_, _, bt, err := GetWorkCrHash(use)
 	if err != nil {
 		t.Errorf("GetGetWorkCrHash Expected no error, got %v", err)
 	}
@@ -55,18 +55,16 @@ func TestGetGetWorkCrHash(t *testing.T) {
 	store.DBInit()
 	defer store.DBClose()
 
-	var blockNumber uint64 = 1
 	var use map[string][]int64 = map[string][]int64{"x": {1, 2, 3}}
 
-	hash2, _, _, err := GetWorkCrHash(use, blockNumber)
+	hash2, _, _, err := GetWorkCrHash(use)
 	if err != nil {
 		t.Errorf("GetGetWorkCrHash Expected no error, got %v", err)
 	}
 
 	pf := WorkCrProof{
-		BlockNumber: blockNumber,
-		Time:        uint64(time.Now().Unix()),
-		Cr:          use,
+		Time: uint64(time.Now().Unix()),
+		Cr:   use,
 	}
 	bt, err := json.Marshal(&pf)
 	hash := blake2b.Sum256(bt)

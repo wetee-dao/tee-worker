@@ -11,9 +11,8 @@ import (
 
 // 硬件资源证明
 type WorkCrProof struct {
-	BlockNumber uint64
-	Time        uint64
-	Cr          map[string][]int64
+	Time uint64
+	Cr   map[string][]int64
 }
 
 var CrBucket = "cr"
@@ -42,11 +41,10 @@ func ListMonitoringsById(id uint64, page int, size int, isCache bool) ([]WorkCrP
 }
 
 // 工作量证明资源占用 hash
-func GetWorkCrHash(cr map[string][]int64, blockNumber uint64) ([]byte, []uint32, []byte, error) {
+func GetWorkCrHash(cr map[string][]int64) ([]byte, []uint32, []byte, error) {
 	pf := WorkCrProof{
-		BlockNumber: blockNumber,
-		Time:        uint64(time.Now().Unix()),
-		Cr:          cr,
+		Time: uint64(time.Now().Unix()),
+		Cr:   cr,
 	}
 	bt, err := json.Marshal(&pf)
 	hash := blake2b.Sum256(bt)
@@ -57,4 +55,18 @@ func GetWorkCrHash(cr map[string][]int64, blockNumber uint64) ([]byte, []uint32,
 		crA[1] += uint32(v[1])
 	}
 	return hash[:], crA, bt, err
+}
+
+func AddMonitor(pod model.Pod, logs []string, crs map[string][]int64) error {
+	name := fmt.Sprint(pod.PodId)
+	_, _, bt, err := GetWorkCrHash(crs)
+	if err != nil {
+		return err
+	}
+
+	err = model.AddToList(LogBucket, name, bt)
+	if err != nil {
+		return err
+	}
+	return model.AddToList(CrBucket, name, bt)
 }

@@ -11,9 +11,8 @@ import (
 
 // 日志证明
 type WorkLogProof struct {
-	BlockNumber uint64
-	Time        uint64
-	Logs        []string
+	Time uint64
+	Logs []string
 }
 
 var LogBucket = "log"
@@ -45,11 +44,10 @@ func ListLogsById(podId uint64, page int, size int, isCache bool) ([]WorkLogProo
 }
 
 // 工作量日志 hash
-func GetWorkLogHash(log []string, blockNumber uint64) ([]byte, []byte, error) {
+func GetWorkLogHash(log []string) ([]byte, []byte, error) {
 	pf := WorkLogProof{
-		BlockNumber: blockNumber,
-		Time:        uint64(time.Now().Unix()),
-		Logs:        log,
+		Time: uint64(time.Now().Unix()),
+		Logs: log,
 	}
 	bt, err := json.Marshal(&pf)
 	hash := blake2b.Sum256(bt)

@@ -3,7 +3,6 @@ package proof
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
@@ -13,85 +12,18 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	inkutil "github.com/wetee-dao/ink.go/util"
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
 	"wetee.app/worker/internal/store"
 	"wetee.app/worker/internal/util"
 )
 
 func MakeWorkProof(pod model.Pod, pod_key inkutil.Option[types.AccountID], logs []string, crs map[string][]int64, now time.Time) (*model.TeeCall, error) {
-	name := fmt.Sprint(pod.PodId)
-
-	// 获取log和硬件资源使用量
-	var logHash = []byte{}
-	var crHash = []byte{}
-	var cr = []uint32{0, 0, 0}
-	var err error
-
-	err = store.SetLastMintTime(name, now.Unix())
+	err := AddMonitor(pod, logs, crs)
 	if err != nil {
-		util.LogError("SetLastMintTIme", err)
 		return nil, err
 	}
 
-	err = model.DeleteList(LogBucket, name+"_cache")
-	if err != nil {
-		util.LogError("DeleteLog", err)
-		return nil, err
-	}
-
-	if len(logs) > 0 {
-		// 获取 log hash
-		// Get log hash
-		var bt []byte
-		logHash, bt, err = GetWorkLogHash(logs, uint64(pod.LastMintBlockNumber))
-		if err != nil {
-			util.LogError("getWorkLogHash", err)
-			return nil, err
-		}
-		err = model.AddToList(LogBucket, name, bt)
-		if err != nil {
-			util.LogError("Addlog", err)
-			return nil, err
-		}
-	}
-
-	err = model.DeleteList(CrBucket, name+"_cache")
-	if err != nil {
-		util.LogError("DeleteLog", err)
-		return nil, err
-	}
-
-	if len(crs) > 0 {
-		// 获取计算资源hash
-		// Get Computing resource hash
-		var bt []byte
-		crHash, cr, bt, err = GetWorkCrHash(crs, uint64(pod.LastMintBlockNumber))
-		if err != nil {
-			util.LogError("getWorkCrHash", err)
-			return nil, err
-		}
-		err := model.AddToList(CrBucket, name, bt)
-		if err != nil {
-			util.LogError("AddCr", err)
-			return nil, err
-		}
-	}
-
-	crProof := gtypes.ComCr{
-		Cpu:  cr[0],
-		Mem:  cr[1],
-		Disk: 0,
-	}
-
-	hasHash := false
-	if len(logHash) > 0 || len(crHash) > 0 {
-		hasHash = true
-	}
-
-	util.LogWithGray("MakeWorkProof", crProof.Cpu, hasHash)
-
-	// 获取工作证明
-	// Get report of work
+	// 获取 TEE 证明
+	// Get TEE report of work
 	reportHash := [32]byte{}
 	report, err := store.GetPendingTEEReport(pod.PodId)
 	if err != nil {
@@ -104,7 +36,7 @@ func MakeWorkProof(pod model.Pod, pod_key inkutil.Option[types.AccountID], logs 
 
 	// 所有需要提交的信息都不存在，不继续提交
 	// All required submission information is missing, and the submission will not be continued.
-	if reportHash == [32]byte{} && crHash == nil && logHash == nil {
+	if reportHash == [32]byte{} {
 		return nil, errors.New("report, crHash and logHash are all nil")
 	}
 

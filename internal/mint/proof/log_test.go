@@ -22,7 +22,7 @@ func TestListLogsById(t *testing.T) {
 	page := 1
 	size := 2
 
-	_, bt, err := GetWorkLogHash([]string{"log1", "xlog2"}, 1)
+	_, bt, err := GetWorkLogHash([]string{"log1", "xlog2"})
 	if err != nil {
 		t.Errorf("GetWorkLogHash Expected no error, got %v", err)
 	}
@@ -55,18 +55,16 @@ func TestGetWorkLogHash(t *testing.T) {
 	store.DBInit()
 	defer store.DBClose()
 
-	var blockNumber uint64 = 1
 	logs := []string{"log1", "log2"}
 
-	hash2, _, err := GetWorkLogHash(logs, blockNumber)
+	hash2, _, err := GetWorkLogHash(logs)
 	if err != nil {
 		t.Errorf("GetWorkLogHash Expected no error, got %v", err)
 	}
 
 	pf := WorkLogProof{
-		BlockNumber: blockNumber,
-		Time:        uint64(time.Now().Unix()),
-		Logs:        logs,
+		Time: uint64(time.Now().Unix()),
+		Logs: logs,
 	}
 	bt, err := json.Marshal(&pf)
 	hash := blake2b.Sum256(bt)
