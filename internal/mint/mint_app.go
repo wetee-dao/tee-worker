@@ -22,13 +22,14 @@ import (
 func (m *Minter) MintAPP(ctx *context.Context, pod model.Pod, stage uint32, currBlock uint32) (*model.TeeCall, error) {
 	nameSpace := AccountToSpace(pod.Owner[:])
 
+	fmt.Println("CurrBlock:", currBlock, " pod.LastMintBlockNumber:", pod.LastMintBlockNumber, " stage:", stage)
 	// Check if work proof needs to be uploaded
 	// status 0=>created  1=>deoloying 2=>error  3=>stop
 	if currBlock-pod.LastMintBlockNumber < stage {
 		return nil, nil
 	}
 
-	util.LogWithCyan("MINT APP", "===========================================", pod.PodId)
+	util.LogWithCyan("START MINT APP", "===========================================", pod.PodId)
 
 	// get logs and use compute resource
 	now := time.Now()

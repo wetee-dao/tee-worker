@@ -1,6 +1,7 @@
 package hack
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -206,4 +207,26 @@ func TestDeletePod(t *testing.T) {
 		Signer:    &pk,
 		PayAmount: types.NewU128(*big.NewInt(0)),
 	})
+}
+
+func TestQueryPod(t *testing.T) {
+	client, err := chain.InitClient([]string{TestChainUrl}, true)
+	if err != nil {
+		panic(err)
+	}
+
+	pk, err := chain.Sr25519PairFromSecret("//Alice", 42)
+	if err != nil {
+		util.LogWithPurple("Sr25519PairFromSecret", err)
+		panic(err)
+	}
+
+	cloudIns, err := cloud.InitCloudContract(client, contracts.GetCloudAddress())
+	if err != nil {
+		util.LogWithPurple("InitCloudContract", err)
+		panic(err)
+	}
+
+	pods, _, err := cloudIns.QueryPodsByIds([]uint64{0}, chain.DefaultParamWithOrigin(pk.AccountID()))
+	fmt.Println((*pods)[0].F5, err)
 }

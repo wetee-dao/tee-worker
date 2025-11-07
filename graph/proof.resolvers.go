@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
@@ -33,7 +34,12 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, podID uint64, page int,
 		return "", gqlerror.Errorf("QueryLog: " + nameSpace + " :" + err.Error())
 	}
 
-	bt, err := json.Marshal(list)
+	bt, err := json.Marshal([]proof.WorkLogProof{
+		{
+			Time: uint64(time.Now().Unix()),
+			Logs: list,
+		},
+	})
 	if err != nil {
 		return "", gqlerror.Errorf("JsonMarshal:" + err.Error())
 	}
@@ -61,7 +67,8 @@ func (r *queryResolver) WorkWetriclist(ctx context.Context, podID uint64, page i
 	}
 
 	listCache = append(listCache, proof.WorkCrProof{
-		Cr: list,
+		Time: uint64(time.Now().Unix()),
+		Cr:   list,
 	})
 	bt, err := json.Marshal(listCache)
 	if err != nil {

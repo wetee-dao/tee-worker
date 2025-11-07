@@ -231,11 +231,10 @@ func (m *Minter) StartMint() {
 				continue
 			}
 
-			m.checkPodStatus(&ctx, *p)
-
-			if p.Status != 1 {
+			if pv.Status != 1 {
 				continue
 			}
+			m.checkPodStatus(&ctx, *p)
 
 			if p.Ptype.CPU != nil {
 				call, err := m.MintAPP(&ctx, *p, stage, uint32(head))
@@ -266,7 +265,7 @@ func (m *Minter) StartMint() {
 				}
 			}
 
-			store.SetPodSkipUtil(p.PodId, p.LastMintBlockNumber+200)
+			store.SetPodSkipUtil(p.PodId, uint32(head)+100)
 		}
 
 		// 读取待同步到区块链的调用

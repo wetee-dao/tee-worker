@@ -26,18 +26,18 @@ func MakeWorkProof(pod model.Pod, pod_key inkutil.Option[types.AccountID], logs 
 	// Get TEE report of work
 	reportHash := [32]byte{}
 	report, err := store.GetPendingTEEReport(pod.PodId)
-	if err != nil {
-		// util.LogError("GetWorkDcapReport", err)
-	} else {
+	if err == nil {
 		reportData, _ := json.Marshal(report)
 		hash := blake2b.Sum256(reportData)
 		reportHash = hash
+	} else {
+		util.LogError("Proof", "GetWorkDcapReport ERROR:", err)
 	}
 
 	// 所有需要提交的信息都不存在，不继续提交
 	// All required submission information is missing, and the submission will not be continued.
 	if reportHash == [32]byte{} {
-		return nil, errors.New("report, crHash and logHash are all nil")
+		return nil, errors.New("report is nil")
 	}
 
 	account, err := sidechain.GetDkgPubkey()
