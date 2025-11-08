@@ -226,6 +226,9 @@ func (m *Minter) StartMint() {
 				continue
 			}
 
+			// 更新最后挖矿区块
+			p.LastMintBlockNumber = pv.LastMint
+
 			// 跳过200个块以内已经部署的POD
 			if p.SkipUtil >= uint32(head) {
 				continue
@@ -265,7 +268,7 @@ func (m *Minter) StartMint() {
 				}
 			}
 
-			store.SetPodSkipUtil(p.PodId, uint32(head)+100)
+			store.SetPodSkipUtil(p.PodId, uint32(head)+100, pv.LastMint)
 		}
 
 		// 读取待同步到区块链的调用

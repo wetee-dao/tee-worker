@@ -18,17 +18,18 @@ func SetPod(pod model.Pod) error {
 }
 
 // SetPodLastMint
-func SetPodLastMint(podId uint64, t uint32) error {
+func SetPodLastMint(podId uint64, last uint32) error {
 	pod, _ := GetPod(podId)
-	pod.LastMintBlockNumber = t
+	pod.LastMintBlockNumber = last
 
 	return SetPod(*pod)
 }
 
 // SetPodSkipUtil skip mint util
-func SetPodSkipUtil(podId uint64, t uint32) error {
+func SetPodSkipUtil(podId uint64, t uint32, last uint32) error {
 	pod, _ := GetPod(podId)
 	pod.SkipUtil = t
+	pod.LastMintBlockNumber = last
 
 	return SetPod(*pod)
 }
