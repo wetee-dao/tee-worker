@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/vedhavyas/go-subkey/v2 v2.0.0
 	github.com/vektah/gqlparser/v2 v2.5.27
-	github.com/wetee-dao/ink.go v0.1.30
+	github.com/wetee-dao/ink.go v0.1.31
 	github.com/wetee-dao/tee-dsecret v0.1.10
 	golang.org/x/crypto v0.38.0
 	k8s.io/api v0.29.2
