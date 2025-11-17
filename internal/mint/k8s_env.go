@@ -11,6 +11,7 @@ import (
 
 	"github.com/pelletier/go-toml/v2"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/contracts"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -93,6 +94,10 @@ func (m *Minter) WrapDeploymentInitData(deployment *appsv1.Deployment, version m
 		initToml.Data["__ENCRYPTS__"] = string(encrypts)
 		initToml.Data["__FILES__"] = string(files)
 		initToml.Data["__DISKS__"] = string(disks)
+
+		params := map[string]string{}
+		// TODO
+		params["polkadot_cloud_addr"] = contracts.CloudAddress
 
 		deployment.Spec.Template.ObjectMeta.Annotations["io.katacontainers.config.runtime.cc_init_data"] = initToml.base64()
 	}

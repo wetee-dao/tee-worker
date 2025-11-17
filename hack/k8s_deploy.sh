@@ -45,4 +45,4 @@ kubectl create -f ./hack/install/manager_headless.yaml
 kubectl create -f ./hack/install/manager_nodeport.yaml
 
 # 创建开发服务
-# kubectl create -f ./hack/install/manager_for_localdev.yaml
+kubectl create -f ./hack/install/manager_for_localdev.yaml
