@@ -159,9 +159,11 @@ func (m *Minter) StartMint() {
 			sleepFrom(start, time.Second*6)
 			continue
 		}
-		if len(deployList) > 0 {
+		if len(podVersions) > 0 {
+			fmt.Println()
+			util.LogWithGreen("BLOCK  ", "-", head)
 			util.LogWithGray("POD ALL", "-", len(podVersions))
-			util.LogWithGreen("TODO   ", "-", len(deployList))
+			util.LogWithGray("TODO   ", "-", len(deployList))
 		}
 
 		// 触发TEE调用
@@ -268,7 +270,7 @@ func (m *Minter) StartMint() {
 				}
 			}
 
-			store.SetPodSkipUtil(p.PodId, uint32(head)+100, pv.LastMint)
+			store.SetPodSkipUtil(p.PodId, uint32(head)+10, pv.LastMint)
 		}
 
 		// 读取待同步到区块链的调用

@@ -17,10 +17,10 @@ import (
 )
 
 func MakeWorkProof(pod model.Pod, pod_key inkutil.Option[types.AccountID], logs []string, crs map[string][]int64, now time.Time) (*model.TeeCall, error) {
-	err := AddMonitor(pod, logs, crs)
-	if err != nil {
-		return nil, err
-	}
+	defer func() {
+		util.LogOk("WorkProof", "Save Work Proof for pod:", pod.PodId)
+		AddMonitor(pod, logs, crs)
+	}()
 
 	// 获取 TEE 证明
 	// Get TEE report of work

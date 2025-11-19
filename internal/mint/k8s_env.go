@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/pelletier/go-toml/v2"
@@ -63,6 +64,9 @@ func (m *Minter) WrapDeploymentInitData(deployment *appsv1.Deployment, version m
 	encrypts, _ := json.Marshal(initData.Encrypts)
 	files, _ := json.Marshal(initData.Files)
 	disks, _ := json.Marshal(initData.Disks)
+	params := map[string]string{}
+	params["polkadot_cloud_addr"] = contracts.CloudAddress
+	paramStr, _ := json.Marshal(params)
 	if version.SGX != nil {
 		for k, v := range initData.InitDatas {
 			deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
@@ -82,22 +86,23 @@ func (m *Minter) WrapDeploymentInitData(deployment *appsv1.Deployment, version m
 			Name:  "__DISKS__",
 			Value: string(disks),
 		})
+		deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
+			Name:  "__PARAMS__",
+			Value: string(paramStr),
+		})
 	} else if version.CVM != nil {
 		initToml := CVMInitData{
 			Version:   "0.1.0",
 			Algorithm: "sha256",
 			Data:      map[string]string{},
 		}
-		for k, v := range initData.InitDatas {
-			initToml.Data[k] = v
-		}
+		maps.Copy(initToml.Data, initData.InitDatas)
 		initToml.Data["__ENCRYPTS__"] = string(encrypts)
 		initToml.Data["__FILES__"] = string(files)
 		initToml.Data["__DISKS__"] = string(disks)
 
-		params := map[string]string{}
 		// TODO
-		params["polkadot_cloud_addr"] = contracts.CloudAddress
+		initToml.Data["__PARAMS__"] = string(paramStr)
 
 		deployment.Spec.Template.ObjectMeta.Annotations["io.katacontainers.config.runtime.cc_init_data"] = initToml.base64()
 	}

@@ -15,6 +15,7 @@ extend type Query {
   Query log list
   """
   work_loglist(
+    user: String!
     pod_id: Uint64!
     page: Int!
     size: Int!
@@ -23,6 +24,7 @@ extend type Query {
   Query Metric list
   """
   work_wetriclist(
+    user: String!
     pod_id: Uint64!
     page: Int!
     size: Int!
@@ -31,7 +33,7 @@ extend type Query {
   Query Metric list
   """
   work_servicelist(
-    project_id: String!
+    user: String!
     pod_id: Uint64!
   ): [Service!]!
 

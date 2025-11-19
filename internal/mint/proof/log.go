@@ -54,3 +54,15 @@ func GetWorkLogHash(log []string) ([]byte, []byte, error) {
 
 	return hash[:], bt, err
 }
+
+// 工作量证明资源占用 hash
+func GetLogHash(logs []string) ([]byte, []byte, error) {
+	pf := WorkLogProof{
+		Time: uint64(time.Now().Unix()),
+		Logs: logs,
+	}
+	bt, err := json.Marshal(&pf)
+	hash := blake2b.Sum256(bt)
+
+	return hash[:], bt, err
+}

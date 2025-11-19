@@ -63,9 +63,9 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AttestationReportVerify func(childComplexity int, report string) int
-		WorkLoglist             func(childComplexity int, podID uint64, page int, size int) int
-		WorkServicelist         func(childComplexity int, projectID string, podID uint64) int
-		WorkWetriclist          func(childComplexity int, podID uint64, page int, size int) int
+		WorkLoglist             func(childComplexity int, user string, podID uint64, page int, size int) int
+		WorkServicelist         func(childComplexity int, user string, podID uint64) int
+		WorkWetriclist          func(childComplexity int, user string, podID uint64, page int, size int) int
 		Worker                  func(childComplexity int) int
 		WorkerInfo              func(childComplexity int) int
 	}
@@ -102,9 +102,9 @@ type MutationResolver interface {
 	Login(ctx context.Context, input model.LoginContent, signature string) (string, error)
 }
 type QueryResolver interface {
-	WorkLoglist(ctx context.Context, podID uint64, page int, size int) (string, error)
-	WorkWetriclist(ctx context.Context, podID uint64, page int, size int) (string, error)
-	WorkServicelist(ctx context.Context, projectID string, podID uint64) ([]*model.Service, error)
+	WorkLoglist(ctx context.Context, user string, podID uint64, page int, size int) (string, error)
+	WorkWetriclist(ctx context.Context, user string, podID uint64, page int, size int) (string, error)
+	WorkServicelist(ctx context.Context, user string, podID uint64) ([]*model.Service, error)
 	AttestationReportVerify(ctx context.Context, report string) (bool, error)
 	WorkerInfo(ctx context.Context) (*model.WorkerInfo, error)
 	Worker(ctx context.Context) ([]*model.Contract, error)
@@ -220,7 +220,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkLoglist(childComplexity, args["pod_id"].(uint64), args["page"].(int), args["size"].(int)), true
+		return e.complexity.Query.WorkLoglist(childComplexity, args["user"].(string), args["pod_id"].(uint64), args["page"].(int), args["size"].(int)), true
 
 	case "Query.work_servicelist":
 		if e.complexity.Query.WorkServicelist == nil {
@@ -232,7 +232,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkServicelist(childComplexity, args["project_id"].(string), args["pod_id"].(uint64)), true
+		return e.complexity.Query.WorkServicelist(childComplexity, args["user"].(string), args["pod_id"].(uint64)), true
 
 	case "Query.work_wetriclist":
 		if e.complexity.Query.WorkWetriclist == nil {
@@ -244,7 +244,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkWetriclist(childComplexity, args["pod_id"].(uint64), args["page"].(int), args["size"].(int)), true
+		return e.complexity.Query.WorkWetriclist(childComplexity, args["user"].(string), args["pod_id"].(uint64), args["page"].(int), args["size"].(int)), true
 
 	case "Query.worker":
 		if e.complexity.Query.Worker == nil {
@@ -744,23 +744,46 @@ func (ec *executionContext) field_Query_attestation_report_verify_argsReport(
 func (ec *executionContext) field_Query_work_loglist_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Query_work_loglist_argsPodID(ctx, rawArgs)
+	arg0, err := ec.field_Query_work_loglist_argsUser(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["pod_id"] = arg0
-	arg1, err := ec.field_Query_work_loglist_argsPage(ctx, rawArgs)
+	args["user"] = arg0
+	arg1, err := ec.field_Query_work_loglist_argsPodID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["page"] = arg1
-	arg2, err := ec.field_Query_work_loglist_argsSize(ctx, rawArgs)
+	args["pod_id"] = arg1
+	arg2, err := ec.field_Query_work_loglist_argsPage(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["size"] = arg2
+	args["page"] = arg2
+	arg3, err := ec.field_Query_work_loglist_argsSize(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["size"] = arg3
 	return args, nil
 }
+func (ec *executionContext) field_Query_work_loglist_argsUser(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["user"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
+	if tmp, ok := rawArgs["user"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_work_loglist_argsPodID(
 	ctx context.Context,
 	rawArgs map[string]any,
@@ -818,11 +841,11 @@ func (ec *executionContext) field_Query_work_loglist_argsSize(
 func (ec *executionContext) field_Query_work_servicelist_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Query_work_servicelist_argsProjectID(ctx, rawArgs)
+	arg0, err := ec.field_Query_work_servicelist_argsUser(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["project_id"] = arg0
+	args["user"] = arg0
 	arg1, err := ec.field_Query_work_servicelist_argsPodID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -830,17 +853,17 @@ func (ec *executionContext) field_Query_work_servicelist_args(ctx context.Contex
 	args["pod_id"] = arg1
 	return args, nil
 }
-func (ec *executionContext) field_Query_work_servicelist_argsProjectID(
+func (ec *executionContext) field_Query_work_servicelist_argsUser(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (string, error) {
-	if _, ok := rawArgs["project_id"]; !ok {
+	if _, ok := rawArgs["user"]; !ok {
 		var zeroVal string
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("project_id"))
-	if tmp, ok := rawArgs["project_id"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
+	if tmp, ok := rawArgs["user"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
@@ -869,23 +892,46 @@ func (ec *executionContext) field_Query_work_servicelist_argsPodID(
 func (ec *executionContext) field_Query_work_wetriclist_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Query_work_wetriclist_argsPodID(ctx, rawArgs)
+	arg0, err := ec.field_Query_work_wetriclist_argsUser(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["pod_id"] = arg0
-	arg1, err := ec.field_Query_work_wetriclist_argsPage(ctx, rawArgs)
+	args["user"] = arg0
+	arg1, err := ec.field_Query_work_wetriclist_argsPodID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["page"] = arg1
-	arg2, err := ec.field_Query_work_wetriclist_argsSize(ctx, rawArgs)
+	args["pod_id"] = arg1
+	arg2, err := ec.field_Query_work_wetriclist_argsPage(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["size"] = arg2
+	args["page"] = arg2
+	arg3, err := ec.field_Query_work_wetriclist_argsSize(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["size"] = arg3
 	return args, nil
 }
+func (ec *executionContext) field_Query_work_wetriclist_argsUser(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	if _, ok := rawArgs["user"]; !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
+	if tmp, ok := rawArgs["user"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query_work_wetriclist_argsPodID(
 	ctx context.Context,
 	rawArgs map[string]any,
@@ -1492,7 +1538,7 @@ func (ec *executionContext) _Query_work_loglist(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkLoglist(rctx, fc.Args["pod_id"].(uint64), fc.Args["page"].(int), fc.Args["size"].(int))
+		return ec.resolvers.Query().WorkLoglist(rctx, fc.Args["user"].(string), fc.Args["pod_id"].(uint64), fc.Args["page"].(int), fc.Args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1547,7 +1593,7 @@ func (ec *executionContext) _Query_work_wetriclist(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkWetriclist(rctx, fc.Args["pod_id"].(uint64), fc.Args["page"].(int), fc.Args["size"].(int))
+		return ec.resolvers.Query().WorkWetriclist(rctx, fc.Args["user"].(string), fc.Args["pod_id"].(uint64), fc.Args["page"].(int), fc.Args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1602,7 +1648,7 @@ func (ec *executionContext) _Query_work_servicelist(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkServicelist(rctx, fc.Args["project_id"].(string), fc.Args["pod_id"].(uint64))
+		return ec.resolvers.Query().WorkServicelist(rctx, fc.Args["user"].(string), fc.Args["pod_id"].(uint64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
