@@ -1,36 +1,39 @@
 package hack
 
-// import (
-// 	"math/big"
+import (
+	"math/big"
+	"testing"
 
-// 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
-// 	chain "github.com/wetee-dao/ink.go"
-// 	"github.com/wetee-dao/ink.go/util"
-// 	"github.com/wetee-dao/tee-dsecret/pkg/chains/contracts"
-// 	"github.com/wetee-dao/tee-dsecret/pkg/chains/contracts/subnet"
-// )
+	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
+	"github.com/wetee-dao/ink.go"
+	"github.com/wetee-dao/ink.go/util"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/contracts"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/contracts/cloud"
+)
 
-// func TestUpdateWorker() {
-// 	client, err := chain.InitClient([]string{TestChainUrl}, true)
-// 	if err != nil {
-// 		panic(err)
-// 	}
+func TestUpdatePodCode(t *testing.T) {
+	client, err := ink.InitClient([]string{TestChainUrl}, true)
+	if err != nil {
+		panic(err)
+	}
 
-// 	pk, err := chain.Sr25519PairFromSecret("//Alice", 42)
-// 	if err != nil {
-// 		util.LogWithPurple("Sr25519PairFromSecret", err)
-// 		panic(err)
-// 	}
+	pk, err := ink.Sr25519PairFromSecret("//Alice", 42)
+	if err != nil {
+		util.LogWithPurple("Sr25519PairFromSecret", err)
+		panic(err)
+	}
 
-// 	_call := chain.ExecParams{
-// 		Signer:    &pk,
-// 		PayAmount: types.NewU128(*big.NewInt(0)),
-// 	}
+	cloudIns, err := cloud.InitCloudContract(client, contracts.GetCloudAddress())
+	if err != nil {
+		util.LogWithPurple("InitCloudContract", err)
+		panic(err)
+	}
 
-// 	subnetContract, err := subnet.InitSubnetContract(client, contracts.GetSubnetAddress())
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	err = subnetContract.ExecWorkerUpdate(0, []byte("w0"), subnet.Ip{}, 10000, _call)
-// }
+	err = cloudIns.ExecCharge(ink.ExecParams{
+		Signer:    &pk,
+		PayAmount: types.NewU128(*big.NewInt(100000000000)),
+	})
+	if err != nil {
+		panic(err)
+	}
+}

@@ -79,6 +79,7 @@ func TestAddPod(t *testing.T) {
 		0,
 		1,
 		0,
+		0,
 		chain.ExecParams{
 			Signer:    &pk,
 			PayAmount: types.NewU128(*big.NewInt(0)),
