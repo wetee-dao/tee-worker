@@ -8,7 +8,7 @@ package mint
 // 	"github.com/centrifuge/go-substrate-rpc-client/v4/types/codec"
 // 	"github.com/go-resty/resty/v2"
 // 	chain "github.com/wetee-dao/ink.go"
-// 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
+// 	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/ink/generated/types"
 // 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 
 // 	"wetee.app/worker/internal/mint/proof"

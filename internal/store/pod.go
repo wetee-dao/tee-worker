@@ -48,7 +48,8 @@ func DelPod(pod model.Pod) error {
 
 // GetPods
 func GetPods() ([]*model.Pod, error) {
-	return model.GetJsonList[model.Pod](PodBucket, PodKey)
+	pods, _, err := model.GetJsonList[model.Pod](PodBucket, PodKey)
+	return pods, err
 }
 
 var PendingCallKey = "pending_call_"

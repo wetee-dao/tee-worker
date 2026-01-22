@@ -11,7 +11,7 @@ import (
 	"fmt"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
-	module "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets"
+	module "github.com/wetee-dao/tee-dsecret/pkg/chains/ink/pallets"
 	dmodel "github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/mint"

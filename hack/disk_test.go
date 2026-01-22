@@ -8,8 +8,8 @@ import (
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	"github.com/wetee-dao/ink.go"
 	"github.com/wetee-dao/ink.go/util"
-	"github.com/wetee-dao/tee-dsecret/pkg/chains/contracts"
-	"github.com/wetee-dao/tee-dsecret/pkg/chains/contracts/cloud"
+	contracts "github.com/wetee-dao/tee-dsecret/pkg/chains/ink"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/ink/cloud"
 )
 
 func TestInitDisk(t *testing.T) {

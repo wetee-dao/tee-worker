@@ -9,7 +9,7 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	inkutil "github.com/wetee-dao/ink.go/util"
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/pallets/generated/types"
+	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/ink/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
