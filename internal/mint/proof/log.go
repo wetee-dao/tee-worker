@@ -19,15 +19,15 @@ var LogBucket = "log"
 
 // 工作量日志列表
 // Work Log List
-func ListLogsById(podId uint64, page int, size int, isCache bool) ([]WorkLogProof, error) {
+func ListLogsById(podId uint64, start string, size int, isCache bool) ([]WorkLogProof, string, error) {
 	name := fmt.Sprint(podId)
 	if isCache {
 		name = name + "_cache"
 	}
 
-	res, err := model.GetList(LogBucket, name, page, size)
+	res, lastKey, err := model.GetList(LogBucket, name, []byte(start), size)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	var list = make([]WorkLogProof, 0, len(res))
@@ -35,12 +35,12 @@ func ListLogsById(podId uint64, page int, size int, isCache bool) ([]WorkLogProo
 		logProof := WorkLogProof{}
 		err = json.Unmarshal(v, &logProof)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		list = append(list, logProof)
 	}
 
-	return list, nil
+	return list, string(lastKey), nil
 }
 
 // 工作量日志 hash

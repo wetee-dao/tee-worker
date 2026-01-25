@@ -14,7 +14,7 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	wmodel "wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/mint/proof"
@@ -22,10 +22,10 @@ import (
 )
 
 // WorkLoglist is the resolver for the work_loglist field.
-func (r *queryResolver) WorkLoglist(ctx context.Context, user string, podID uint64, page int, size int) (string, error) {
-	listCache, err := proof.ListLogsById(podID, page, 200, false)
+func (r *queryResolver) WorkLoglist(ctx context.Context, user string, podID uint64, start string, size int) (*wmodel.QueryResult, error) {
+	listCache, lastKey, err := proof.ListLogsById(podID, start, size, false)
 	if err != nil {
-		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
+		return nil, gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
 
 	nameSpace := mint.HexStringToSpace(user)
@@ -33,12 +33,12 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, user string, podID uint
 	// check is running
 	pod, err := store.GetPod(podID)
 	if err != nil && err.Error() != "the list not found" {
-		return "", gqlerror.Errorf("GetPod:" + err.Error())
+		return nil, gqlerror.Errorf("GetPod:" + err.Error())
 	}
 	if pod != nil {
 		list, err := mint.MinterIns.QueryLog(ctx, *pod, nameSpace, 0)
 		if err != nil {
-			return "", gqlerror.Errorf("QueryLog: " + nameSpace + " :" + err.Error())
+			return nil, gqlerror.Errorf("QueryLog: " + nameSpace + " :" + err.Error())
 		}
 		listCache = append(listCache, proof.WorkLogProof{
 			Time: uint64(time.Now().Unix()),
@@ -48,29 +48,32 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, user string, podID uint
 
 	bt, err := json.Marshal(listCache)
 	if err != nil {
-		return "", gqlerror.Errorf("JsonMarshal:" + err.Error())
+		return nil, gqlerror.Errorf("JsonMarshal:" + err.Error())
 	}
 
-	return string(bt), nil
+	return &wmodel.QueryResult{
+		Data:    string(bt),
+		LastKey: lastKey,
+	}, nil
 }
 
 // WorkWetriclist is the resolver for the work_wetriclist field.
-func (r *queryResolver) WorkWetriclist(ctx context.Context, user string, podID uint64, page int, size int) (string, error) {
-	listCache, err := proof.ListMonitoringsById(podID, page, 200, false)
+func (r *queryResolver) WorkWetriclist(ctx context.Context, user string, podID uint64, start string, size int) (*wmodel.QueryResult, error) {
+	listCache, lastKey, err := proof.ListMonitoringsById(podID, start, size, false)
 	if err != nil {
-		return "", gqlerror.Errorf("WorkLogList:" + err.Error())
+		return nil, gqlerror.Errorf("WorkLogList:" + err.Error())
 	}
 
 	// check is running
 	nameSpace := mint.HexStringToSpace(user)
 	pod, err := store.GetPod(podID)
 	if err != nil && err.Error() != "the list not found" {
-		return "", gqlerror.Errorf("GetPod:" + err.Error())
+		return nil, gqlerror.Errorf("GetPod:" + err.Error())
 	}
 	if pod != nil {
 		list, err := mint.MinterIns.QueryMetric(ctx, *pod, nameSpace)
 		if err != nil {
-			return "", gqlerror.Errorf("QueryMetric: " + err.Error())
+			return nil, gqlerror.Errorf("QueryMetric: " + err.Error())
 		}
 
 		listCache = append(listCache, proof.WorkCrProof{
@@ -81,10 +84,13 @@ func (r *queryResolver) WorkWetriclist(ctx context.Context, user string, podID u
 
 	bt, err := json.Marshal(listCache)
 	if err != nil {
-		return "", gqlerror.Errorf("JsonMarshal:" + err.Error())
+		return nil, gqlerror.Errorf("JsonMarshal:" + err.Error())
 	}
 
-	return string(bt), nil
+	return &wmodel.QueryResult{
+		Data:    string(bt),
+		LastKey: lastKey,
+	}, nil
 }
 
 // WorkServicelist is the resolver for the work_servicelist field.

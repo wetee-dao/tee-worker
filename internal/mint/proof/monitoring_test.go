@@ -18,7 +18,7 @@ func TestListMonitoringsById(t *testing.T) {
 	defer store.DBClose()
 
 	id := uint64(time.Now().Unix() + 1)
-	page := 1
+	start := ""
 	size := 10
 
 	var use map[string][]int64 = map[string][]int64{"x": {1, 2, 3}}
@@ -31,7 +31,7 @@ func TestListMonitoringsById(t *testing.T) {
 	name := fmt.Sprint(id)
 	model.AddToList(CrBucket, name, bt)
 
-	crs, err := ListMonitoringsById(id, page, size, false)
+	crs, _, err := ListMonitoringsById(id, start, size, false)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}

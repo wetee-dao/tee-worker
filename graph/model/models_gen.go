@@ -31,6 +31,11 @@ type Mutation struct {
 type Query struct {
 }
 
+type QueryResult struct {
+	Data    string `json:"data"`
+	LastKey string `json:"lastKey"`
+}
+
 type Service struct {
 	Type  string         `json:"Type"`
 	Ports []*ServicePort `json:"Ports"`

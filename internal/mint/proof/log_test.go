@@ -19,7 +19,7 @@ func TestListLogsById(t *testing.T) {
 
 	// Test case 1: Valid input
 	id := uint64(time.Now().Unix())
-	page := 1
+	start := ""
 	size := 2
 
 	_, bt, err := GetWorkLogHash([]string{"log1", "xlog2"})
@@ -30,7 +30,7 @@ func TestListLogsById(t *testing.T) {
 	name := fmt.Sprint(id)
 	model.AddToList(LogBucket, name, bt)
 
-	logs, err := ListLogsById(id, page, size, false)
+	logs, lastKey, err := ListLogsById(id, start, size, false)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -40,9 +40,8 @@ func TestListLogsById(t *testing.T) {
 	}
 
 	// Test case 2: Error case
-	page = 2
 	size = 1
-	logs, err = ListLogsById(id, page, size, false)
+	logs, _, err = ListLogsById(id, lastKey, size, false)
 	if err == nil {
 		t.Error("Expected error, got nil")
 	}

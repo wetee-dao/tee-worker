@@ -63,11 +63,16 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AttestationReportVerify func(childComplexity int, report string) int
-		WorkLoglist             func(childComplexity int, user string, podID uint64, page int, size int) int
+		WorkLoglist             func(childComplexity int, user string, podID uint64, start string, size int) int
 		WorkServicelist         func(childComplexity int, user string, podID uint64) int
-		WorkWetriclist          func(childComplexity int, user string, podID uint64, page int, size int) int
+		WorkWetriclist          func(childComplexity int, user string, podID uint64, start string, size int) int
 		Worker                  func(childComplexity int) int
 		WorkerInfo              func(childComplexity int) int
+	}
+
+	QueryResult struct {
+		Data    func(childComplexity int) int
+		LastKey func(childComplexity int) int
 	}
 
 	Service struct {
@@ -102,8 +107,8 @@ type MutationResolver interface {
 	Login(ctx context.Context, input model.LoginContent, signature string) (string, error)
 }
 type QueryResolver interface {
-	WorkLoglist(ctx context.Context, user string, podID uint64, page int, size int) (string, error)
-	WorkWetriclist(ctx context.Context, user string, podID uint64, page int, size int) (string, error)
+	WorkLoglist(ctx context.Context, user string, podID uint64, start string, size int) (*model.QueryResult, error)
+	WorkWetriclist(ctx context.Context, user string, podID uint64, start string, size int) (*model.QueryResult, error)
 	WorkServicelist(ctx context.Context, user string, podID uint64) ([]*model.Service, error)
 	AttestationReportVerify(ctx context.Context, report string) (bool, error)
 	WorkerInfo(ctx context.Context) (*model.WorkerInfo, error)
@@ -220,7 +225,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkLoglist(childComplexity, args["user"].(string), args["pod_id"].(uint64), args["page"].(int), args["size"].(int)), true
+		return e.complexity.Query.WorkLoglist(childComplexity, args["user"].(string), args["pod_id"].(uint64), args["start"].(string), args["size"].(int)), true
 
 	case "Query.work_servicelist":
 		if e.complexity.Query.WorkServicelist == nil {
@@ -244,7 +249,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.WorkWetriclist(childComplexity, args["user"].(string), args["pod_id"].(uint64), args["page"].(int), args["size"].(int)), true
+		return e.complexity.Query.WorkWetriclist(childComplexity, args["user"].(string), args["pod_id"].(uint64), args["start"].(string), args["size"].(int)), true
 
 	case "Query.worker":
 		if e.complexity.Query.Worker == nil {
@@ -259,6 +264,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.WorkerInfo(childComplexity), true
+
+	case "QueryResult.data":
+		if e.complexity.QueryResult.Data == nil {
+			break
+		}
+
+		return e.complexity.QueryResult.Data(childComplexity), true
+
+	case "QueryResult.lastKey":
+		if e.complexity.QueryResult.LastKey == nil {
+			break
+		}
+
+		return e.complexity.QueryResult.LastKey(childComplexity), true
 
 	case "Service.Ports":
 		if e.complexity.Service.Ports == nil {
@@ -754,11 +773,11 @@ func (ec *executionContext) field_Query_work_loglist_args(ctx context.Context, r
 		return nil, err
 	}
 	args["pod_id"] = arg1
-	arg2, err := ec.field_Query_work_loglist_argsPage(ctx, rawArgs)
+	arg2, err := ec.field_Query_work_loglist_argsStart(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["page"] = arg2
+	args["start"] = arg2
 	arg3, err := ec.field_Query_work_loglist_argsSize(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -802,21 +821,21 @@ func (ec *executionContext) field_Query_work_loglist_argsPodID(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_work_loglist_argsPage(
+func (ec *executionContext) field_Query_work_loglist_argsStart(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["page"]; !ok {
-		var zeroVal int
+) (string, error) {
+	if _, ok := rawArgs["start"]; !ok {
+		var zeroVal string
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-	if tmp, ok := rawArgs["page"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
+	if tmp, ok := rawArgs["start"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
-	var zeroVal int
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -902,11 +921,11 @@ func (ec *executionContext) field_Query_work_wetriclist_args(ctx context.Context
 		return nil, err
 	}
 	args["pod_id"] = arg1
-	arg2, err := ec.field_Query_work_wetriclist_argsPage(ctx, rawArgs)
+	arg2, err := ec.field_Query_work_wetriclist_argsStart(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["page"] = arg2
+	args["start"] = arg2
 	arg3, err := ec.field_Query_work_wetriclist_argsSize(ctx, rawArgs)
 	if err != nil {
 		return nil, err
@@ -950,21 +969,21 @@ func (ec *executionContext) field_Query_work_wetriclist_argsPodID(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_work_wetriclist_argsPage(
+func (ec *executionContext) field_Query_work_wetriclist_argsStart(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (int, error) {
-	if _, ok := rawArgs["page"]; !ok {
-		var zeroVal int
+) (string, error) {
+	if _, ok := rawArgs["start"]; !ok {
+		var zeroVal string
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-	if tmp, ok := rawArgs["page"]; ok {
-		return ec.unmarshalNInt2int(ctx, tmp)
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
+	if tmp, ok := rawArgs["start"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
 	}
 
-	var zeroVal int
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -1538,7 +1557,7 @@ func (ec *executionContext) _Query_work_loglist(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkLoglist(rctx, fc.Args["user"].(string), fc.Args["pod_id"].(uint64), fc.Args["page"].(int), fc.Args["size"].(int))
+		return ec.resolvers.Query().WorkLoglist(rctx, fc.Args["user"].(string), fc.Args["pod_id"].(uint64), fc.Args["start"].(string), fc.Args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1550,9 +1569,9 @@ func (ec *executionContext) _Query_work_loglist(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.QueryResult)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNQueryResult2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐQueryResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_work_loglist(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1562,7 +1581,13 @@ func (ec *executionContext) fieldContext_Query_work_loglist(ctx context.Context,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_QueryResult_data(ctx, field)
+			case "lastKey":
+				return ec.fieldContext_QueryResult_lastKey(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type QueryResult", field.Name)
 		},
 	}
 	defer func() {
@@ -1593,7 +1618,7 @@ func (ec *executionContext) _Query_work_wetriclist(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().WorkWetriclist(rctx, fc.Args["user"].(string), fc.Args["pod_id"].(uint64), fc.Args["page"].(int), fc.Args["size"].(int))
+		return ec.resolvers.Query().WorkWetriclist(rctx, fc.Args["user"].(string), fc.Args["pod_id"].(uint64), fc.Args["start"].(string), fc.Args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1605,9 +1630,9 @@ func (ec *executionContext) _Query_work_wetriclist(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.QueryResult)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNQueryResult2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐQueryResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_work_wetriclist(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1617,7 +1642,13 @@ func (ec *executionContext) fieldContext_Query_work_wetriclist(ctx context.Conte
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_QueryResult_data(ctx, field)
+			case "lastKey":
+				return ec.fieldContext_QueryResult_lastKey(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type QueryResult", field.Name)
 		},
 	}
 	defer func() {
@@ -2007,6 +2038,94 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QueryResult_data(ctx context.Context, field graphql.CollectedField, obj *model.QueryResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_QueryResult_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_QueryResult_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QueryResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _QueryResult_lastKey(ctx context.Context, field graphql.CollectedField, obj *model.QueryResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_QueryResult_lastKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_QueryResult_lastKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "QueryResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4844,6 +4963,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var queryResultImplementors = []string{"QueryResult"}
+
+func (ec *executionContext) _QueryResult(ctx context.Context, sel ast.SelectionSet, obj *model.QueryResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, queryResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("QueryResult")
+		case "data":
+			out.Values[i] = ec._QueryResult_data(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastKey":
+			out.Values[i] = ec._QueryResult_lastKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var serviceImplementors = []string{"Service"}
 
 func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, obj *model.Service) graphql.Marshaler {
@@ -5496,6 +5659,20 @@ func (ec *executionContext) marshalNInt642int64(ctx context.Context, sel ast.Sel
 func (ec *executionContext) unmarshalNLoginContent2weteeᚗappᚋworkerᚋgraphᚋmodelᚐLoginContent(ctx context.Context, v any) (model.LoginContent, error) {
 	res, err := ec.unmarshalInputLoginContent(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNQueryResult2weteeᚗappᚋworkerᚋgraphᚋmodelᚐQueryResult(ctx context.Context, sel ast.SelectionSet, v model.QueryResult) graphql.Marshaler {
+	return ec._QueryResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNQueryResult2ᚖweteeᚗappᚋworkerᚋgraphᚋmodelᚐQueryResult(ctx context.Context, sel ast.SelectionSet, v *model.QueryResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._QueryResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRole2weteeᚗappᚋworkerᚋgraphᚋmodelᚐRole(ctx context.Context, v any) (model.Role, error) {

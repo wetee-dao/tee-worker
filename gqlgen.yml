@@ -95,3 +95,9 @@ models:
   Uint64:
     model:
       - github.com/99designs/gqlgen/graphql.Uint64
+  WorkLogProof:
+    model:
+      - wetee.app/worker/internal/mint/proof.WorkLogProof
+  WorkCrProof:
+    model:
+      - wetee.app/worker/internal/mint/proof.WorkCrProof

@@ -18,14 +18,14 @@ type WorkCrProof struct {
 var CrBucket = "cr"
 
 // 工作量证明资源占用列表
-func ListMonitoringsById(id uint64, page int, size int, isCache bool) ([]WorkCrProof, error) {
+func ListMonitoringsById(id uint64, start string, size int, isCache bool) ([]WorkCrProof, string, error) {
 	name := fmt.Sprint(id)
 	if isCache {
 		name = name + "_cache"
 	}
-	res, err := model.GetList(CrBucket, name, page, size)
+	res, lastKey, err := model.GetList(CrBucket, name, []byte(start), size)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	var list = make([]WorkCrProof, 0, len(res))
@@ -33,11 +33,11 @@ func ListMonitoringsById(id uint64, page int, size int, isCache bool) ([]WorkCrP
 		proof := WorkCrProof{}
 		err = json.Unmarshal(v, &proof)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		list = append(list, proof)
 	}
-	return list, nil
+	return list, string(lastKey), nil
 }
 
 func AddMonitor(pod model.Pod, logs []string, crs map[string][]int64) error {

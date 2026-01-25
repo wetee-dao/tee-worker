@@ -10,6 +10,11 @@ type ServicePort {
   NodePort: Int!
 }
 
+type QueryResult {
+  data: String!
+  lastKey: String!
+}
+
 extend type Query {
   """
   Query log list
@@ -17,18 +22,20 @@ extend type Query {
   work_loglist(
     user: String!
     pod_id: Uint64!
-    page: Int!
+    start: String!
     size: Int!
-  ): String!
+  ): QueryResult!
+
   """
   Query Metric list
   """
   work_wetriclist(
     user: String!
     pod_id: Uint64!
-    page: Int!
+    start: String!
     size: Int!
-  ): String!
+  ): QueryResult!
+
   """
   Query Metric list
   """
