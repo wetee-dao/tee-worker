@@ -10,7 +10,7 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"wetee.app/worker/internal/mint"
@@ -53,7 +53,7 @@ func (r *mutationResolver) StartLocalWetee(ctx context.Context, imageVersion str
 
 	_, err := nameSpace.Create(ctx, &deployment, metav1.CreateOptions{})
 	if err != nil {
-		return false, gqlerror.Errorf(err.Error())
+		return false, gqlerror.Errorf("%s", err.Error())
 	}
 
 	// 创建集群内部服务
@@ -77,7 +77,7 @@ func (r *mutationResolver) StartLocalWetee(ctx context.Context, imageVersion str
 	}
 	_, err = ServiceSpace.Create(ctx, &service, metav1.CreateOptions{})
 	if err != nil {
-		return false, gqlerror.Errorf(err.Error())
+		return false, gqlerror.Errorf("%s", err.Error())
 	}
 
 	return true, nil
@@ -126,7 +126,7 @@ func (r *mutationResolver) StartSgxPccs(ctx context.Context, imageVersion string
 
 	_, err := nameSpace.Create(ctx, &deployment, metav1.CreateOptions{})
 	if err != nil {
-		return false, gqlerror.Errorf(err.Error())
+		return false, gqlerror.Errorf("%s", err.Error())
 	}
 
 	// 创建集群内部服务
@@ -150,7 +150,7 @@ func (r *mutationResolver) StartSgxPccs(ctx context.Context, imageVersion string
 	}
 	_, err = ServiceSpace.Create(ctx, &service, metav1.CreateOptions{})
 	if err != nil {
-		return false, gqlerror.Errorf(err.Error())
+		return false, gqlerror.Errorf("%s", err.Error())
 	}
 	return true, nil
 }

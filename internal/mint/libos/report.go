@@ -3,8 +3,8 @@ package libos
 import (
 	"bytes"
 
-	"github.com/cometbft/cometbft/abci/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
+	"github.com/wetee-dao/tee-dsecret/pkg/model/protoio"
 	"wetee.app/worker/internal/util"
 )
 
@@ -22,7 +22,7 @@ func (s *TEEServer) report() ([]byte, error) {
 	}
 
 	buf := new(bytes.Buffer)
-	err = types.WriteMessage(resp, buf)
+	err = protoio.WriteMessage(resp, buf)
 	if err != nil {
 		return nil, err
 	}

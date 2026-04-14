@@ -19,7 +19,7 @@ func (r *mutationResolver) LoginAsRoot(ctx context.Context, input model.LoginCon
 		// 设置根用户
 		err := store.SetRootUser(input.Address)
 		if err != nil {
-			return "", gqlerror.Errorf("Set root user error: " + err.Error())
+			return "", gqlerror.Errorf("%s", "Set root user error: "+err.Error())
 		}
 	} else {
 		if rootUser != input.Address {

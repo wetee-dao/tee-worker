@@ -14,7 +14,7 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	wmodel "wetee.app/worker/graph/model"
 	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/mint/proof"
@@ -25,7 +25,7 @@ import (
 func (r *queryResolver) WorkLoglist(ctx context.Context, user string, podID uint64, start string, size int) (*wmodel.QueryResult, error) {
 	listCache, lastKey, err := proof.ListLogsById(podID, start, size, false)
 	if err != nil {
-		return nil, gqlerror.Errorf("WorkLogList:" + err.Error())
+		return nil, gqlerror.Errorf("%s", "WorkLogList:"+err.Error())
 	}
 
 	nameSpace := mint.HexStringToSpace(user)
@@ -33,12 +33,12 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, user string, podID uint
 	// check is running
 	pod, err := store.GetPod(podID)
 	if err != nil && err.Error() != "the list not found" {
-		return nil, gqlerror.Errorf("GetPod:" + err.Error())
+		return nil, gqlerror.Errorf("%s", "GetPod:"+err.Error())
 	}
 	if pod != nil {
 		list, err := mint.MinterIns.QueryLog(ctx, *pod, nameSpace, 0)
 		if err != nil {
-			return nil, gqlerror.Errorf("QueryLog: " + nameSpace + " :" + err.Error())
+			return nil, gqlerror.Errorf("%s", "QueryLog: "+nameSpace+" :"+err.Error())
 		}
 		listCache = append(listCache, proof.WorkLogProof{
 			Time: uint64(time.Now().Unix()),
@@ -48,7 +48,7 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, user string, podID uint
 
 	bt, err := json.Marshal(listCache)
 	if err != nil {
-		return nil, gqlerror.Errorf("JsonMarshal:" + err.Error())
+		return nil, gqlerror.Errorf("%s", "JsonMarshal:"+err.Error())
 	}
 
 	return &wmodel.QueryResult{
@@ -61,19 +61,19 @@ func (r *queryResolver) WorkLoglist(ctx context.Context, user string, podID uint
 func (r *queryResolver) WorkWetriclist(ctx context.Context, user string, podID uint64, start string, size int) (*wmodel.QueryResult, error) {
 	listCache, lastKey, err := proof.ListMonitoringsById(podID, start, size, false)
 	if err != nil {
-		return nil, gqlerror.Errorf("WorkLogList:" + err.Error())
+		return nil, gqlerror.Errorf("%s", "WorkLogList:"+err.Error())
 	}
 
 	// check is running
 	nameSpace := mint.HexStringToSpace(user)
 	pod, err := store.GetPod(podID)
 	if err != nil && err.Error() != "the list not found" {
-		return nil, gqlerror.Errorf("GetPod:" + err.Error())
+		return nil, gqlerror.Errorf("%s", "GetPod:"+err.Error())
 	}
 	if pod != nil {
 		list, err := mint.MinterIns.QueryMetric(ctx, *pod, nameSpace)
 		if err != nil {
-			return nil, gqlerror.Errorf("QueryMetric: " + err.Error())
+			return nil, gqlerror.Errorf("%s", "QueryMetric: "+err.Error())
 		}
 
 		listCache = append(listCache, proof.WorkCrProof{
@@ -84,7 +84,7 @@ func (r *queryResolver) WorkWetriclist(ctx context.Context, user string, podID u
 
 	bt, err := json.Marshal(listCache)
 	if err != nil {
-		return nil, gqlerror.Errorf("JsonMarshal:" + err.Error())
+		return nil, gqlerror.Errorf("%s", "JsonMarshal:"+err.Error())
 	}
 
 	return &wmodel.QueryResult{
@@ -104,7 +104,7 @@ func (r *queryResolver) WorkServicelist(ctx context.Context, user string, podID 
 		LabelSelector: "service=" + name,
 	})
 	if err != nil {
-		return nil, gqlerror.Errorf("WorkServiceList:" + err.Error())
+		return nil, gqlerror.Errorf("%s", "WorkServiceList:"+err.Error())
 	}
 
 	var services []*wmodel.Service = make([]*wmodel.Service, 0, 10)
@@ -135,7 +135,7 @@ func (r *queryResolver) AttestationReportVerify(ctx context.Context, report stri
 	reportx := strings.TrimPrefix(report, "0x")
 	bt, err := hex.DecodeString(reportx)
 	if err != nil {
-		return false, gqlerror.Errorf("HexDecodeString:" + err.Error())
+		return false, gqlerror.Errorf("%s", "HexDecodeString:"+err.Error())
 	}
 
 	ps := model.TeeCall{}
@@ -143,7 +143,7 @@ func (r *queryResolver) AttestationReportVerify(ctx context.Context, report stri
 
 	_, err = model.VerifyReport(&ps)
 	if err != nil {
-		return false, gqlerror.Errorf("VerifyLocalReport error:" + err.Error())
+		return false, gqlerror.Errorf("%s", "VerifyLocalReport error:"+err.Error())
 	}
 
 	return true, nil

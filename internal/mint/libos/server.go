@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
@@ -116,7 +115,7 @@ func (s *TEEServer) wrapData(req uint64, code int32, data []byte) []byte {
 	}
 
 	buf := new(bytes.Buffer)
-	abci.WriteMessage(result, buf)
+	protoio.WriteMessage(result, buf)
 	bt, _ := Encode(req, buf.Bytes())
 	return bt
 }

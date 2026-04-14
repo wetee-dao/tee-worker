@@ -132,7 +132,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Link to polkadot
+	// Link to main chain
 	_, err = chain.ConnectMainChain(chainAddr, nodePriv)
 	if err != nil {
 		fmt.Println("Connect to chain error:", err)
@@ -140,13 +140,19 @@ func main() {
 	}
 
 	// Init node
-	node, side, _, err := sidechain.InitSideChain(chainPort, true, func() {
+	nodeFunc, side, _, err := sidechain.InitSideChain(chainPort, true, func() {
 		fmt.Println()
 		util.LogWithYellow("Main Chain", chainAddr)
 		util.LogWithYellow("Node Key", nodePriv.GetPublic().SS58())
 	})
 	if err != nil {
 		log.Fatalf("failed to init node: %v", err)
+		os.Exit(1)
+	}
+
+	node, err := nodeFunc()
+	if err != nil {
+		log.Fatalf("failed to create BFT node: %v", err)
 		os.Exit(1)
 	}
 
@@ -161,7 +167,7 @@ func main() {
 	}()
 
 	// 开启 mint 主线程
-	err = mint.InitCluster(mgr, nodePriv)
+	err = mint.InitCluster(mgr, nodePriv, side)
 	if err != nil {
 		setupLog.Error(err, "unable to start mint")
 		os.Exit(1)

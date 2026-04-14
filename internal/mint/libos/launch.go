@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/pkg/errors"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"github.com/wetee-dao/tee-dsecret/pkg/model/protoio"
@@ -62,7 +61,7 @@ func (s *TEEServer) launch(req []byte) ([]byte, error) {
 
 	// 写入解密消息
 	buf := new(bytes.Buffer)
-	abci.WriteMessage(secrets, buf)
+	protoio.WriteMessage(secrets, buf)
 
 	return buf.Bytes(), nil
 }

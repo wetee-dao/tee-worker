@@ -10,11 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/vektah/gqlparser/v2/gqlerror"
-	module "github.com/wetee-dao/tee-dsecret/pkg/chains/ink/pallets"
 	dmodel "github.com/wetee-dao/tee-dsecret/pkg/model"
 	"wetee.app/worker/graph/model"
-	"wetee.app/worker/internal/mint"
 	"wetee.app/worker/internal/store"
 )
 
@@ -56,28 +53,5 @@ func (r *queryResolver) WorkerInfo(ctx context.Context) (*model.WorkerInfo, erro
 
 // Worker is the resolver for the worker field.
 func (r *queryResolver) Worker(ctx context.Context) ([]*model.Contract, error) {
-	gsigner := mint.MinterIns.PrivateKey.ToSigner()
-	worker := &module.Worker{
-		Signer: gsigner,
-	}
-
-	clusterID, err := store.GetClusterId()
-	if err != nil {
-		return nil, gqlerror.Errorf("Cant get cluster id:" + err.Error())
-	}
-
-	contracts, err := worker.GetClusterContracts(clusterID, nil)
-	if err != nil {
-		return nil, gqlerror.Errorf("GetClusterContracts:" + err.Error())
-	}
-
-	list := make([]*model.Contract, 0, len(contracts))
-	for _, contract := range contracts {
-		list = append(list, &model.Contract{
-			StartNumber: fmt.Sprint(contract.ContractState.StartNumber),
-			User:        hex.EncodeToString(contract.ContractState.User[:]),
-			WorkID:      fmt.Sprint(contract.ContractState.WorkId.Id),
-		})
-	}
-	return list, nil
+	return nil, nil
 }

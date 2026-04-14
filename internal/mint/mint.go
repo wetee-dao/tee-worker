@@ -33,13 +33,14 @@ type Minter struct {
 	HostDomain    string
 	mu            sync.RWMutex
 
+	side *sidechain.SideChain
 	// preRecerve is the channel to receive SendEncryptedSecretRequest
 	preRecerve map[string]chan any
 }
 
 // InitCluster
 // 初始化矿工
-func InitCluster(mgr manager.Manager, privateKey *model.PrivKey) error {
+func InitCluster(mgr manager.Manager, privateKey *model.PrivKey, side *sidechain.SideChain) error {
 	// 创建K8s Client
 	clientset, err := kubernetes.NewForConfig(mgr.GetConfig())
 	if err != nil {
@@ -56,6 +57,7 @@ func InitCluster(mgr manager.Manager, privateKey *model.PrivKey) error {
 		K8sClient:     clientset,
 		MetricsClient: metricsClient,
 		HostDomain:    "",
+		side:          side,
 		preRecerve:    make(map[string]chan any),
 	}
 	MinterIns.PrivateKey = privateKey
@@ -281,11 +283,13 @@ func (m *Minter) StartMint() {
 		// 批量提交调用到区块链
 		// sync tx to chain
 		if len(mintCalls) > 0 {
-			_, err = sidechain.SubmitTx(&model.Tx{
-				Payload: &model.Tx_HubCall{
+			tx := &model.SysCall{
+				Payload: &model.SysCall_HubCall{
 					HubCall: &model.HubCall{Call: mintCalls},
 				},
-			})
+			}
+
+			err = m.side.SubmitCallFromNode(tx)
 			if err != nil && !strings.Contains(err.Error(), "tx already exists") && err.Error() != "Tx already received from peer" {
 				util.LogError("SubmitTx", err)
 			} else {

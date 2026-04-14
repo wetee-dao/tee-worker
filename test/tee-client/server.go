@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	"github.com/wetee-dao/tee-dsecret/pkg/model/protoio"
@@ -78,7 +77,7 @@ func (s *TEEServer) ReturnError(c gnet.Conn, req uint64, err error) gnet.Action 
 
 	// 写入解密消息
 	buf := new(bytes.Buffer)
-	abci.WriteMessage(result, buf)
+	protoio.WriteMessage(result, buf)
 	bt, _ := Encode(req, buf.Bytes())
 	c.Write(bt)
 	return gnet.None
@@ -93,7 +92,7 @@ func (s *TEEServer) ReturnData(c gnet.Conn, req uint64, body []byte) gnet.Action
 
 	// 写入解密消息
 	buf := new(bytes.Buffer)
-	abci.WriteMessage(result, buf)
+	protoio.WriteMessage(result, buf)
 	bt, _ := Encode(req, buf.Bytes())
 	c.Write(bt)
 	return gnet.None

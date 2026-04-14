@@ -9,7 +9,6 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	inkutil "github.com/wetee-dao/ink.go/util"
-	gtypes "github.com/wetee-dao/tee-dsecret/pkg/chains/ink/generated/types"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -56,7 +55,7 @@ func (m *Minter) DeployOrUpdateGPU(ctx *context.Context, pod model.Pod) (*appsv1
 		}
 
 		// 重新创建
-		err = m.CreateGpuApp(ctx, pod, []*gtypes.Env1{})
+		err = m.CreateGpuApp(ctx, pod)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +70,7 @@ func (m *Minter) DeployOrUpdateGPU(ctx *context.Context, pod model.Pod) (*appsv1
 
 // CreateOrUpdateApp create or update app
 // 校对应用链上状态后创建或更新应用
-func (m *Minter) CreateGpuApp(ctx *context.Context, pod model.Pod, envs []*gtypes.Env1) error {
+func (m *Minter) CreateGpuApp(ctx *context.Context, pod model.Pod) error {
 	// get namespace name
 	name := GetPodName(pod.PodId)
 	saddress := AccountToSpace(pod.Owner[:])
