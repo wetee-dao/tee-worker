@@ -140,7 +140,7 @@ func main() {
 	}
 
 	// Init node
-	nodeFunc, side, _, err := sidechain.InitSideChain(chainPort, true, func() {
+	nodeFunc, side, _, err := sidechain.InitSideChain(nodePriv, chainPort, true, func() {
 		fmt.Println()
 		util.LogWithYellow("Main Chain", chainAddr)
 		util.LogWithYellow("Node Key", nodePriv.GetPublic().SS58())

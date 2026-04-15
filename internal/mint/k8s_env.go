@@ -64,9 +64,11 @@ func (m *Minter) WrapDeploymentInitData(deployment *appsv1.Deployment, version m
 	encrypts, _ := json.Marshal(initData.Encrypts)
 	files, _ := json.Marshal(initData.Files)
 	disks, _ := json.Marshal(initData.Disks)
+
 	params := map[string]string{}
 	params["polkadot_cloud_addr"] = contracts.CloudAddress
 	paramStr, _ := json.Marshal(params)
+
 	if version.SGX != nil {
 		for k, v := range initData.InitDatas {
 			deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
@@ -74,18 +76,22 @@ func (m *Minter) WrapDeploymentInitData(deployment *appsv1.Deployment, version m
 				Value: v,
 			})
 		}
+
 		deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
 			Name:  "__ENCRYPTS__",
 			Value: string(encrypts),
 		})
+
 		deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
 			Name:  "__FILES__",
 			Value: string(files),
 		})
+
 		deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
 			Name:  "__DISKS__",
 			Value: string(disks),
 		})
+
 		deployment.Spec.Template.Spec.Containers[0].Env = append(deployment.Spec.Template.Spec.Containers[0].Env, corev1.EnvVar{
 			Name:  "__PARAMS__",
 			Value: string(paramStr),
@@ -96,6 +102,9 @@ func (m *Minter) WrapDeploymentInitData(deployment *appsv1.Deployment, version m
 			Algorithm: "sha256",
 			Data:      map[string]string{},
 		}
+
+		fmt.Println("11111111111111111")
+
 		maps.Copy(initToml.Data, initData.InitDatas)
 		initToml.Data["__ENCRYPTS__"] = string(encrypts)
 		initToml.Data["__FILES__"] = string(files)
