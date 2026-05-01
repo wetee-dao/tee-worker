@@ -46,7 +46,7 @@
             "fromHost": true
         },
         {
-            "name": "CHAIN_ADDR",
+            "name": "CHAIN_ENV",
             "fromHost": true
         },
         {

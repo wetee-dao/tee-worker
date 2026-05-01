@@ -12,7 +12,7 @@ import (
 
 	"github.com/pelletier/go-toml/v2"
 	"github.com/wetee-dao/tee-dsecret/pkg/chains"
-	contracts "github.com/wetee-dao/tee-dsecret/pkg/chains/revives"
+	contracts "github.com/wetee-dao/tee-dsecret/pkg/chains/revive"
 	"github.com/wetee-dao/tee-dsecret/pkg/model"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -66,7 +66,7 @@ func (m *Minter) WrapDeploymentInitData(deployment *appsv1.Deployment, version m
 	disks, _ := json.Marshal(initData.Disks)
 
 	params := map[string]string{}
-	params["polkadot_cloud_addr"] = contracts.CloudAddress
+	params["polkadot_cloud_addr"] = contracts.GetCloudAddress()
 	paramStr, _ := json.Marshal(params)
 
 	if version.SGX != nil {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/types"
 	chain "github.com/wetee-dao/ink.go"
-	contracts "github.com/wetee-dao/tee-dsecret/pkg/chains/revives"
-	"github.com/wetee-dao/tee-dsecret/pkg/chains/revives/cloud"
+	contracts "github.com/wetee-dao/tee-dsecret/pkg/chains/revive"
+	"github.com/wetee-dao/tee-dsecret/pkg/chains/revive/cloud"
 	"wetee.app/worker/internal/util"
 )
 

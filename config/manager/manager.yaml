@@ -90,8 +90,8 @@ spec:
           env:
             - name: SIDE_CHAIN_PORT
               value: "10000"
-            - name: CHAIN_ADDR
-              value: "ws://192.168.110.205:30002/ws"
+            - name: CHAIN_ENV
+              value: "test"
           # TODO(user): Configure the resources accordingly based on the project requirements.
           # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
           resources:

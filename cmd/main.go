@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -53,9 +52,8 @@ import (
 )
 
 var (
-	scheme                 = runtime.NewScheme()
-	setupLog               = ctrl.Log.WithName("setup")
-	DefaultChainUrl string = "ws://wetee-node.worker-addon.svc.cluster.local:9944"
+	scheme   = runtime.NewScheme()
+	setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
@@ -116,7 +114,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	chainAddr := strings.Split(util.GetEnv("CHAIN_ADDR", DefaultChainUrl), ",")
+	chainEnv := util.GetEnv("CHAIN_ENV", "local")
 	chainPort := util.GetEnvInt("SIDE_CHAIN_PORT", 10000)
 
 	// 初始化数据库
@@ -133,16 +131,22 @@ func main() {
 	}
 
 	// Link to main chain
-	_, err = chain.ConnectMainChain(chainAddr, nodePriv)
+	_, err = chain.ConnectMainChain(chainEnv, nodePriv)
 	if err != nil {
 		fmt.Println("Connect to chain error:", err)
+		os.Exit(1)
+	}
+
+	chainConfig := model.GetChainConfig(chainEnv)
+	if chainConfig == nil {
+		fmt.Println("Invalid chain environment:", chainEnv)
 		os.Exit(1)
 	}
 
 	// Init node
 	nodeFunc, side, _, err := sidechain.InitSideChain(nodePriv, chainPort, true, func() {
 		fmt.Println()
-		util.LogWithYellow("Main Chain", chainAddr)
+		util.LogWithYellow("Main Chain", chainConfig.Urls)
 		util.LogWithYellow("Node Key", nodePriv.GetPublic().SS58())
 	})
 	if err != nil {
